@@ -3080,6 +3080,7 @@ static int selinux_inode_follow_link(struct dentry *dentry, struct inode *inode,
 				  rcu ? MAY_NOT_BLOCK : 0);
 }
 
+#ifdef CONFIG_AUDIT
 static noinline int audit_inode_permission(struct inode *inode,
 					   u32 perms, u32 audited, u32 denied,
 					   int result)
@@ -3098,6 +3099,9 @@ static noinline int audit_inode_permission(struct inode *inode,
 		return rc;
 	return 0;
 }
+#else
+#define audit_inode_permission(...) 0
+#endif
 
 static int selinux_inode_permission(struct inode *inode, int mask)
 {
