@@ -229,7 +229,7 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
  * @brief Compile time Assert
  */
 #define QDF_COMPILE_TIME_ASSERT(assertion_name, predicate) \
-    typedef char assertion_name[(predicate) ? 1 : -1]
+    typedef char assertion_name[(predicate) ? 1 : 0]
 
 #define __qdf_container_of(ptr, type, member) container_of(ptr, type, member)
 
