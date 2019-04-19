@@ -27,6 +27,7 @@
 #include <linux/interconnect.h>
 #include <soc/qcom/devfreq_icc.h>
 #include <soc/qcom/of_common.h>
+#include <linux/devfreq_boost.h>
 
 /* Has to be ULL to prevent overflow where this macro is used. */
 #define MBYTE (1ULL << 20)
@@ -277,6 +278,9 @@ int devfreq_add_icc(struct device *dev)
 		icc_put(d->icc_path);
 		return PTR_ERR(d->df);
 	}
+
+ 	if (!strcmp(dev_name(dev), "soc:qcom,cpu-llcc-ddr-bw"))
+		devfreq_register_boost_device(DEVFREQ_MSM_CPUBW, d->df);
 
 	return 0;
 }
