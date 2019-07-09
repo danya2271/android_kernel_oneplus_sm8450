@@ -104,6 +104,8 @@ extern const struct cpumask *const cpu_lp_mask;
 extern const struct cpumask *const cpu_perf_mask;
 extern const struct cpumask *const cpu_prime_mask;
 
+extern atomic_t __num_online_cpus;
+
 #if NR_CPUS > 1
 /**
  * num_online_cpus() - Read the number of online CPUs
