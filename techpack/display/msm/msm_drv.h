@@ -70,6 +70,15 @@ struct msm_fence_cb;
 struct msm_gem_address_space;
 struct msm_gem_vma;
 
+struct vblank_work {
+	struct kthread_work work;
+	int crtc_id;
+	bool enable;
+	struct msm_drm_private *priv;
+};
+
+static struct kmem_cache *kmem_vblank_work_pool;
+
 #define NUM_DOMAINS    4    /* one for KMS, then one per gpu core (?) */
 #define MAX_CRTCS      16
 #define MAX_PLANES     20
