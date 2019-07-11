@@ -62,13 +62,6 @@ struct sde_crtc_custom_events {
 			struct sde_irq_callback *irq);
 };
 
-struct vblank_work {
-	struct kthread_work work;
-	int crtc_id;
-	bool enable;
-	struct msm_drm_private *priv;
-};
-
 static int sde_crtc_power_interrupt_handler(struct drm_crtc *crtc_drm,
 	bool en, struct sde_irq_callback *ad_irq);
 static int sde_crtc_idle_interrupt_handler(struct drm_crtc *crtc_drm,
@@ -6960,7 +6953,7 @@ static void vblank_ctrl_worker(struct kthread_work *work)
 
 	sde_crtc_vblank(priv->crtcs[cur_work->crtc_id], cur_work->enable);
 
-	kfree(cur_work);
+	kmem_cache_free(kmem_vblank_work_pool, cur_work);
 }
 
 static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
