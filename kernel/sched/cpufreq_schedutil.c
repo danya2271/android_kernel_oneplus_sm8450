@@ -123,6 +123,14 @@ static void sugov_fast_switch(struct sugov_policy *sg_policy, u64 time,
 		cpufreq_driver_fast_switch(sg_policy->policy, next_freq);
 }
 
+static inline void walt_irq_work_queue(struct irq_work *work)
+{
+	if (likely(cpu_online(raw_smp_processor_id())))
+		irq_work_queue(work);
+	else
+		irq_work_queue_on(work, cpumask_any(cpu_online_mask));
+}
+
 static void sugov_deferred_update(struct sugov_policy *sg_policy, u64 time,
 				  unsigned int next_freq)
 {
