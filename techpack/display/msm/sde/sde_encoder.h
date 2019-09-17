@@ -265,6 +265,7 @@ struct sde_encoder_virt {
 #if defined(CONFIG_PXLW_IRIS)
 	struct kthread_work disable_autorefresh_work;
 #endif
+	bool input_handler_registered;
 	bool vblank_enabled;
 	bool idle_pc_restore;
 	enum frame_trigger_mode_type frame_trigger_mode;
