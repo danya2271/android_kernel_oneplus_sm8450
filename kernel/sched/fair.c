@@ -5493,7 +5493,10 @@ void unthrottle_cfs_rq(struct cfs_rq *cfs_rq)
 	add_nr_running(rq, task_delta);
 
 unthrottle_throttle:
+<<<<<<< HEAD
 
+=======
+>>>>>>> f3326591269bb (sched/fair: Fix unthrottle_cfs_rq() for leaf_cfs_rq list)
 	/*
 	 * The cfs_rq_throttled() breaks in the above iteration can result in
 	 * incomplete leaf list maintenance, resulting in triggering the
@@ -5502,7 +5505,12 @@ unthrottle_throttle:
 	for_each_sched_entity(se) {
 		cfs_rq = cfs_rq_of(se);
 
+<<<<<<< HEAD
 		list_add_leaf_cfs_rq(cfs_rq);
+=======
+		if (list_add_leaf_cfs_rq(cfs_rq))
+			break;
+>>>>>>> f3326591269bb (sched/fair: Fix unthrottle_cfs_rq() for leaf_cfs_rq list)
 	}
 
 	assert_list_leaf_cfs_rq(rq);
