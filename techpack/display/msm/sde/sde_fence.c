@@ -233,13 +233,13 @@ static int _sde_fence_create_fd(void *fence_ctx, uint32_t val)
 	signed int fd = -EINVAL;
 	struct sde_fence_context *ctx = fence_ctx;
 
-	if (!ctx) {
+	if (unlikely(!ctx)) {
 		SDE_ERROR("invalid context\n");
 		goto exit;
 	}
 
-	sde_fence = kzalloc(sizeof(*sde_fence), GFP_KERNEL);
-	if (!sde_fence)
+	sde_fence = kmem_cache_zalloc(kmem_fence_pool, GFP_KERNEL);
+	if (unlikely(!sde_fence))
 		return -ENOMEM;
 
 	sde_fence->ctx = fence_ctx;
@@ -256,7 +256,7 @@ static int _sde_fence_create_fd(void *fence_ctx, uint32_t val)
 
 	/* create fence */
 	sync_file = sync_file_create(&sde_fence->base);
-	if (sync_file == NULL) {
+	if (unlikely(sync_file == NULL)) {
 		put_unused_fd(fd);
 		fd = -EINVAL;
 		dma_fence_put(&sde_fence->base);
@@ -364,7 +364,7 @@ int sde_fence_create(struct sde_fence_context *ctx, uint64_t *val,
 	int fd, rc = -EINVAL;
 	unsigned long flags;
 
-	if (!ctx || !val) {
+	if (unlikely(!ctx || !val)) {
 		SDE_ERROR("invalid argument(s), fence %d, pval %d\n",
 				ctx != NULL, val != NULL);
 		return rc;
