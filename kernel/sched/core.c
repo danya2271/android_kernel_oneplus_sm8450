@@ -1404,8 +1404,10 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
 	if (unlikely(!p->sched_class->uclamp_enabled))
 		return;
 
-	for_each_clamp_id(clamp_id)
+	for_each_clamp_id(clamp_id) {
 		uclamp_rq_dec_id(rq, p, clamp_id);
+		uclamp_rq_bucket_update(rq, p, clamp_id);
+	}
 }
 
 static inline void uclamp_rq_reinc_id(struct rq *rq, struct task_struct *p,
