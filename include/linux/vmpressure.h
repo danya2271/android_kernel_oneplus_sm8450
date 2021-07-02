@@ -36,7 +36,11 @@ extern void vmpressure(gfp_t gfp, struct mem_cgroup *memcg, bool tree,
 		       unsigned long scanned, unsigned long reclaimed,
 		       int order);
 extern void vmpressure_prio(gfp_t gfp, struct mem_cgroup *memcg, int prio,
+<<<<<<< HEAD
 							int order);
+=======
+			    int order);
+>>>>>>> 1525ac5487c64 (mm: vmpressure: Ignore costly-order allocations for direct reclaim too)
 
 #ifdef CONFIG_MEMCG
 extern void vmpressure_init(struct vmpressure *vmpr);
