@@ -4509,6 +4509,8 @@ static int icnss_probe(struct platform_device *pdev)
 		priv->pon_gpio_control = true;
 	}
 
+	device_enable_async_suspend(dev);
+
 	spin_lock_init(&priv->event_lock);
 	spin_lock_init(&priv->on_off_lock);
 	spin_lock_init(&priv->soc_wake_msg_lock);
