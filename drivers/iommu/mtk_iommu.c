@@ -1084,6 +1084,7 @@ static struct platform_driver mtk_iommu_driver = {
 		.name = "mtk-iommu",
 		.of_match_table = mtk_iommu_of_ids,
 		.pm = &mtk_iommu_pm_ops,
+		.probe_type = PROBE_FORCE_SYNCHRONOUS,
 	}
 };
 
