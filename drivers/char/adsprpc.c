@@ -8034,6 +8034,7 @@ static int __init fastrpc_device_init(void)
 	void *region_vaddr = NULL;
 	struct fastrpc_buf *buf = NULL;
 
+#ifdef CONFIG_DEBUG_FS
 	debugfs_root = debugfs_create_dir("adsprpc", NULL);
 	if (IS_ERR_OR_NULL(debugfs_root)) {
 		pr_warn("Error: %s: %s: failed to create debugfs root dir\n",
@@ -8041,6 +8042,7 @@ static int __init fastrpc_device_init(void)
 		debugfs_remove_recursive(debugfs_root);
 		debugfs_root = NULL;
 	}
+#endif
 	memset(me, 0, sizeof(*me));
 	fastrpc_init(me);
 	me->dev = NULL;
