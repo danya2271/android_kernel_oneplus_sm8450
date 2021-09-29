@@ -98,7 +98,7 @@ static void pm_qos_set_value(struct pm_qos_constraints *c, s32 value)
  *
  * Return: 1 if the aggregate constraint value has changed, 0  otherwise.
  */
-int pm_qos_update_target(struct pm_qos_constraints *c, struct plist_node *node,
+int __always_inline pm_qos_update_target(struct pm_qos_constraints *c, struct plist_node *node,
 			 enum pm_qos_req_action action, int value)
 {
 	int prev_value, curr_value, new_value;
@@ -238,13 +238,13 @@ s32 cpu_latency_qos_limit(void)
  * Return: 'true' if @req has been added to the CPU latency QoS list, 'false'
  * otherwise.
  */
-bool cpu_latency_qos_request_active(struct pm_qos_request *req)
+bool __always_inline cpu_latency_qos_request_active(struct pm_qos_request *req)
 {
 	return req->qos == &cpu_latency_constraints;
 }
 EXPORT_SYMBOL_GPL(cpu_latency_qos_request_active);
 
-static void cpu_latency_qos_apply(struct pm_qos_request *req,
+static void __always_inline cpu_latency_qos_apply(struct pm_qos_request *req,
 				  enum pm_qos_req_action action, s32 value)
 {
 	int ret = pm_qos_update_target(req->qos, &req->node, action, value);
@@ -264,7 +264,7 @@ static void cpu_latency_qos_apply(struct pm_qos_request *req,
  * Callers need to save the handle for later use in updates and removal of the
  * QoS request represented by it.
  */
-void cpu_latency_qos_add_request(struct pm_qos_request *req, s32 value)
+void __always_inline cpu_latency_qos_add_request(struct pm_qos_request *req, s32 value)
 {
 	if (!req)
 		return;
@@ -290,7 +290,7 @@ EXPORT_SYMBOL_GPL(cpu_latency_qos_add_request);
  * latency QoS list along with updating the effective constraint value for that
  * list.
  */
-void cpu_latency_qos_update_request(struct pm_qos_request *req, s32 new_value)
+void __always_inline cpu_latency_qos_update_request(struct pm_qos_request *req, s32 new_value)
 {
 	if (!req)
 		return;
