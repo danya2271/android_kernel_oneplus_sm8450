@@ -1388,6 +1388,9 @@ struct task_struct {
 
 	/* PF_IO_WORKER */
 	ANDROID_KABI_USE(1, void *pf_io_worker);
+#ifdef CONFIG_SPRD_ROTATION_TASK
+	u64 last_enqueue_ts;
+#endif
 
 	ANDROID_KABI_RESERVE(2);
 	ANDROID_KABI_RESERVE(3);
