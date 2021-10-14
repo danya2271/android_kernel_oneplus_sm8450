@@ -103,6 +103,7 @@
 #include <asm/mmu_context.h>
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
+#include <linux/cpu_input_boost.h>
 
 #include <trace/events/sched.h>
 
@@ -2543,6 +2544,10 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 	    (args->flags & CLONE_PARENT_SETTID) &&
 	    (args->pidfd == args->parent_tid))
 		return -EINVAL;
+
+	if (task_is_zygote(current)) {
+		cpu_input_boost_kick_max(150);
+	}
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When
