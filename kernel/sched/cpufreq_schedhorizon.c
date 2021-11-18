@@ -27,8 +27,8 @@
 static unsigned int default_efficient_freq_lp[] = {1267200};
 static u64 default_up_delay_lp[] = {30 * NSEC_PER_MSEC};
 
-static unsigned int default_efficient_freq_hp[] = {1113200, 2227400};
-static u64 default_up_delay_hp[] = {3 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
+static unsigned int default_efficient_freq_hp[] = {633200, 1209200, 2227400};
+static u64 default_up_delay_hp[] = {3 * NSEC_PER_MSEC, 3 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_pr[] = {2054400, 2630200};
 static u64 default_up_delay_pr[] = {15 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
@@ -487,8 +487,7 @@ unsigned long sugov_effective_cpu_perf(int cpu, unsigned long actual,
 
 static void sugov_get_util(struct sugov_cpu *sg_cpu, unsigned long boost)
 {
-	struct rq *rq = cpu_rq(sg_cpu->cpu);
-	unsigned long min, max, util = cpu_util_cfs(rq);
+	unsigned long min, max, util = cpu_util_cfs(sg_cpu->cpu);
 
 	util = schedhorizon_cpu_util(sg_cpu->cpu, util, &min, &max);
 	util = max(util, boost);
