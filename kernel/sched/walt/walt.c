@@ -2671,6 +2671,8 @@ static void walt_update_cluster_topology(void)
 		if (policy) {
 			cluster->max_possible_freq = policy->cpuinfo.max_freq;
 			cluster->max_freq = policy->max;
+			/*CPU run at its fmax at boot time*/
+			cluster->cur_freq = policy->cpuinfo.max_freq;
 			for_each_cpu(i, &cluster->cpus) {
 				wrq = (struct walt_rq *) cpu_rq(i)->android_vendor_data1;
 				cpumask_copy(&wrq->freq_domain_cpumask,
