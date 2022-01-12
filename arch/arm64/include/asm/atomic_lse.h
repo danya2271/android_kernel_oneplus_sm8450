@@ -246,11 +246,12 @@ __lse__cmpxchg_case_##name##sz(volatile void *ptr,			\
 {									\
 	asm volatile(							\
 	__LSE_PREAMBLE							\
-	"	prfm	pstl1strm, %[v]\n"				\
-	"	cas" #mb #sfx "	%" #w "[old], %" #w "[new], %[v]\n"	\
-	: [v] "+Q" (*(u##sz *)ptr),					\
-	  [old] "+r" (old)						\
-	: [new] "rZ" (new)						\
+	"	mov	%" #w "[tmp], %" #w "[old]\n"			\
+	"	cas" #mb #sfx "\t%" #w "[tmp], %" #w "[new], %[v]\n"	\
+	"	mov	%" #w "[ret], %" #w "[tmp]"			\
+	: [ret] "+r" (x0), [v] "+Q" (*(u##sz *)ptr),			\
+	  [tmp] "=&r" (tmp)						\
+	: [old] "r" (x1), [new] "r" (x2)				\
 	: cl);								\
 									\
 	return old;							\
