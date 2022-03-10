@@ -938,21 +938,21 @@ static void _iris_post_config_for_timing(void)
 			iris_send_ipopt_cmds(IRIS_IP_RX, use_2nd_timing ? 0xE1 : 0xE0);
 			iris_set_out_frame_rate(pcfg->panel->cur_mode->timing.refresh_rate);
 			iris_send_ipopt_cmds(IRIS_IP_DMA, 0xE9);
-			udelay(200);
+			usleep_range(180, 220);
 			IRIS_LOGI("%s(), for clock rate switch", __func__);
 		} else if (iris_is_res_switched_from_last_pt()) {
 			//resolution change (may have fps change)
 			iris_send_timing_switch_pkt();
 			iris_send_ipopt_cmds(IRIS_IP_RX, use_2nd_timing ? 0xE1 : 0xE0);
 			iris_send_ipopt_cmds(IRIS_IP_DMA, 0xE9);
-			udelay(200);
+			usleep_range(180, 220);
 			IRIS_LOGI("%s(), for resolution switch", __func__);
 		} else if (iris_is_freq_switched_from_last_pt()) {
 			//only fps change
 			iris_send_ipopt_cmds(IRIS_IP_RX, use_2nd_timing ? 0xE1 : 0xE0);
 			iris_set_out_frame_rate(pcfg->panel->cur_mode->timing.refresh_rate);
 			iris_send_ipopt_cmds(IRIS_IP_DMA, 0xE9);
-			udelay(200);
+			usleep_range(180, 220);
 			IRIS_LOGI("%s(), for frequency switch", __func__);
 		}
 
