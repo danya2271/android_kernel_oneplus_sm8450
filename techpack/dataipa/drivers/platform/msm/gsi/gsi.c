@@ -5864,6 +5864,7 @@ static int msm_gsi_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
+#ifdef CONFIG_IPC_LOGGING
 	gsi_ctx->ipc_logbuf = ipc_log_context_create(GSI_IPC_LOG_PAGES,
 		"gsi", MINIDUMP_MASK);
 	if (gsi_ctx->ipc_logbuf == NULL)
@@ -5879,6 +5880,7 @@ static int msm_gsi_probe(struct platform_device *pdev)
 			gsi_ctx->msi.num = GSI_MAX_NUM_MSI;
 		} else GSIDBG("Num MSIs=%u\n", gsi_ctx->msi.num);
 	}
+#endif
 
 	gsi_ctx->dev = dev;
 	init_completion(&gsi_ctx->gen_ee_cmd_compl);

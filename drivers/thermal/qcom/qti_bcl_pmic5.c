@@ -77,6 +77,7 @@
 #define IPC_LOGPAGES          10
 
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
+#ifdef CONFIG_IPC_LOGGING
 #define BCL_IPC(dev, msg, args...)      do { \
 			if ((dev) && (dev)->ipc_log) { \
 				ipc_log_string((dev)->ipc_log, \
@@ -84,6 +85,9 @@
 					current->comm, __func__, args); \
 			} \
 		} while (0)
+#else
+#define BCL_IPC(dev, msg, args...) no_printk(msg, ##args)
+#endif
 
 enum bcl_dev_type {
 	BCL_IBAT_LVL0,
@@ -903,7 +907,9 @@ static int bcl_remove(struct platform_device *pdev)
 static int bcl_probe(struct platform_device *pdev)
 {
 	struct bcl_device *bcl_perph = NULL;
+#ifdef CONFIG_IPC_LOGGING
 	char bcl_name[40];
+#endif
 	int err = 0;
 
 	if (bcl_device_ct >= MAX_PERPH_COUNT) {
@@ -940,7 +946,7 @@ static int bcl_probe(struct platform_device *pdev)
 	bcl_configure_bcl_peripheral(bcl_perph);
 
 	dev_set_drvdata(&pdev->dev, bcl_perph);
-
+#ifdef CONFIG_IPC_LOGGING
 	snprintf(bcl_name, MAX_BCL_NAME_LENGTH, "bcl_0x%04x_%d",
 					bcl_perph->fg_bcl_addr,
 					bcl_device_ct - 1);
@@ -951,6 +957,7 @@ static int bcl_probe(struct platform_device *pdev)
 		pr_err("%s: unable to create IPC Logging for %s\n",
 					__func__, bcl_name);
 	bcl_stats_init(bcl_name, bcl_perph->stats, MAX_BCL_LVL_COUNT);
+#endif
 
 	return 0;
 }
