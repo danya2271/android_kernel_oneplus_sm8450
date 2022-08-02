@@ -260,6 +260,7 @@
 #define BDF_OFFSET(bus, devfn) \
 	((bus << 24) | (devfn << 16))
 
+#ifdef CONFIG_IPC_LOGGING
 #define PCIE_DBG(dev, fmt, arg...) do {			 \
 	if ((dev) && (dev)->ipc_log_long)   \
 		ipc_log_string((dev)->ipc_log_long, \
@@ -310,6 +311,15 @@
 		ipc_log_string((dev)->ipc_log, "%s: " fmt, __func__, ##arg); \
 	pr_err("%s: " fmt, __func__, arg);  \
 	} while (0)
+#else
+#define PCIE_DBG(dev, fmt, arg...) no_printk(fmt, ##arg)
+#define PCIE_DBG2(dev, fmt, arg...) no_printk(fmt, ##arg)
+#define PCIE_DBG3(dev, fmt, arg...) no_printk(fmt, ##arg)
+#define PCIE_DUMP(dev, fmt, arg...) no_printk(fmt, ##arg)
+#define PCIE_DBG_FS(dev, fmt, arg...) no_printk(fmt, ##arg)
+#define PCIE_INFO(dev, fmt, arg...) no_printk(fmt, ##arg)
+#define PCIE_ERR(dev, fmt, arg...) no_printk(fmt, ##arg)
+#endif
 
 #define CHECK_NTN3_VERSION_MASK (0x000000FF)
 #define NTN3_CHIP_VERSION_1 (0x00000000)
@@ -8112,7 +8122,9 @@ static struct i2c_driver pcie_i2c_ctrl_driver = {
 static int __init pcie_init(void)
 {
 	int ret = 0, i;
+#ifdef CONFIG_IPC_LOGGING
 	char rc_name[MAX_RC_NAME_LEN];
+#endif
 
 	pr_alert("pcie:%s.\n", __func__);
 
@@ -8121,9 +8133,11 @@ static int __init pcie_init(void)
 	mutex_init(&pcie_drv.rpmsg_lock);
 
 	for (i = 0; i < MAX_RC_NUM; i++) {
+#ifdef CONFIG_IPC_LOGGING
 		scnprintf(rc_name, MAX_RC_NAME_LEN, "pcie%d-short", i);
 		scnprintf(rc_name, MAX_RC_NAME_LEN, "pcie%d-long", i);
 		scnprintf(rc_name, MAX_RC_NAME_LEN, "pcie%d-dump", i);
+#endif
 		spin_lock_init(&msm_pcie_dev[i].cfg_lock);
 		spin_lock_init(&msm_pcie_dev[i].evt_reg_list_lock);
 		msm_pcie_dev[i].cfg_access = true;
@@ -8206,9 +8220,12 @@ module_exit(pcie_exit);
 /* RC do not represent the right class; set it to PCI_CLASS_BRIDGE_PCI */
 static void msm_pcie_fixup_early(struct pci_dev *dev)
 {
+#ifdef CONFIG_IPC_LOGGING
 	struct msm_pcie_dev_t *pcie_dev = PCIE_BUS_PRIV_DATA(dev->bus);
 
 	PCIE_DBG(pcie_dev, "hdr_type %d\n", dev->hdr_type);
+#endif
+
 	if (pci_is_root_bus(dev->bus))
 		dev->class = (dev->class & 0xff) | (PCI_CLASS_BRIDGE_PCI << 8);
 }

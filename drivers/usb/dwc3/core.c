@@ -1641,8 +1641,9 @@ static int dwc3_probe(struct platform_device *pdev)
 	}
 
 	dwc3_check_params(dwc);
+#ifdef CONFIG_IPC_LOGGING
 	dwc3_debugfs_init(dwc);
-
+#endif
 	ret = dwc3_core_init_mode(dwc);
 	if (ret)
 		goto err5;
@@ -1654,7 +1655,9 @@ static int dwc3_probe(struct platform_device *pdev)
 	return 0;
 
 err5:
+#ifdef CONFIG_IPC_LOGGING
 	dwc3_debugfs_exit(dwc);
+#endif
 	dwc3_event_buffers_cleanup(dwc);
 
 	usb_phy_set_suspend(dwc->usb2_phy, 1);
