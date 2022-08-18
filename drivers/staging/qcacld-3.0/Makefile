@@ -11,7 +11,6 @@ KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 # module source directory.
 M ?= $(shell pwd)
 
-ifeq ($(WLAN_ROOT),)
 WLAN_CHIPSET := qca_cld3
 LOCAL_DEV_NAME := $(patsubst .%,%,\
 	$(lastword $(strip $(subst /, ,$(M)))))
@@ -20,11 +19,7 @@ LOCAL_DEV_NAME := $(patsubst .%,%,\
 KBUILD_OPTIONS := WLAN_ROOT=$(KERNEL_SRC)/$(M)
 
 # MODNAME should be qca_cld3_wlan for helium based platform
-ifeq (qca_cld3, $(WLAN_CHIPSET))
-KBUILD_OPTIONS += MODNAME?=$(WLAN_CHIPSET)_$(LOCAL_DEV_NAME)
-else
-KBUILD_OPTIONS += MODNAME?=wlan
-endif
+KBUILD_OPTIONS += MODNAME=qca_cld3_qca6490
 
 #By default build for CLD
 WLAN_SELECT := CONFIG_QCA_CLD_WLAN=m
@@ -37,7 +32,6 @@ KBUILD_OPTIONS += \
     DEVNAME=$(LOCAL_DEV_NAME) \
     WLAN_CTRL_NAME=wlan
 
-endif
 
 all:
 	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
