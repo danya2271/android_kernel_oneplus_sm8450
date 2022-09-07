@@ -6695,19 +6695,19 @@ static inline int select_idle_smt(struct task_struct *p, int target)
 static int select_idle_cpu(struct task_struct *p, struct sched_domain *sd, int target)
 {
 	struct cpumask *cpus = this_cpu_cpumask_var_ptr(select_idle_mask);
-	struct sched_domain *this_sd;
+	struct sched_domain *this_sd = NULL;
 	u64 time;
 	int this = smp_processor_id();
 	int cpu, nr = INT_MAX;
-
-	this_sd = rcu_dereference(*this_cpu_ptr(&sd_llc));
-	if (!this_sd)
-		return -1;
 
 	cpumask_and(cpus, sched_domain_span(sd), p->cpus_ptr);
 
 	if (sched_feat(SIS_PROP)) {
 		u64 avg_cost, avg_idle, span_avg;
+
+		this_sd = rcu_dereference(*this_cpu_ptr(&sd_llc));
+		if (!this_sd)
+			return -1;
 
 		/*
 		 * Due to large variance we need a large fuzz factor;
@@ -6732,7 +6732,7 @@ static int select_idle_cpu(struct task_struct *p, struct sched_domain *sd, int t
 			break;
 	}
 
-	if (sched_feat(SIS_PROP)) {
+	if (sched_feat(SIS_PROP) && this_sd) {
 		time = cpu_clock(this) - time;
 		update_avg(&this_sd->avg_scan_cost, time);
 	}
