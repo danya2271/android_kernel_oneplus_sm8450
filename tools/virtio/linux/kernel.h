@@ -122,7 +122,7 @@ static inline void free_page(unsigned long addr)
 #ifdef DEBUG
 #define pr_debug(format, ...) fprintf (stderr, format, ## __VA_ARGS__)
 #else
-#define pr_debug(format, ...) do {} while (0)
+#define pr_debug(format, ...) ((void)0)
 #endif
 #define dev_err(dev, format, ...) fprintf (stderr, format, ## __VA_ARGS__)
 #define dev_warn(dev, format, ...) fprintf (stderr, format, ## __VA_ARGS__)
