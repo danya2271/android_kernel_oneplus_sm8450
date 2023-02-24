@@ -119,10 +119,10 @@ static inline void __btrfs_debug_check_extent_io_range(const char *caller,
 	}
 }
 #else
-#define btrfs_leak_debug_add(lock, new, head)	do {} while (0)
-#define btrfs_leak_debug_del(lock, entry)	do {} while (0)
-#define btrfs_extent_state_leak_debug_check()	do {} while (0)
-#define btrfs_debug_check_extent_io_range(c, s, e)	do {} while (0)
+#define btrfs_leak_debug_add(lock, new, head)	((void)0)
+#define btrfs_leak_debug_del(lock, entry)	((void)0)
+#define btrfs_extent_state_leak_debug_check()	((void)0)
+#define btrfs_debug_check_extent_io_range(c, s, e)	((void)0)
 #endif
 
 struct tree_entry {
