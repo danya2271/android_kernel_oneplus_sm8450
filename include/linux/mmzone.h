@@ -1655,10 +1655,10 @@ static inline unsigned long next_present_section_nr(unsigned long section_nr)
 
 void sparse_init(void);
 #else
-#define sparse_init()	do {} while (0)
-#define sparse_index_init(_sec, _nid)  do {} while (0)
+#define sparse_init()	((void)0)
+#define sparse_index_init(_sec, _nid)  ((void)0)
 #define pfn_in_present_section pfn_valid
-#define subsection_map_init(_pfn, _nr_pages) do {} while (0)
+#define subsection_map_init(_pfn, _nr_pages) ((void)0)
 #endif /* CONFIG_SPARSEMEM */
 
 /*

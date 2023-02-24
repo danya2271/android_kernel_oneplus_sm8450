@@ -359,7 +359,7 @@ static void __init vmware_paravirt_ops_setup(void)
 	}
 }
 #else
-#define vmware_paravirt_ops_setup() do {} while (0)
+#define vmware_paravirt_ops_setup() ((void)0)
 #endif
 
 /*
