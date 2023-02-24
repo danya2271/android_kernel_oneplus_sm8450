@@ -108,7 +108,7 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 	return pte;
 }
 
-#define pmd_set(pmdp,ptep) do {} while (0)
+#define pmd_set(pmdp,ptep) ((void)0)
 
 #define __pte_page(pte) \
 ((unsigned long) __va ((pte_val (pte) & SUN3_PAGE_PGNUM_MASK) << PAGE_SHIFT))
