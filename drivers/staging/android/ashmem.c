@@ -228,13 +228,21 @@ static int ashmem_mmap(struct file *file, struct vm_area_struct *vma)
 	get_file(asma->file);
 
 	if (vma->vm_flags & VM_SHARED) {
-		shmem_set_file(vma, asma->file);
+		int ret = shmem_zero_setup(vma);
+		if (ret) {
+			fput(asma->file);
+			return ret;
+		}
 	} else {
 		vma_set_anonymous(vma);
 		if (vma->vm_file)
 			fput(vma->vm_file);
 		vma->vm_file = asma->file;
 	}
+
+	if (vma->vm_file)
+		fput(vma->vm_file);
+	vma->vm_file = asma->file;
 
 	return 0;
 }
@@ -316,15 +324,6 @@ static const struct file_operations ashmem_fops = {
 	.compat_ioctl = compat_ashmem_ioctl,
 #endif
 };
-
-/*
- * is_ashmem_file - Check if struct file* is associated with ashmem
- */
-int is_ashmem_file(struct file *file)
-{
-	return file->f_op == &ashmem_fops;
-}
-EXPORT_SYMBOL_GPL(is_ashmem_file);
 
 static struct miscdevice ashmem_misc = {
 	.minor = MISC_DYNAMIC_MINOR,
