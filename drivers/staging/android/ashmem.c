@@ -441,10 +441,10 @@ static int ashmem_mmap(struct file *file, struct vm_area_struct *vma)
 	 * shmem_set_file while we're in staging. -jstultz
 	 */
 	if (vma->vm_flags & VM_SHARED) {
-		ret = shmem_zero_setup(vma);
+		int ret = shmem_zero_setup(vma);
 		if (ret) {
 			fput(asma->file);
-			goto out;
+			return ret;
 		}
 	} else {
 		vma_set_anonymous(vma);
@@ -454,9 +454,7 @@ static int ashmem_mmap(struct file *file, struct vm_area_struct *vma)
 		fput(vma->vm_file);
 	vma->vm_file = asma->file;
 
-out:
-	mutex_unlock(&ashmem_mutex);
-	return ret;
+	return 0;
 }
 
 /*
@@ -914,15 +912,6 @@ static const struct file_operations ashmem_fops = {
 	.show_fdinfo = ashmem_show_fdinfo,
 #endif
 };
-
-/*
- * is_ashmem_file - Check if struct file* is associated with ashmem
- */
-int is_ashmem_file(struct file *file)
-{
-	return file->f_op == &ashmem_fops;
-}
-EXPORT_SYMBOL_GPL(is_ashmem_file);
 
 static struct miscdevice ashmem_misc = {
 	.minor = MISC_DYNAMIC_MINOR,
