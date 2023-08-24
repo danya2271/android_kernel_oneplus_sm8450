@@ -430,7 +430,7 @@ static __always_inline bool system_capabilities_finalized(void)
  *
  * Before the capability is detected, this returns false.
  */
-static inline bool cpus_have_cap(unsigned int num)
+static __always_inline bool cpus_have_cap(unsigned int num)
 {
 	if (num >= ARM64_NCAPS)
 		return false;
