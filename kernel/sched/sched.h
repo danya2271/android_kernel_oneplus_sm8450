@@ -582,6 +582,7 @@ struct cfs_rq {
 	unsigned long		tg_load_avg_contrib;
 	long			propagate;
 	long			prop_runnable_sum;
+	u64			last_update_tg_load_avg;
 
 	/*
 	 *   h_load = weight * f(tg)
