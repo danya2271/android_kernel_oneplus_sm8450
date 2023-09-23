@@ -25,6 +25,7 @@
 #include <trace/events/ipi.h>
 #include <trace/events/power.h>
 #include <trace/hooks/cpuidle.h>
+#include "../../kernel/sched/sched.h"
 
 #include "qcom-lpm.h"
 #define CREATE_TRACE_POINTS
@@ -68,6 +69,9 @@ static bool lpm_disallowed(s64 sleep_ns, int cpu)
 
 	if (!check_cpu_isactive(cpu))
 		return false;
+
+	if (is_reserved(cpu))
+		return true;
 
 	if ((sleep_disabled || sleep_ns < 0))
 		return true;
