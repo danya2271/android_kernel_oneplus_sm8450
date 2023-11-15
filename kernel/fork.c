@@ -97,6 +97,7 @@
 #include <linux/scs.h>
 #include <linux/io_uring.h>
 #include <linux/cpufreq_times.h>
+#include <linux/irq.h>
 
 #include <asm/pgalloc.h>
 #include <linux/uaccess.h>
@@ -2526,6 +2527,7 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 150);
 		cpu_input_boost_kick_max(150);
 		gpu_input_boost_kick_max(150);
+		balance_irqs();
 	}
 
 	/*
