@@ -29,9 +29,8 @@ extern struct static_key_false arm64_const_caps_ready;
 		__ll_sc_##op(__VA_ARGS__);				\
 })
 
-/* In-line patching at runtime */
-#define ARM64_LSE_ATOMIC_INSN(llsc, lse)				\
-	ALTERNATIVE(llsc, __LSE_PREAMBLE lse, ARM64_HAS_LSE_ATOMICS)
+/* Always use LSE atomics */
+#define ARM64_LSE_ATOMIC_INSN(lse)		__LSE_PREAMBLE lse
 
 #else	/* CONFIG_ARM64_LSE_ATOMICS */
 
