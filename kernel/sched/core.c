@@ -923,7 +923,7 @@ static void set_load_weight(struct task_struct *p)
 static DEFINE_MUTEX(uclamp_mutex);
 
 /* Max allowed minimum utilization */
-unsigned int sysctl_sched_uclamp_util_min = 96;
+unsigned int sysctl_sched_uclamp_util_min = 128;
 
 /* Max allowed maximum utilization */
 unsigned int sysctl_sched_uclamp_util_max = SCHED_CAPACITY_SCALE;
@@ -8061,9 +8061,10 @@ cpu_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
 	return &tg->css;
 }
 
+bool task_is_booster(struct task_struct *tsk);
+
 #ifdef CONFIG_UCLAMP_ASSIST
 static void uclamp_set(struct cgroup_subsys_state *css);
-bool task_is_booster(struct task_struct *tsk);
 #endif
 
 /* Expose task group only after completing cgroup initialization */
@@ -8461,7 +8462,6 @@ static void uclamp_set(struct cgroup_subsys_state *css)
 			pr_info("uclamp_assist: setting values for %s: uclamp_min=%s uclamp_max=%s uclamp_latency_sensitive=%d\n"
 			tgt.name, tgt.uclamp_min, tgt.uclamp_max, tgt.uclamp_latency_sensitive);
 #endif
-
 
 			return;
 		}
