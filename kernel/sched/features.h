@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+
 /*
  * Only give sleepers 50% of their service deficit. This allows
  * them to run sooner, but does not allow tons of sleepers to
@@ -6,11 +7,14 @@
  */
 SCHED_FEAT(GENTLE_FAIR_SLEEPERS, true)
 
+SCHED_FEAT(FAIR_SLEEPERS, false)
+
+
 /*
- * Place new tasks ahead so that they do not starve already running
- * tasks
+ * Using the avg_vruntime, do the right thing and preserve lag across
+ * sleep+wake cycles. EEVDF placement strategy #1, #2 if disabled.
  */
-SCHED_FEAT(START_DEBIT, true)
+#define SCHED_FEAT_PLACE_LAG 1
 
 /*
  * Prefer to schedule the task we woke last (assuming it failed
