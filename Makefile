@@ -856,6 +856,11 @@ KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
 KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
 endif
 
+ifeq ($(cc-name),clang)
+#Enable fast FMA optimizations
+KBUILD_CFLAGS   += -ffp-contract=fast
+endif
+
 ifdef CONFIG_LLVM_POLLY
 KBUILD_CFLAGS	+= -mllvm -polly \
 		   -mllvm -polly-run-inliner \
