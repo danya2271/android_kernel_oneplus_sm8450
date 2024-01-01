@@ -50,7 +50,7 @@ endif
 
 ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 130000 2>/dev/null; echo $$?),0)
 # Optimize for Qualcomm WAIPIO family
-KBUILD_CFLAGS	+= -march=armv9-a+crypto+nosve -mcpu=cortex-a710
+KBUILD_CFLAGS	+= -march=armv9.2-a+crypto+nosve -mcpu=cortex-a510
 endif
 
 KBUILD_CFLAGS	+= -mgeneral-regs-only	\

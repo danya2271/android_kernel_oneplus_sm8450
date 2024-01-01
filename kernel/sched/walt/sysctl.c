@@ -40,9 +40,11 @@ unsigned int sysctl_sched_util_busy_hyst_cpu[WALT_NR_CPUS];
 unsigned int sysctl_sched_util_busy_hyst_cpu_util[WALT_NR_CPUS];
 unsigned int sysctl_sched_boost;
 unsigned int sysctl_sched_wake_up_idle[2];
+#ifdef CONFIG_WALT_INPUT_BOOST
 unsigned int sysctl_input_boost_ms;
 unsigned int sysctl_input_boost_freq[8];
 unsigned int sysctl_sched_boost_on_input;
+#endif
 int sysctl_cluster_arr[3][15];
 
 /* sysctl nodes accesed by other files */
@@ -438,6 +440,7 @@ unlock_mutex:
 }
 #endif /* CONFIG_PROC_SYSCTL */
 
+#ifdef CONFIG_WALT_INPUT_BOOST
 struct ctl_table input_boost_sysctls[] = {
 	{
 		.procname	= "input_boost_ms",
@@ -468,6 +471,7 @@ struct ctl_table input_boost_sysctls[] = {
 	},
 	{ }
 };
+#endif
 
 struct ctl_table walt_table[] = {
 	{
@@ -791,11 +795,13 @@ struct ctl_table walt_table[] = {
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &two_hundred_fifty_five,
 	},
+#ifdef CONFIG_WALT_INPUT_BOOST
 	{
 		.procname	= "input_boost",
 		.mode		= 0555,
 		.child		= input_boost_sysctls,
 	},
+#endif
 	{
 		.procname	= "sched_wake_up_idle",
 		.data		= (int *) WAKE_UP_IDLE,
@@ -949,8 +955,10 @@ void walt_tunables(void)
 
 	sched_ravg_window = DEFAULT_SCHED_RAVG_WINDOW;
 
+#ifdef CONFIG_WALT_INPUT_BOOST
 	sysctl_input_boost_ms = 40;
 
 	for (i = 0; i < 8; i++)
 		sysctl_input_boost_freq[i] = 0;
+#endif
 }
