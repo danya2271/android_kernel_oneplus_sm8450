@@ -49,9 +49,7 @@ $(warning Detected assembler with broken .inst; disassembly will be unreliable)
 endif
 
 # Optimize for Qualcomm WAIPIO family
-ifneq ($(filter y,$(CONFIG_ARCH_WAIPIO) $(CONFIG_ARCH_CAPE) $(CONFIG_ARCH_DIWALI)),)
-KBUILD_CFLAGS	+= -march=armv9-a+crypto+nosve -mcpu=cortex-a510
-endif
+KBUILD_CFLAGS	+= -march=armv9.2-a+crypto+nosve -mcpu=cortex-a510
 
 KBUILD_CFLAGS	+= -mgeneral-regs-only	\
 		   $(compat_vdso) $(cc_has_k_constraint)
