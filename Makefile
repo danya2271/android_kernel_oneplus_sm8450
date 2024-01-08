@@ -537,7 +537,6 @@ CLANG_FLAGS :=
 # For use when analysis needs to call subshell with CC before cc-wrapper is built.
 NO_WRAPPER_CC := $(CC)
 
-
 # ifdef OPLUS_BUG_STABILITY
 KBUILD_CFLAGS +=   -DOPLUS_BUG_STABILITY
 KBUILD_CPPFLAGS += -DOPLUS_BUG_STABILITY
