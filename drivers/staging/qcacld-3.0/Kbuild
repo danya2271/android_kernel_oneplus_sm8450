@@ -3017,6 +3017,7 @@ INCS +=		$(COAP_CORE_INC)
 INCS +=		$(COAP_WMI_INC)
 
 ccflags-y += $(INCS)
+ldflags-y += -Wl --lto-O0
 
 cppflags-y +=	-Wall
 
