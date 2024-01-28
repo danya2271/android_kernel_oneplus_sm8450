@@ -4,6 +4,7 @@
 #
 
 # Object files in subdirectories
+subdir-ccflags-y := -Oz
 
 obj-$(CONFIG_USB_COMMON)	+= common/
 obj-$(CONFIG_USB)		+= core/
