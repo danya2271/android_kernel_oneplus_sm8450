@@ -2495,7 +2495,6 @@ ol_txrx_peer_attach(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 				    vdev->wait_on_peer_id, (int) rc);
 			/* Added for debugging only */
 			ol_txrx_dump_peer_access_list(temp_peer);
-			wlan_roam_debug_dump_table();
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 
 			return QDF_STATUS_E_FAILURE;
