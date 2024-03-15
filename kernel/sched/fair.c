@@ -1129,6 +1129,20 @@ void post_init_entity_util_avg(struct task_struct *p)
 		return;
 	}
 
+	if (cap > 0) {
+		if (cfs_rq->avg.util_avg != 0) {
+			sa->util_avg  = cfs_rq->avg.util_avg * se_weight(se);
+			sa->util_avg /= (cfs_rq->avg.load_avg + 1);
+
+			if (sa->util_avg > cap)
+				sa->util_avg = cap;
+		} else {
+			sa->util_avg = cap;
+		}
+	}
+
+	sa->runnable_avg = sa->util_avg;
+
 	/* Hook before this se's util is attached to cfs_rq's util */
 	trace_android_rvh_post_init_entity_util_avg(se);
 	attach_entity_cfs_rq(se);
@@ -10892,13 +10906,8 @@ static void nohz_balancer_kick(struct rq *rq)
 		 * When ASYM_CPUCAPACITY; see if there's a higher capacity CPU
 		 * to run the misfit task on.
 		 */
-<<<<<<< HEAD
-		if (check_misfit_status(rq, sd)) {
-			flags = NOHZ_KICK_MASK;
-=======
 		if (check_misfit_status(rq)) {
 			flags = NOHZ_STATS_KICK | NOHZ_BALANCE_KICK;
->>>>>>> a67d22d5d70b3 (sched/fair: Check if a task has a fitting CPU when updating misfit)
 			goto unlock;
 		}
 
