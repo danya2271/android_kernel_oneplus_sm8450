@@ -35,6 +35,7 @@
 #include "kgsl_mmu.h"
 #include "kgsl_pool.h"
 #include "kgsl_reclaim.h"
+#include "kgsl_sharedmem.h"
 #include "kgsl_sync.h"
 #include "kgsl_sysfs.h"
 #include "kgsl_trace.h"
@@ -2703,13 +2704,8 @@ static long gpuobj_free_on_fence(struct kgsl_device_private *dev_priv,
 		return -EINVAL;
 	}
 
-#ifdef CONFIG_QCOM_KGSL_DEBUG
-	handle = kgsl_sync_fence_async_wait(event.fd,
-		gpuobj_free_fence_func, entry, NULL);
-#else
 	handle = kgsl_sync_fence_async_wait(event.fd,
 		gpuobj_free_fence_func, entry);
-#endif
 
 	if (IS_ERR(handle)) {
 		kgsl_mem_entry_unset_pend(entry);
