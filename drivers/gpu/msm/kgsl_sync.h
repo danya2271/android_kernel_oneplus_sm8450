@@ -133,6 +133,13 @@ static inline void kgsl_sync_timeline_put(struct kgsl_sync_timeline *ktimeline)
 }
 
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
+static inline struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
+					bool (*func)(void *priv), void *priv)
+{
+	return NULL;
+}
+#else
 static inline struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
 					bool (*func)(void *priv), void *priv)
 {

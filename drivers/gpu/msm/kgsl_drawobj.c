@@ -27,6 +27,7 @@
 #include "kgsl_device.h"
 #include "kgsl_drawobj.h"
 #include "kgsl_eventlog.h"
+#include "kgsl_sharedmem.h"
 #include "kgsl_sync.h"
 #include "kgsl_timeline.h"
 #include "kgsl_trace.h"
@@ -36,6 +37,9 @@
  * allocate and free them so frequently
  */
 static struct kmem_cache *memobjs_cache;
+static struct kmem_cache *timeline_cache;
+static struct kmem_cache *sync_cache;
+static struct kmem_cache *cmd_cache;
 
 static void syncobj_destroy_object(struct kgsl_drawobj *drawobj)
 {
@@ -44,26 +48,18 @@ static void syncobj_destroy_object(struct kgsl_drawobj *drawobj)
 
 	for (i = 0; i < syncobj->numsyncs; i++) {
 		struct kgsl_drawobj_sync_event *event = &syncobj->synclist[i];
-
-		if (event->type == KGSL_CMD_SYNCPOINT_TYPE_FENCE) {
-			if (event->handle) {
-				struct kgsl_sync_fence_cb *kcb = event->handle;
-
-				dma_fence_put(kcb->fence);
-				kfree(kcb);
-			}
-		} else if (event->type == KGSL_CMD_SYNCPOINT_TYPE_TIMELINE) {
+		if (event->type == KGSL_CMD_SYNCPOINT_TYPE_TIMELINE) {
 			kfree(event->priv);
 		}
 	}
 
 	kfree(syncobj->synclist);
-	kfree(syncobj);
+	kmem_cache_free(sync_cache, syncobj);
 }
 
 static void cmdobj_destroy_object(struct kgsl_drawobj *drawobj)
 {
-	kfree(CMDOBJ(drawobj));
+	kmem_cache_free(cmd_cache, CMDOBJ(drawobj));
 }
 
 static void bindobj_destroy_object(struct kgsl_drawobj *drawobj)
@@ -73,7 +69,7 @@ static void bindobj_destroy_object(struct kgsl_drawobj *drawobj)
 
 static void timelineobj_destroy_object(struct kgsl_drawobj *drawobj)
 {
-	kfree(TIMELINEOBJ(drawobj));
+	kmem_cache_free(timeline_cache, TIMELINEOBJ(drawobj));
 }
 
 void kgsl_drawobj_destroy_object(struct kref *kref)
@@ -150,10 +146,6 @@ static void syncobj_timer(struct timer_list *t)
 	dev_err(device->dev,
 		"kgsl: possible gpu syncpoint deadlock for context %u timestamp %u\n",
 		drawobj->context->id, drawobj->timestamp);
-
-	set_bit(ADRENO_CONTEXT_FENCE_LOG, &drawobj->context->priv);
-	kgsl_context_dump(drawobj->context);
-	clear_bit(ADRENO_CONTEXT_FENCE_LOG, &drawobj->context->priv);
 
 	dev_err(device->dev, "      pending events:\n");
 
@@ -510,8 +502,6 @@ static int drawobj_add_sync_timeline(struct kgsl_device *device,
 		return ret;
 	}
 
-	/* Put the refcount from fence creation */
-	dma_fence_put(event->fence);
 	return 0;
 }
 
@@ -846,7 +836,7 @@ kgsl_drawobj_timeline_create(struct kgsl_device *device,
 {
 	int ret;
 	struct kgsl_drawobj_timeline *timelineobj =
-		kzalloc(sizeof(*timelineobj), GFP_KERNEL);
+		kmem_cache_zalloc(timeline_cache, GFP_KERNEL);
 
 	if (!timelineobj)
 		return ERR_PTR(-ENOMEM);
@@ -854,7 +844,7 @@ kgsl_drawobj_timeline_create(struct kgsl_device *device,
 	ret = drawobj_init(device, context, &timelineobj->base,
 		TIMELINEOBJ_TYPE);
 	if (ret) {
-		kfree(timelineobj);
+		kmem_cache_free(timeline_cache, timelineobj);
 		return ERR_PTR(ret);
 	}
 
@@ -1009,7 +999,7 @@ struct kgsl_drawobj_sync *kgsl_drawobj_sync_create(struct kgsl_device *device,
 		struct kgsl_context *context)
 {
 	struct kgsl_drawobj_sync *syncobj =
-		kzalloc(sizeof(*syncobj), GFP_KERNEL);
+		kmem_cache_zalloc(sync_cache, GFP_KERNEL);
 	int ret;
 
 	if (!syncobj)
@@ -1017,7 +1007,7 @@ struct kgsl_drawobj_sync *kgsl_drawobj_sync_create(struct kgsl_device *device,
 
 	ret = drawobj_init(device, context, &syncobj->base, SYNCOBJ_TYPE);
 	if (ret) {
-		kfree(syncobj);
+		kmem_cache_free(sync_cache, syncobj);
 		return ERR_PTR(ret);
 	}
 
@@ -1043,7 +1033,8 @@ struct kgsl_drawobj_cmd *kgsl_drawobj_cmd_create(struct kgsl_device *device,
 		struct kgsl_context *context, unsigned int flags,
 		unsigned int type)
 {
-	struct kgsl_drawobj_cmd *cmdobj = kzalloc(sizeof(*cmdobj), GFP_KERNEL);
+	struct kgsl_drawobj_cmd *cmdobj =
+		kmem_cache_zalloc(cmd_cache, GFP_KERNEL);
 	int ret;
 
 	if (!cmdobj)
@@ -1052,7 +1043,7 @@ struct kgsl_drawobj_cmd *kgsl_drawobj_cmd_create(struct kgsl_device *device,
 	ret = drawobj_init(device, context, &cmdobj->base,
 		(type & (CMDOBJ_TYPE | MARKEROBJ_TYPE)));
 	if (ret) {
-		kfree(cmdobj);
+		kmem_cache_free(cmd_cache, cmdobj);
 		return ERR_PTR(ret);
 	}
 
@@ -1434,13 +1425,19 @@ int kgsl_drawobj_sync_add_synclist(struct kgsl_device *device,
 void kgsl_drawobjs_cache_exit(void)
 {
 	kmem_cache_destroy(memobjs_cache);
+	kmem_cache_destroy(timeline_cache);
+	kmem_cache_destroy(sync_cache);
+	kmem_cache_destroy(cmd_cache);
 }
 
 int kgsl_drawobjs_cache_init(void)
 {
-	memobjs_cache = KMEM_CACHE(kgsl_memobj_node, 0);
+	memobjs_cache = KMEM_CACHE(kgsl_memobj_node, SLAB_HWCACHE_ALIGN);
+	timeline_cache = KMEM_CACHE(kgsl_drawobj_timeline, SLAB_HWCACHE_ALIGN);
+	sync_cache = KMEM_CACHE(kgsl_drawobj_sync, SLAB_HWCACHE_ALIGN);
+	cmd_cache = KMEM_CACHE(kgsl_drawobj_cmd, SLAB_HWCACHE_ALIGN);
 
-	if (!memobjs_cache)
+	if (!memobjs_cache || !timeline_cache || !sync_cache || !cmd_cache)
 		return -ENOMEM;
 
 	return 0;

@@ -502,8 +502,6 @@ struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
 	kcb->priv = priv;
 	kcb->func = func;
 
-	kgsl_get_fence_info(fence, priv);
-
 	/* if status then error or signaled */
 	status = dma_fence_add_callback(fence, &kcb->fence_cb,
 				kgsl_sync_fence_callback);
