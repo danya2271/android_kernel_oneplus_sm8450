@@ -1947,7 +1947,6 @@ static unsigned noinline_for_stack move_pages_to_lru(struct lruvec *lruvec,
 
 		update_lru_size(lruvec, lru, page_zonenum(page), nr_pages);
 		list_add(&page->lru, &lruvec->lists[lru]);
-		trace_android_vh_add_page_to_lrulist(page, false, lru);
 		nr_moved += nr_pages;
 		if (PageActive(page))
 			workingset_age_nonresident(lruvec, nr_pages);
