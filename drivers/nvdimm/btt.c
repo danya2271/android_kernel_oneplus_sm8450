@@ -1452,9 +1452,9 @@ static blk_qc_t btt_submit_bio(struct bio *bio)
 	if (!bio_integrity_prep(bio))
 		return BLK_QC_T_NONE;
 
-	do_acct = blk_queue_io_stat(bio->bi_disk->queue);
-	if (do_acct)
-		start = bio_start_io_acct(bio);
+//	do_acct = blk_queue_io_stat(bio->bi_disk->queue);
+//	if (do_acct)
+//		start = bio_start_io_acct(bio);
 	bio_for_each_segment(bvec, bio, iter) {
 		unsigned int len = bvec.bv_len;
 
