@@ -16,6 +16,7 @@
 #include "../../../drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_notify/touchpanel_event_notify.h"
 #include <linux/cpu_input_boost.h>
 #include <linux/gpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 /* -------------------- macro -------------------- */
 /* fp type bit setting */
@@ -2198,6 +2199,7 @@ int oplus_ofp_notify_fp_press(void *buf)
 	if (*fp_press) {
 		/* finger is pressed down and pressed icon layer is ready */
 		p_oplus_ofp_params->fp_press = true;
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 1200);
 		cpu_input_boost_kick_max(1200);
 		gpu_input_boost_kick_max(1200);
 	} else {
