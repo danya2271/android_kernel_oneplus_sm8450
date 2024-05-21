@@ -4434,7 +4434,7 @@ static void ufs_qcom_parse_lpm(struct ufs_qcom_host *host)
 {
 	struct device_node *node = host->hba->dev->of_node;
 
-	host->disable_lpm = of_property_read_bool(node, "qcom,disable-lpm");
+	host->disable_lpm = false;
 	if (host->disable_lpm)
 		dev_info(host->hba->dev, "(%s) All LPM is disabled\n",
 			 __func__);
