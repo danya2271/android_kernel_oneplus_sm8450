@@ -55,7 +55,7 @@ obj-y			:= filemap.o mempool.o oom_kill.o fadvise.o \
 			   interval_tree.o list_lru.o workingset.o \
 			   gup.o $(mmu-y)
 
-obj-$(DEBUG_KERNEL)	+= debug.o
+obj-$(CONFIG_DEBUG_KERNEL)	+= debug.o
 
 # Give 'page_alloc' its own module-parameter namespace
 page-alloc-y := page_alloc.o
