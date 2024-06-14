@@ -44,8 +44,8 @@ enum sched_tunable_scaling sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_L
  *
  * (default: 0.5 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
-unsigned int sysctl_sched_base_slice			= 500000ULL;
-static unsigned int normalized_sysctl_sched_base_slice	= 500000ULL;
+unsigned int sysctl_sched_base_slice			= 3000000ULL;
+static unsigned int normalized_sysctl_sched_base_slice	= 3000000ULL;
 
 /*
  * After fork, child runs first. If set to 0 (default) then
