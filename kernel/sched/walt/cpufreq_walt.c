@@ -259,6 +259,9 @@ static unsigned long waltgov_get_util(struct waltgov_cpu *wg_cpu)
 
 	wg_cpu->max = max;
 	util = cpu_util_freq_walt(wg_cpu->cpu, &wg_cpu->walt_load);
+
+	util = apply_dvfs_headroom(util, wg_cpu->cpu);
+
 	return uclamp_rq_util_with(rq, util, NULL);
 }
 
