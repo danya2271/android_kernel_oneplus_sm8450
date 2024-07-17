@@ -100,13 +100,14 @@ endif
 # make-4.0 (and later) keep single letter options in the 1st word of MAKEFLAGS.
 
 ifeq ($(filter 3.%,$(MAKE_VERSION)),)
-silence:=$(findstring s,$(firstword -$(MAKEFLAGS)))
+short-opts := $(firstword -$(MAKEFLAGS))
 else
-silence:=$(findstring s,$(filter-out --%,$(MAKEFLAGS)))
+short-opts := $(filter-out --%,$(MAKEFLAGS))
 endif
 
-ifeq ($(silence),s)
-quiet=silent_
+ifneq ($(findstring s,$(filter-out --%,$(short-opts))),)
+  quiet=silent_
+  tools_silent=s
 endif
 
 export quiet Q KBUILD_VERBOSE
@@ -852,6 +853,7 @@ KBUILD_CFLAGS	+= -mllvm -polly \
 		   -mllvm -polly-vectorizer=stripmine \
 		   -mllvm -polly-invariant-load-hoisting
 endif
+KBUILD_CFLAGS += -Wno-strict-prototypes
 
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
