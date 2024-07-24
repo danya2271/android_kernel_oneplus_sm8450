@@ -6462,7 +6462,7 @@ static int oplus_mtk_ic_register(struct device *dev, struct mtk_charger *info)
 	ic_cfg.virq_data = mtk_chg_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(mtk_chg_virq_table);
 	ic_cfg.of_node = node;
-	pinfo->ic_dev = devm_oplus_chg_ic_register(&pinfo->pdev->dev, &ic_cfg);
+	pinfo->ic_dev = devm_oplus_chg_ic_register_2(&pinfo->pdev->dev, &ic_cfg);
 	if (!pinfo->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -6501,7 +6501,7 @@ static int oplus_mtk_ic_register(struct device *dev, struct mtk_charger *info)
 			continue;
 		}
 
-		ic_dev = devm_oplus_chg_ic_register(&pinfo->pdev->dev, &ic_cfg);
+		ic_dev = devm_oplus_chg_ic_register_2(&pinfo->pdev->dev, &ic_cfg);
 		if (!ic_dev) {
 			rc = -ENODEV;
 			chg_err("register %s error\n", child->name);

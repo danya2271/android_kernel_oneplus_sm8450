@@ -168,13 +168,13 @@ struct rk826_bat {
 };
 
 static struct rk826_bat the_bat;
-struct wakeup_source *rk826_update_wake_lock = NULL;
+struct wakeup_source *rk826_update_wake_lock_2 = NULL;
 
 #ifdef CONFIG_OPLUS_CHARGER_MTK
 #define GTP_SUPPORT_I2C_DMA 0
 #define I2C_MASTER_CLOCK 300
 
-DEFINE_MUTEX(dma_wr_access_rk826);
+DEFINE_MUTEX(dma_wr_access_rk826_2);
 
 static char gpDMABuf_pa[GTP_DMA_MAX_TRANSACTION_LENGTH] = { 0 };
 
@@ -208,11 +208,11 @@ static int i2c_dma_read(struct i2c_client *client, u8 addr, s32 len, u8 *rxbuf)
 		  .timing = I2C_MASTER_CLOCK },
 	};
 
-	mutex_lock(&dma_wr_access_rk826);
+	mutex_lock(&dma_wr_access_rk826_2);
 	/*buffer[0] = (addr >> 8) & 0xFF;*/
 	buffer[0] = addr & 0xFF;
 	if (rxbuf == NULL) {
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return -1;
 	}
 	/*chg_err("vooc dma i2c read: 0x%x, %d bytes(s)\n", addr, len);*/
@@ -222,11 +222,11 @@ static int i2c_dma_read(struct i2c_client *client, u8 addr, s32 len, u8 *rxbuf)
 			continue;
 		}
 		memcpy(rxbuf, gpDMABuf_va, len);
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return 0;
 	}
 	/*chg_err(" Error: 0x%04X, %d byte(s), err-code: %d\n", addr, len, ret);*/
-	mutex_unlock(&dma_wr_access_rk826);
+	mutex_unlock(&dma_wr_access_rk826_2);
 	return ret;
 }
 
@@ -245,10 +245,10 @@ static int i2c_dma_write(struct i2c_client *client, u8 addr, s32 len,
 		.timing = I2C_MASTER_CLOCK
 	};
 
-	mutex_lock(&dma_wr_access_rk826);
+	mutex_lock(&dma_wr_access_rk826_2);
 	wr_buf[0] = (u8)(addr & 0xFF);
 	if (txbuf == NULL) {
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return -1;
 	}
 	memcpy(wr_buf + 1, txbuf, len);
@@ -257,11 +257,11 @@ static int i2c_dma_write(struct i2c_client *client, u8 addr, s32 len,
 		if (ret < 0) {
 			continue;
 		}
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return 0;
 	}
 	/*chg_err(" Error: 0x%04X, %d byte(s), err-code: %d\n", addr, len, ret);*/
-	mutex_unlock(&dma_wr_access_rk826);
+	mutex_unlock(&dma_wr_access_rk826_2);
 	return ret;
 }
 #endif /*GTP_SUPPORT_I2C_DMA*/
@@ -287,11 +287,11 @@ static int oplus_i2c_dma_read(struct i2c_client *client, u16 addr, s32 len,
 		},
 	};
 
-	mutex_lock(&dma_wr_access_rk826);
+	mutex_lock(&dma_wr_access_rk826_2);
 	buffer[0] = (u8)(addr & 0xFF);
 	buffer[1] = (u8)((addr >> 8) & 0xFF);
 	if (rxbuf == NULL) {
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return -1;
 	}
 	/* chg_debug("vooc dma i2c read: 0x%x, %d bytes(s)\n", addr, len); */
@@ -302,11 +302,11 @@ static int oplus_i2c_dma_read(struct i2c_client *client, u16 addr, s32 len,
 		if (ret < 0)
 			continue;
 		memcpy(rxbuf, gpDMABuf_pa, len);
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return 0;
 	}
 	chg_err(" Error: 0x%04X, %d byte(s), err-code: %d\n", addr, len, ret);
-	mutex_unlock(&dma_wr_access_rk826);
+	mutex_unlock(&dma_wr_access_rk826_2);
 	return ret;
 }
 
@@ -323,11 +323,11 @@ static int oplus_i2c_dma_write(struct i2c_client *client, u16 addr, s32 len,
 		.len = 2 + len,
 	};
 
-	mutex_lock(&dma_wr_access_rk826);
+	mutex_lock(&dma_wr_access_rk826_2);
 	wr_buf[0] = (u8)(addr & 0xFF);
 	wr_buf[1] = (u8)((addr >> 8) & 0xFF);
 	if (txbuf == NULL) {
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return -1;
 	}
 	memcpy(wr_buf + 2, txbuf, len);
@@ -337,17 +337,17 @@ static int oplus_i2c_dma_write(struct i2c_client *client, u16 addr, s32 len,
 		if (ret < 0) {
 			continue;
 		}
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return 0;
 	}
 	chg_err(" Error: 0x%04X, %d byte(s), err-code: %d\n", addr, len, ret);
-	mutex_unlock(&dma_wr_access_rk826);
+	mutex_unlock(&dma_wr_access_rk826_2);
 	return ret;
 }
 
 #else /*CONFIG_OPLUS_CHARGER_MTK*/
 
-DEFINE_MUTEX(dma_wr_access_rk826);
+DEFINE_MUTEX(dma_wr_access_rk826_2);
 static char gpDMABuf_pa[GTP_DMA_MAX_TRANSACTION_LENGTH] = { 0 };
 static int oplus_i2c_dma_read(struct i2c_client *client, u16 addr, s32 len,
 			      u8 *rxbuf)
@@ -371,11 +371,11 @@ static int oplus_i2c_dma_read(struct i2c_client *client, u16 addr, s32 len,
 	};
 	/* 	chg_debug("kilody in\n"); */
 
-	mutex_lock(&dma_wr_access_rk826);
+	mutex_lock(&dma_wr_access_rk826_2);
 	buffer[0] = (u8)(addr & 0xFF);
 	buffer[1] = (u8)((addr >> 8) & 0xFF);
 	if (rxbuf == NULL) {
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return -1;
 	}
 	/* chg_debug("vooc dma i2c read: 0x%x, %d bytes(s)\n", addr, len); */
@@ -385,11 +385,11 @@ static int oplus_i2c_dma_read(struct i2c_client *client, u16 addr, s32 len,
 			continue;
 		}
 		memcpy(rxbuf, gpDMABuf_pa, len);
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return 0;
 	}
 	chg_err(" Error: 0x%04X, %d byte(s), err-code: %d\n", addr, len, ret);
-	mutex_unlock(&dma_wr_access_rk826);
+	mutex_unlock(&dma_wr_access_rk826_2);
 
 	/* 	chg_debug("kilody out\n"); */
 	return ret;
@@ -409,11 +409,11 @@ static int oplus_i2c_dma_write(struct i2c_client *client, u16 addr, s32 len,
 	};
 	/* 	chg_debug("kilody in\n"); */
 
-	mutex_lock(&dma_wr_access_rk826);
+	mutex_lock(&dma_wr_access_rk826_2);
 	wr_buf[0] = (u8)(addr & 0xFF);
 	wr_buf[1] = (u8)((addr >> 8) & 0xFF);
 	if (txbuf == NULL) {
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return -1;
 	}
 	memcpy(wr_buf + 2, txbuf, len);
@@ -423,11 +423,11 @@ static int oplus_i2c_dma_write(struct i2c_client *client, u16 addr, s32 len,
 		if (ret < 0) {
 			continue;
 		}
-		mutex_unlock(&dma_wr_access_rk826);
+		mutex_unlock(&dma_wr_access_rk826_2);
 		return 0;
 	}
 	chg_err(" Error: 0x%04X, %d byte(s), err-code: %d\n", addr, len, ret);
-	mutex_unlock(&dma_wr_access_rk826);
+	mutex_unlock(&dma_wr_access_rk826_2);
 
 	/* 	chg_debug("kilody out\n"); */
 	return ret;
@@ -656,7 +656,7 @@ fw_update_check_err:
 	return FW_CHECK_FAIL;
 }
 
-u32 js_hash_en(u32 hash, const u8 *buf, u32 len)
+u32 js_hash_2_en_2(u32 hash, const u8 *buf, u32 len)
 {
 	u32 i;
 
@@ -665,12 +665,12 @@ u32 js_hash_en(u32 hash, const u8 *buf, u32 len)
 	return hash;
 }
 
-u32 js_hash(const u8 *buf, u32 len)
+u32 js_hash_2(const u8 *buf, u32 len)
 {
-	return js_hash_en(0x47C6A7E6, buf, len);
+	return js_hash_2_en_2(0x47C6A7E6, buf, len);
 }
 
-int WriteSram(struct rk826_chip *chip, const u8 *buf, u32 size)
+int WriteSram_2(struct rk826_chip *chip, const u8 *buf, u32 size)
 {
 	u8 offset = 0;
 	u16 reg_addr;
@@ -748,7 +748,7 @@ int WriteSram(struct rk826_chip *chip, const u8 *buf, u32 size)
 	return 0;
 }
 
-int Download_00_code(struct rk826_chip *chip)
+int Download_00_code_2(struct rk826_chip *chip)
 {
 	u8 transfer_buf[TRANSFER_LIMIT];
 	u32 onetime_size = TRANSFER_LIMIT - 8;
@@ -773,8 +773,8 @@ int Download_00_code(struct rk826_chip *chip)
 		}
 		*((u32 *)(transfer_buf + onetime_size)) = index;
 		*((u32 *)(transfer_buf + onetime_size + 4)) =
-			js_hash(transfer_buf, onetime_size + 4);
-		ret = WriteSram(chip, transfer_buf, TRANSFER_LIMIT);
+			js_hash_2(transfer_buf, onetime_size + 4);
+		ret = WriteSram_2(chip, transfer_buf, TRANSFER_LIMIT);
 		if (ret != 0) {
 			return ret;
 		}
@@ -785,7 +785,7 @@ int Download_00_code(struct rk826_chip *chip)
 	return 0;
 }
 
-int Download_ff_code(struct rk826_chip *chip)
+int Download_ff_code_2(struct rk826_chip *chip)
 {
 	u8 transfer_buf[TRANSFER_LIMIT];
 	u32 onetime_size = TRANSFER_LIMIT - 8;
@@ -809,8 +809,8 @@ int Download_ff_code(struct rk826_chip *chip)
 		}
 		*((u32 *)(transfer_buf + onetime_size)) = index;
 		*((u32 *)(transfer_buf + onetime_size + 4)) =
-			js_hash(transfer_buf, onetime_size + 4);
-		ret = WriteSram(chip, transfer_buf, TRANSFER_LIMIT);
+			js_hash_2(transfer_buf, onetime_size + 4);
+		ret = WriteSram_2(chip, transfer_buf, TRANSFER_LIMIT);
 		if (ret != 0) {
 			return ret;
 		}
@@ -894,9 +894,9 @@ static int rk826_fw_write_00_code(struct rk826_chip *chip, const u8 *fw_buf,
 	req.ram_offset = 0;
 	req.length = 16384; /* for erase */
 	req.timeout = 0;
-	req.fw_crc = js_hash(fw_buf, fw_size); /* for crc hash */
-	req.header_crc = js_hash((const u8 *)&req, sizeof(req) - 4);
-	ret = WriteSram(chip, (const u8 *)&req, sizeof(req));
+	req.fw_crc = js_hash_2(fw_buf, fw_size); /* for crc hash */
+	req.header_crc = js_hash_2((const u8 *)&req, sizeof(req) - 4);
+	ret = WriteSram_2(chip, (const u8 *)&req, sizeof(req));
 	if (ret != 0) {
 		chg_err("failed to send request!err=%d\n", ret);
 		goto update_fw_err;
@@ -916,7 +916,7 @@ static int rk826_fw_write_00_code(struct rk826_chip *chip, const u8 *fw_buf,
 	}
 
 	/* send fw */
-	ret = Download_00_code(chip);
+	ret = Download_00_code_2(chip);
 	if (ret != 0) {
 		chg_err("failed to send firmware");
 		goto update_fw_err;
@@ -1014,9 +1014,9 @@ static int rk826_fw_write_ff_code(struct rk826_chip *chip, const u8 *fw_buf,
 	req.ram_offset = 0;
 	req.length = 16384; /* for erase */
 	req.timeout = 0;
-	req.fw_crc = js_hash(fw_buf, fw_size); /* for crc hash */
-	req.header_crc = js_hash((const u8 *)&req, sizeof(req) - 4);
-	ret = WriteSram(chip, (const u8 *)&req, sizeof(req));
+	req.fw_crc = js_hash_2(fw_buf, fw_size); /* for crc hash */
+	req.header_crc = js_hash_2((const u8 *)&req, sizeof(req) - 4);
+	ret = WriteSram_2(chip, (const u8 *)&req, sizeof(req));
 	if (ret != 0) {
 		chg_err("failed to send request!err=%d\n", ret);
 		goto update_fw_err;
@@ -1036,7 +1036,7 @@ static int rk826_fw_write_ff_code(struct rk826_chip *chip, const u8 *fw_buf,
 	}
 
 	/* send fw */
-	ret = Download_ff_code(chip);
+	ret = Download_ff_code_2(chip);
 	if (ret != 0) {
 		chg_err("failed to send firmware");
 		goto update_fw_err;
@@ -1060,7 +1060,7 @@ update_fw_err:
 	chg_err("fail\n");
 	return 1;
 }
-int DownloadFirmware(struct rk826_chip *chip, const u8 *buf, u32 size)
+int DownloadFirmware_2(struct rk826_chip *chip, const u8 *buf, u32 size)
 {
 	u8 transfer_buf[TRANSFER_LIMIT];
 	u32 onetime_size = TRANSFER_LIMIT - 8;
@@ -1082,8 +1082,8 @@ int DownloadFirmware(struct rk826_chip *chip, const u8 *buf, u32 size)
 		}
 		*((u32 *)(transfer_buf + onetime_size)) = index;
 		*((u32 *)(transfer_buf + onetime_size + 4)) =
-			js_hash(transfer_buf, onetime_size + 4);
-		ret = WriteSram(chip, transfer_buf, TRANSFER_LIMIT);
+			js_hash_2(transfer_buf, onetime_size + 4);
+		ret = WriteSram_2(chip, transfer_buf, TRANSFER_LIMIT);
 		if (ret != 0) {
 			return ret;
 		}
@@ -1168,9 +1168,9 @@ static int rk826_fw_update(struct rk826_chip *chip, const u8 *fw_buf,
 	req.ram_offset = 0;
 	req.length = fw_size;
 	req.timeout = 0;
-	req.fw_crc = js_hash(fw_buf, req.length);
-	req.header_crc = js_hash((const u8 *)&req, sizeof(req) - 4);
-	ret = WriteSram(chip, (const u8 *)&req, sizeof(req));
+	req.fw_crc = js_hash_2(fw_buf, req.length);
+	req.header_crc = js_hash_2((const u8 *)&req, sizeof(req) - 4);
+	ret = WriteSram_2(chip, (const u8 *)&req, sizeof(req));
 	if (ret != 0) {
 		chg_err("failed to send request!err=%d\n", ret);
 		goto update_fw_err;
@@ -1190,7 +1190,7 @@ static int rk826_fw_update(struct rk826_chip *chip, const u8 *fw_buf,
 	}
 
 	/* send fw */
-	ret = DownloadFirmware(chip, fw_buf, fw_size);
+	ret = DownloadFirmware_2(chip, fw_buf, fw_size);
 	if (ret != 0) {
 		chg_err("failed to send firmware");
 		goto update_fw_err;
@@ -1314,7 +1314,7 @@ static int __rk826_fw_check_then_recover(struct rk826_chip *chip)
 		msleep(2500);
 		chip->boot_by_gpio = false;
 		rk826_set_clock_sleep(chip);
-		__pm_stay_awake(rk826_update_wake_lock);
+		__pm_stay_awake(rk826_update_wake_lock_2);
 		if (rk826_fw_update_check(chip, chip->firmware_data,
 					  chip->fw_data_count) ==
 			    FW_CHECK_FAIL ||
@@ -1374,7 +1374,7 @@ static int __rk826_fw_check_then_recover(struct rk826_chip *chip)
 			}
 		}
 	update_fw_err:
-		__pm_relax(rk826_update_wake_lock);
+		__pm_relax(rk826_update_wake_lock_2);
 		chip->upgrading = false;
 		msleep(5);
 		rk826_set_reset_active(chip);
@@ -1437,7 +1437,7 @@ static int __rk826_fw_check_then_recover_fix(struct rk826_chip *chip)
 		msleep(2500);
 		chip->boot_by_gpio = false;
 		rk826_set_clock_sleep(chip);
-		__pm_stay_awake(rk826_update_wake_lock);
+		__pm_stay_awake(rk826_update_wake_lock_2);
 		if (rk826_fw_update_check(chip, chip->firmware_data,
 					  chip->fw_data_count) ==
 			    FW_CHECK_FAIL ||
@@ -1488,7 +1488,7 @@ static int __rk826_fw_check_then_recover_fix(struct rk826_chip *chip)
 			}
 		}
 	update_fw_err:
-		__pm_relax(rk826_update_wake_lock);
+		__pm_relax(rk826_update_wake_lock_2);
 		chip->upgrading = false;
 		msleep(5);
 		rk826_set_reset_active(chip);
@@ -1522,7 +1522,7 @@ static int __rk826_user_fw_upgrade(struct rk826_chip *chip, const u8 *fw_buf,
 	msleep(2500);
 	chip->boot_by_gpio = false;
 	rk826_set_clock_sleep(chip);
-	__pm_stay_awake(rk826_update_wake_lock);
+	__pm_stay_awake(rk826_update_wake_lock_2);
 	chg_info("firmware update start\n");
 	do {
 		rk826_set_clock_active(chip);
@@ -1539,7 +1539,7 @@ static int __rk826_user_fw_upgrade(struct rk826_chip *chip, const u8 *fw_buf,
 			break;
 	} while ((update_result) && (--try_count > 0));
 	chg_info("firmware update end, retry times %d\n", 5 - try_count);
-	__pm_relax(rk826_update_wake_lock);
+	__pm_relax(rk826_update_wake_lock_2);
 	chip->upgrading = false;
 	msleep(5);
 	rk826_set_reset_active(chip);
@@ -1547,7 +1547,7 @@ static int __rk826_user_fw_upgrade(struct rk826_chip *chip, const u8 *fw_buf,
 	return update_result;
 }
 
-int rk826_asic_fw_status(struct rk826_chip *chip)
+int rk826_asic_fw_status_2(struct rk826_chip *chip)
 {
 	u32 force_dis_update_flag = 0x00000000;
 	u32 sw_reset_flag = SW_RESET_FLAG;
@@ -1717,11 +1717,11 @@ static int rk826_init(struct oplus_chg_ic_dev *ic_dev)
 #endif
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
-	rk826_update_wake_lock =
-		wakeup_source_register("rk826_update_wake_lock");
+	rk826_update_wake_lock_2 =
+		wakeup_source_register("rk826_update_wake_lock_2");
 #else
-	rk826_update_wake_lock =
-		wakeup_source_register(NULL, "rk826_update_wake_lock");
+	rk826_update_wake_lock_2 =
+		wakeup_source_register(NULL, "rk826_update_wake_lock_2");
 #endif
 
 	register_vooc_devinfo();
@@ -1744,7 +1744,7 @@ static int rk826_exit(struct oplus_chg_ic_dev *ic_dev)
 
 	chip = oplus_chg_ic_get_drvdata(ic_dev);
 	ic_dev->online = false;
-	wakeup_source_remove(rk826_update_wake_lock);
+	wakeup_source_remove(rk826_update_wake_lock_2);
 #ifdef CONFIG_OPLUS_CHARGER_MTK
 #if GTP_SUPPORT_I2C_DMA
 	dma_free_coherent(chip->dev, GTP_DMA_MAX_TRANSACTION_LENGTH,
@@ -1893,7 +1893,7 @@ static int rk826_check_fw_status(struct oplus_chg_ic_dev *ic_dev, bool *pass)
 	}
 	chip = oplus_chg_ic_get_drvdata(ic_dev);
 
-	rc = rk826_asic_fw_status(chip);
+	rc = rk826_asic_fw_status_2(chip);
 	if (rc < 0) {
 		chg_err("get firmware status error, rc=%d\n", rc);
 		return rc;
@@ -2107,7 +2107,7 @@ static int rk826_driver_probe(struct i2c_client *client,
 	ic_cfg.virq_data = rk826_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(rk826_virq_table);
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -2175,7 +2175,7 @@ static void rk826_driver_remove(struct i2c_client *client)
 
 	if (chip->ic_dev->online)
 		rk826_exit(chip->ic_dev);
-	devm_oplus_chg_ic_unregister(&client->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&client->dev, chip->ic_dev);
 	i2c_set_clientdata(client, NULL);
 	devm_kfree(&client->dev, chip);
 
@@ -2202,7 +2202,7 @@ static const struct i2c_device_id rk826_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, rk826_id);
 
-struct i2c_driver rk826_i2c_driver = {
+struct i2c_driver rk826_i2c_driver_2 = {
 	.driver = {
 		.name = "rk826-fastcg",
 		.owner        = THIS_MODULE,
@@ -2221,7 +2221,7 @@ int rk826_driver_init(void)
 	chg_debug("init start\n");
 	/* init_hw_version(); */
 
-	if (i2c_add_driver(&rk826_i2c_driver) != 0) {
+	if (i2c_add_driver(&rk826_i2c_driver_2) != 0) {
 		chg_err(" failed to register rk826 i2c driver.\n");
 	} else {
 		chg_debug(" Success to register rk826 i2c driver.\n");
@@ -2232,7 +2232,7 @@ int rk826_driver_init(void)
 
 void rk826_driver_exit(void)
 {
-	i2c_del_driver(&rk826_i2c_driver);
+	i2c_del_driver(&rk826_i2c_driver_2);
 }
 oplus_chg_module_register(rk826_driver);
 

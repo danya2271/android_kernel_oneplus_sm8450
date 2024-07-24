@@ -37,9 +37,9 @@ struct oplus_chg_strategy *
 oplus_chg_strategy_alloc(const char *name, unsigned char *buf, size_t size);
 struct oplus_chg_strategy *
 oplus_chg_strategy_alloc_by_node(const char *name, struct device_node *node);
-int oplus_chg_strategy_init(struct oplus_chg_strategy *strategy);
+int oplus_chg_strategy_init_2(struct oplus_chg_strategy *strategy);
 int oplus_chg_strategy_release(struct oplus_chg_strategy *strategy);
-int oplus_chg_strategy_get_data(struct oplus_chg_strategy *strategy, void *ret);
+int oplus_chg_strategy_get_data_2(struct oplus_chg_strategy *strategy, void *ret);
 int oplus_chg_strategy_register(struct oplus_chg_strategy_desc *desc);
 int oplus_chg_strategy_read_data(struct device *dev,
 				 const char *prop_str, uint8_t **buf);

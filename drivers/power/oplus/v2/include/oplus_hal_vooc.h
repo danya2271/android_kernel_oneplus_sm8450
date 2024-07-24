@@ -21,8 +21,8 @@ enum {
 	FW_CHECK_MODE,
 };
 
-void oplus_vooc_eint_register(struct oplus_chg_ic_dev *vooc_ic);
-void oplus_vooc_eint_unregister(struct oplus_chg_ic_dev *vooc_ic);
+void oplus_vooc_eint_register_2(struct oplus_chg_ic_dev *vooc_ic);
+void oplus_vooc_eint_unregister_2(struct oplus_chg_ic_dev *vooc_ic);
 int oplus_vooc_read_voocphy_bcc_max_curr(struct oplus_chg_ic_dev *vooc_ic);
 int oplus_vooc_read_voocphy_bcc_min_curr(struct oplus_chg_ic_dev *vooc_ic);
 int oplus_vooc_read_voocphy_bcc_exit_curr(struct oplus_chg_ic_dev *vooc_ic);
@@ -39,7 +39,7 @@ void oplus_vooc_reply_data(struct oplus_chg_ic_dev *vooc_ic, int ret_info,
 			   int device_type, int data_width, int curr_ma);
 void oplus_vooc_reply_data_no_type(struct oplus_chg_ic_dev *vooc_ic,
 				   int ret_info, int data_width, int curr_ma);
-void switch_fast_chg(struct oplus_chg_ic_dev *vooc_ic);
+void switch_fast_chg_2(struct oplus_chg_ic_dev *vooc_ic);
 void switch_normal_chg(struct oplus_chg_ic_dev *vooc_ic);
 void oplus_vooc_set_shutdown_mode(struct oplus_chg_ic_dev *vooc_ic);
 enum oplus_chg_vooc_switch_mode oplus_chg_vooc_get_switch_mode(struct oplus_chg_ic_dev *vooc_ic);

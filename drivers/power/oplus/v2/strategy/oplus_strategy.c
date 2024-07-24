@@ -125,7 +125,7 @@ int oplus_chg_strategy_release(struct oplus_chg_strategy *strategy)
 	return 0;
 }
 
-int oplus_chg_strategy_init(struct oplus_chg_strategy *strategy)
+int oplus_chg_strategy_init_2(struct oplus_chg_strategy *strategy)
 {
 	int rc;
 
@@ -148,7 +148,7 @@ int oplus_chg_strategy_init(struct oplus_chg_strategy *strategy)
 	return 0;
 }
 
-int oplus_chg_strategy_get_data(struct oplus_chg_strategy *strategy, void *ret)
+int oplus_chg_strategy_get_data_2(struct oplus_chg_strategy *strategy, void *ret)
 {
 	if (strategy == NULL) {
 		chg_err("strategy is NULL\n");

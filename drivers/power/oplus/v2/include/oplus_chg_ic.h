@@ -173,11 +173,11 @@ static inline void *oplus_chg_ic_get_priv_data(const struct oplus_chg_ic_dev *ic
 	return ic_dev->priv_data;
 }
 
-void oplus_chg_ic_list_lock(void);
-void oplus_chg_ic_list_unlock(void);
+void oplus_chg_ic_list_lock_2(void);
+void oplus_chg_ic_list_unlock_2(void);
 struct oplus_chg_ic_dev *oplus_chg_ic_find_by_name(const char *name);
-struct oplus_chg_ic_dev *of_get_oplus_chg_ic(struct device_node *node, const char *prop_name, int index);
-const char *of_get_oplus_chg_ic_name(struct device_node *node, const char *prop_name, int index);
+struct oplus_chg_ic_dev *of_get_oplus_chg_ic_2(struct device_node *node, const char *prop_name, int index);
+const char *of_get_oplus_chg_ic_2_name(struct device_node *node, const char *prop_name, int index);
 int oplus_chg_ic_wait_ic(const char *name, ic_callback_t call, void *data);
 int oplus_chg_ic_wait_ic_timeout(const char *name, ic_callback_t call, void *data, unsigned long delay);
 #ifdef OPLUS_CHG_REG_DUMP_ENABLE
@@ -202,12 +202,12 @@ int oplus_chg_ic_move_err_msg(struct oplus_chg_ic_dev *dest,
 int oplus_chg_ic_clean_err_msg(struct oplus_chg_ic_dev *ic_dev,
 			       struct oplus_chg_ic_err_msg *err_msg);
 const char *oplus_chg_ic_err_text(enum oplus_chg_ic_err err_type);
-struct oplus_chg_ic_dev *oplus_chg_ic_register(struct device *dev,
+struct oplus_chg_ic_dev *oplus_chg_ic_register_2(struct device *dev,
 	struct oplus_chg_ic_cfg *cfg);
-int oplus_chg_ic_unregister(struct oplus_chg_ic_dev *ic_dev);
-struct oplus_chg_ic_dev *devm_oplus_chg_ic_register(struct device *dev,
+int oplus_chg_ic_unregister_2(struct oplus_chg_ic_dev *ic_dev);
+struct oplus_chg_ic_dev *devm_oplus_chg_ic_register_2(struct device *dev,
 	struct oplus_chg_ic_cfg *cfg);
-int devm_oplus_chg_ic_unregister(struct device *dev, struct oplus_chg_ic_dev *ic_dev);
+int devm_oplus_chg_ic_unregister_2_2(struct device *dev, struct oplus_chg_ic_dev *ic_dev);
 
 int oplus_chg_ic_func_table_sort(enum oplus_chg_ic_func *table, int func_num);
 int oplus_chg_ic_irq_table_sort(enum oplus_chg_ic_virq_id *table, int irq_num);

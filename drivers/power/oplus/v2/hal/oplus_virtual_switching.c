@@ -95,7 +95,7 @@ static int oplus_chg_switching_init(struct oplus_chg_ic_dev *ic_dev)
 		if (chip->child_list[i].initialized)
 			continue;
 		chip->child_list[i].ic_dev =
-			of_get_oplus_chg_ic(node, "oplus,switch_ic", i);
+			of_get_oplus_chg_ic_2(node, "oplus,switch_ic", i);
 		if (chip->child_list[i].ic_dev == NULL) {
 			chg_debug("switch ic[%d] not found\n", i);
 			retry = true;
@@ -447,7 +447,7 @@ static int oplus_virtual_switching_probe(struct platform_device *pdev)
 	ic_cfg.virq_num = ARRAY_SIZE(oplus_switching_virq_table);
 	ic_cfg.of_node = node;
 	chip->ic_dev =
-		devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+		devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -484,7 +484,7 @@ static int oplus_virtual_switching_remove(struct platform_device *pdev)
 
 	if (chip->ic_dev->online)
 		oplus_chg_switching_exit(chip->ic_dev);
-	devm_oplus_chg_ic_unregister(&pdev->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&pdev->dev, chip->ic_dev);
 	devm_kfree(&pdev->dev, chip->child_list);
 	devm_kfree(&pdev->dev, chip);
 	platform_set_drvdata(pdev, NULL);

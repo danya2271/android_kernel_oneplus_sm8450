@@ -1763,7 +1763,7 @@ int oplus_chg_track_set_hidl_info_2(const char *buf, size_t count)
 	return 0;
 }
 
-struct dentry *oplus_chg_track_get_debugfs_root(void)
+struct dentry *oplus_chg_track_get_debugfs_root_2(void)
 {
 	mutex_lock(&debugfs_root_mutex);
 	if (!track_debugfs_root) {
@@ -4102,7 +4102,7 @@ static int oplus_chg_track_get_fv_when_vooc(struct oplus_monitor *monitor)
 	return flv;
 }
 
-int oplus_chg_track_set_fastchg_break_code(int fastchg_break_code)
+int oplus_chg_track_set_fastchg_break_code_2(int fastchg_break_code)
 {
 	int flv;
 	struct oplus_chg_track *track_chip;
@@ -4241,7 +4241,7 @@ static int oplus_chg_track_obtain_wls_break_sub_crux_info(
 	if (!track_chip || !track_chip->monitor || !track_chip->monitor->wls_topic || !crux_info)
 		return -EINVAL;
 
-	oplus_chg_wls_get_break_sub_crux_info(track_chip->monitor->wls_topic, crux_info);
+	oplus_chg_wls_get_break_sub_crux_info_2(track_chip->monitor->wls_topic, crux_info);
 
 	return 0;
 }
@@ -4262,7 +4262,7 @@ static bool oplus_chg_track_wls_is_status_keep(struct oplus_chg_track *track_chi
 	return false;
 }
 
-int oplus_chg_track_check_wls_charging_break(int wls_connect)
+int oplus_chg_track_check_wls_charging_break_2(int wls_connect)
 {
 	struct oplus_chg_track *track_chip;
 	struct oplus_chg_track_status *track_status;
@@ -4383,7 +4383,7 @@ static bool oplus_chg_track_get_mmi_chg(void)
 	return !get_client_vote(common_chg_suspend_votable, MMI_CHG_VOTER);
 }
 
-int oplus_chg_track_check_wired_charging_break(int vbus_rising)
+int oplus_chg_track_check_wired_charging_break_2(int vbus_rising)
 {
 	struct oplus_chg_track *track_chip;
 	struct oplus_chg_track_status *track_status;
@@ -4487,7 +4487,7 @@ int oplus_chg_track_check_wired_charging_break(int vbus_rising)
 	if (vbus_rising) {
 		track_status->mmi_chg = oplus_chg_track_get_mmi_chg();
 		track_chip->monitor->pre_vooc_sid = 0;
-		oplus_chg_track_set_fastchg_break_code(
+		oplus_chg_track_set_fastchg_break_code_2(
 			TRACK_VOOCPHY_BREAK_DEFAULT);
 	}
 	pre_vbus_rising = vbus_rising;
@@ -6309,7 +6309,7 @@ static int oplus_chg_track_uisoc_soc_jump_check(struct oplus_monitor *monitor)
 	return ret;
 }
 
-int oplus_chg_track_comm_monitor(struct oplus_monitor *monitor)
+int oplus_chg_track_comm_monitor_2(struct oplus_monitor *monitor)
 {
 	int ret = 0;
 
@@ -6395,7 +6395,7 @@ static int oplus_chg_track_debugfs_init(struct oplus_chg_track *track_dev)
 	struct dentry *debugfs_general;
 	struct dentry *debugfs_chg_slow;
 
-	debugfs_root = oplus_chg_track_get_debugfs_root();
+	debugfs_root = oplus_chg_track_get_debugfs_root_2();
 	if (!debugfs_root) {
 		ret = -ENOENT;
 		return ret;

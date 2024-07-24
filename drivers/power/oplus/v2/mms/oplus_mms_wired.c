@@ -1161,7 +1161,7 @@ bool oplus_wired_shipmode_is_enabled(void)
 static bool is_voocphy_ic_available(struct oplus_mms_wired *chip)
 {
 	if (!chip->voocphy_ic)
-		chip->voocphy_ic = of_get_oplus_chg_ic(chip->dev->of_node,
+		chip->voocphy_ic = of_get_oplus_chg_ic_2(chip->dev->of_node,
 						       "oplus,voocphy_ic", 0);
 
 	return !!chip->voocphy_ic;
@@ -2822,7 +2822,7 @@ int oplus_usbtemp_monitor_common_new_method(void *data)
 		current_read_count = current_read_count + 1;
 		if (current_read_count == OPLUS_CHG_CURRENT_READ_COUNT) {
 			/* TODO: parallel charge */
-			chip->usbtemp_batt_current = -oplus_gauge_get_batt_current();
+			chip->usbtemp_batt_current = -oplus_gauge_get_batt_current_2();
 			current_read_count = 0;
 		}
 		oplus_update_usbtemp_current_status_new_method(chip);
@@ -3472,7 +3472,7 @@ static void oplus_mms_wired_init_work(struct work_struct *work)
 	int cc_detect;
 	int rc;
 
-	chip->buck_ic = of_get_oplus_chg_ic(node, "oplus,buck_ic", 0);
+	chip->buck_ic = of_get_oplus_chg_ic_2(node, "oplus,buck_ic", 0);
 	if (chip->buck_ic == NULL) {
 		if (retry > 0) {
 			retry--;

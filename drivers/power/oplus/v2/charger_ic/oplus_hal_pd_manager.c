@@ -1726,7 +1726,7 @@ static int oplus_pd_manager_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = pd_manager_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(pd_manager_virq_table);
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		ret = -ENODEV;
 		chg_err("register %s error\n", node->name);

@@ -96,8 +96,8 @@ init_gauge_auth(struct chip_bq27541 *chip, oplus_gauge_auth_result *rst,
 static int zy0603_unseal(struct chip_bq27541 *chip);
 static int zy0603_seal(struct chip_bq27541 *chip);
 static bool zy0603_afi_update_done(struct chip_bq27541 *chip);
-int oplus_vooc_get_fast_chg_type(void);
-int oplus_vooc_get_fastchg_ing(void);
+int oplus_vooc_get_fast_chg_type_2(void);
+int oplus_vooc_get_fastchg_ing_2(void);
 int oplus_vooc_get_vooc_by_normal_path_2(void);
 static int zy0603_static_checksum_check(struct chip_bq27541 *chip);
 static int zy0603_QmaxFgStatus_check(struct chip_bq27541 *chip);
@@ -153,7 +153,7 @@ void __attribute__((weak)) oplus_vooc_get_fastchg_is_started_pfunc(int (*pfunc)(
 {
 	return;
 }
-void __attribute__((weak)) oplus_vooc_get_fastchg_ing_pfunc(int (*pfunc)(void))
+void __attribute__((weak)) oplus_vooc_get_fastchg_ing_2_pfunc(int (*pfunc)(void))
 {
 	return;
 }
@@ -168,7 +168,7 @@ void __attribute__((weak)) oplus_set_fg_device_type(int device_type)
 }
 #else /*IS_ENABLED(CONFIG_OPLUS_ADSP_CHARGER)*/
 void __attribute__((weak)) oplus_vooc_get_fastchg_is_started_pfunc(int (*pfunc)(void));
-void __attribute__((weak)) oplus_vooc_get_fastchg_ing_pfunc(int (*pfunc)(void));
+void __attribute__((weak)) oplus_vooc_get_fastchg_ing_2_pfunc(int (*pfunc)(void));
 int __attribute__((weak)) oplus_get_fg_device_type(void);
 void __attribute__((weak)) oplus_set_fg_device_type(int device_type);
 #endif /*IS_ENABLED(CONFIG_OPLUS_ADSP_CHARGER)*/
@@ -489,9 +489,9 @@ static bool zy0603_fg_condition_check(struct chip_bq27541 *chip)
 		return false;
 	}
 
-	if (oplus_vooc_get_fastchg_ing() &&
+	if (oplus_vooc_get_fastchg_ing_2() &&
 	    oplus_vooc_get_vooc_by_normal_path_2() &&
-	    oplus_vooc_get_fast_chg_type() == BCC_TYPE_IS_VOOC)
+	    oplus_vooc_get_fast_chg_type_2() == BCC_TYPE_IS_VOOC)
 		return true;
 
 	if (atomic_read(&chip->locked) == 1) {
@@ -1395,7 +1395,7 @@ error_occured:
 	gauge_locked = !!atomic_read(&chip->locked);
 	if (oplus_gauge_get_afi_condition()) {
 		if (!gauge_locked || (oplus_vooc_get_vooc_by_normal_path_2() &&
-				oplus_vooc_get_fast_chg_type() == BCC_TYPE_IS_VOOC)) {
+				oplus_vooc_get_fast_chg_type_2() == BCC_TYPE_IS_VOOC)) {
 			if (!zy0603_unseal(chip)) {
 				chip->afi_update_done = false;
 				ret = zy0603_afi_param_update(chip);
@@ -1465,7 +1465,7 @@ static int zy0603_protect_check(struct oplus_chg_ic_dev *ic_dev)
 	gauge_locked = !!atomic_read(&chip->locked);
 	if ((!gauge_locked ||
 			(oplus_vooc_get_vooc_by_normal_path_2() &&
-			oplus_vooc_get_fast_chg_type() == BCC_TYPE_IS_VOOC)) &&
+			oplus_vooc_get_fast_chg_type_2() == BCC_TYPE_IS_VOOC)) &&
 			chip->disabled && chip->need_check) {
 		if (zy0603_static_checksum_check(chip)) {
 			checksum_error_flag = 1;
@@ -4941,7 +4941,7 @@ write_parameter:
 	return GAUGE_OK;
 }
 
-int oplus_vooc_get_fastchg_ing(void)
+int oplus_vooc_get_fastchg_ing_2(void)
 {
 	int fastchg_status = 0;
 	struct oplus_mms *vooc_topic;
@@ -4960,7 +4960,7 @@ int oplus_vooc_get_fastchg_ing(void)
 	return fastchg_status;
 }
 
-int oplus_vooc_get_fast_chg_type(void)
+int oplus_vooc_get_fast_chg_type_2(void)
 {
 	int svooc_type = 0;
 	struct oplus_mms *vooc_topic;
@@ -5623,7 +5623,7 @@ static int bq27541_suspend(struct i2c_client *client, pm_message_t mesg)
 }
 #endif /*(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))*/
 
-bool oplus_gauge_ic_chip_is_null(struct oplus_chg_ic_dev *ic_dev)
+bool oplus_gauge_ic_chip_is_null_2(struct oplus_chg_ic_dev *ic_dev)
 {
 	struct chip_bq27541 *chip;
 
@@ -6979,7 +6979,7 @@ rerun:
 	ic_cfg.virq_data = bq27541_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(bq27541_virq_table);
 	ic_cfg.of_node = fg_ic->dev->of_node;
-	fg_ic->ic_dev = devm_oplus_chg_ic_register(fg_ic->dev, &ic_cfg);
+	fg_ic->ic_dev = devm_oplus_chg_ic_register_2(fg_ic->dev, &ic_cfg);
 	if (!fg_ic->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", fg_ic->dev->of_node->name);
@@ -6989,7 +6989,7 @@ rerun:
 
 #ifndef CONFIG_OPLUS_CHARGER_MTK
 	oplus_vooc_get_fastchg_is_started_pfunc(&oplus_vooc_get_fastchg_is_started);
-	oplus_vooc_get_fastchg_ing_pfunc(&oplus_vooc_get_fastchg_ing);
+	oplus_vooc_get_fastchg_ing_2_pfunc(&oplus_vooc_get_fastchg_ing_2);
 #endif
 
 	oplus_bq27541_init(fg_ic->ic_dev);

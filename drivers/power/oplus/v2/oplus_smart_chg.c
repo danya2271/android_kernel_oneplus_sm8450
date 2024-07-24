@@ -710,7 +710,7 @@ static int oplus_wls_get_bcc_exit_curr(struct oplus_smart_charge *smart_chg)
 	return bcc_stop_curr;
 }
 
-static bool oplus_vooc_get_fastchg_ing(void)
+static bool oplus_vooc_get_fastchg_ing_2(void)
 {
 	int fastchg_status = 0;
 	struct oplus_mms *vooc_topic;
@@ -758,7 +758,7 @@ static bool oplus_voocphy_get_fastchg_ing(void)
 	return false;
 }
 
-static int oplus_vooc_get_fast_chg_type(void)
+static int oplus_vooc_get_fast_chg_type_2(void)
 {
 	int svooc_type = 0;
 	struct oplus_mms *vooc_topic;
@@ -867,7 +867,7 @@ static void oplus_smart_chg_bcc_set_buffer(int *buffer)
 	}
 
 	if (true == oplus_voocphy_get_fastchg_ing() ||
-		(oplus_vooc_get_fastchg_ing() && oplus_vooc_get_fast_chg_type() != BCC_TYPE_IS_VOOC)){
+		(oplus_vooc_get_fastchg_ing_2() && oplus_vooc_get_fast_chg_type_2() != BCC_TYPE_IS_VOOC)){
 		bcc_current_max = oplus_vooc_check_bcc_max_curr();
 		bcc_current_min = oplus_vooc_check_bcc_min_curr();
 		atl_last_gear_current = oplus_vooc_get_bcc_exit_curr();
@@ -908,7 +908,7 @@ static void oplus_smart_chg_bcc_set_buffer(int *buffer)
 	oplus_gauge_get_volt(gauge_topic, 0, &voltage_cell1);
 	oplus_gauge_get_volt(gauge_topic, 1, &voltage_cell2);
 
-	batt_current = oplus_gauge_get_batt_current();
+	batt_current = oplus_gauge_get_batt_current_2();
 
 	btemp = oplus_vooc_check_bcc_temp();
 
@@ -956,8 +956,8 @@ int oplus_smart_chg_get_battery_bcc_parameters(char *buf)
 	}
 
 	oplus_smart_chg_bcc_set_buffer(buffer);
-	vooc_get_fastchg_ing = oplus_vooc_get_fastchg_ing();
-	vooc_get_fast_chg_type = oplus_vooc_get_fast_chg_type();
+	vooc_get_fastchg_ing = oplus_vooc_get_fastchg_ing_2();
+	vooc_get_fast_chg_type = oplus_vooc_get_fast_chg_type_2();
 	voocphy_get_fastchg_ing = oplus_voocphy_get_fastchg_ing();
 	vooc_check_bcc_temp_range = oplus_vooc_check_bcc_temp_range();
 	wls_fastchg_charging = oplus_wls_get_fastchg_ing();
@@ -1072,7 +1072,7 @@ int oplus_smart_chg_get_fastchg_battery_bcc_parameters(char *buf)
 
 	oplus_smart_chg_bcc_set_buffer(buffer);
 
-	if (oplus_vooc_get_fastchg_ing() && oplus_vooc_get_fast_chg_type() == BCC_TYPE_IS_SVOOC) {
+	if (oplus_vooc_get_fastchg_ing_2() && oplus_vooc_get_fast_chg_type_2() == BCC_TYPE_IS_SVOOC) {
 		buffer[15] = 1;
 	} else {
 		buffer[15] = 0;
@@ -1130,8 +1130,8 @@ int oplus_smart_chg_get_prev_battery_bcc_parameters(char *buf)
 	}
 
 	memcpy(buffer, g_smart_chg->bcc_buf, BCC_PARMS_COUNT_LEN);
-	vooc_get_fastchg_ing = oplus_vooc_get_fastchg_ing();
-	vooc_get_fast_chg_type = oplus_vooc_get_fast_chg_type();
+	vooc_get_fastchg_ing = oplus_vooc_get_fastchg_ing_2();
+	vooc_get_fast_chg_type = oplus_vooc_get_fast_chg_type_2();
 	voocphy_get_fastchg_ing = oplus_voocphy_get_fastchg_ing();
 	vooc_check_bcc_temp_range = oplus_vooc_check_bcc_temp_range();
 	wls_fastchg_charging = oplus_wls_get_fastchg_ing();

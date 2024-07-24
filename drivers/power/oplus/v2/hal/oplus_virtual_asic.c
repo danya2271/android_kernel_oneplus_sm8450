@@ -103,7 +103,7 @@ static int oplus_chg_va_init(struct oplus_chg_ic_dev *ic_dev)
 	node = va->dev->of_node;
 
 	if (va->use_dpdm_switch_ic) {
-		va->dpdm_switch = of_get_oplus_chg_ic(node, "oplus,dpdm_switch_ic", 0);
+		va->dpdm_switch = of_get_oplus_chg_ic_2(node, "oplus,dpdm_switch_ic", 0);
 		if (va->dpdm_switch == NULL) {
 			chg_debug("dpdm_switch_ic not found\n");
 			return -EAGAIN;
@@ -116,7 +116,7 @@ static int oplus_chg_va_init(struct oplus_chg_ic_dev *ic_dev)
 		if (va->asic_list[i].initialized)
 			continue;
 		va->asic_list[i].ic_dev =
-			of_get_oplus_chg_ic(node, "oplus,asic_ic", i);
+			of_get_oplus_chg_ic_2(node, "oplus,asic_ic", i);
 		if (va->asic_list[i].ic_dev == NULL) {
 			chg_debug("asic[%d] not found\n", i);
 			retry = true;
@@ -624,7 +624,7 @@ static int oplus_chg_va_eint_register(struct oplus_chg_ic_dev *ic_dev)
 				 (irq_handler_t)irq_rx_handler,
 				 IRQF_TRIGGER_RISING, "VOOC_AP_DATA-eint", va);
 		if (rc < 0) {
-			chg_err("rc = %d, oplus_vooc_eint_register failed to request_irq \n",
+			chg_err("rc = %d, oplus_vooc_eint_register_2 failed to request_irq \n",
 				rc);
 		}
 	} else {
@@ -635,7 +635,7 @@ static int oplus_chg_va_eint_register(struct oplus_chg_ic_dev *ic_dev)
 					 IRQF_TRIGGER_RISING,
 					 "VOOC_AP_DATA-eint", va);
 			if (rc) {
-				chg_err("rc = %d, oplus_vooc_eint_register failed to request_irq \n",
+				chg_err("rc = %d, oplus_vooc_eint_register_2 failed to request_irq \n",
 					rc);
 			}
 			register_status = 1;
@@ -913,7 +913,7 @@ static int oplus_chg_va_set_switch_mode(struct oplus_chg_ic_dev *ic_dev,
 		return -EINVAL;
 	}
 
-	if (oplus_gauge_afi_update_done() == false) {
+	if (oplus_gauge_afi_update_done_2() == false) {
 		chg_err("zy gauge afi_update_done ing...\n");
 		return -EINVAL;
 	}
@@ -1803,7 +1803,7 @@ static int oplus_virtual_asic_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = oplus_va_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(oplus_va_virq_table);
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -1847,7 +1847,7 @@ static int oplus_virtual_asic_remove(struct platform_device *pdev)
 
 	if (chip->ic_dev->online)
 		oplus_chg_va_exit(chip->ic_dev);
-	devm_oplus_chg_ic_unregister(&pdev->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&pdev->dev, chip->ic_dev);
 	if (gpio_is_valid(chip->gpio.asic_id_gpio))
 		gpio_free(chip->gpio.asic_id_gpio);
 	if (gpio_is_valid(chip->gpio.data_gpio))

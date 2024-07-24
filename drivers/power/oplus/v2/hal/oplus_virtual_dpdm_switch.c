@@ -628,7 +628,7 @@ static int oplus_virtual_dpdm_switch_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = oplus_dpdm_switch_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(oplus_dpdm_switch_virq_table);
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -668,7 +668,7 @@ static int oplus_virtual_dpdm_switch_remove(struct platform_device *pdev)
 	if (chip->ic_dev->online)
 		oplus_dpdm_switch_exit(chip->ic_dev);
 
-	devm_oplus_chg_ic_unregister(&pdev->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&pdev->dev, chip->ic_dev);
 	if (gpio_is_valid(chip->switch_ctrl_gpio))
 		gpio_free(chip->switch_ctrl_gpio);
 	devm_kfree(&pdev->dev, chip);

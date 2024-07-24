@@ -679,7 +679,7 @@ static int tps6128xd_driver_probe(struct i2c_client *client, const struct i2c_de
 	ic_cfg.virq_data = tps6128xd_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(tps6128xd_virq_table);
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);

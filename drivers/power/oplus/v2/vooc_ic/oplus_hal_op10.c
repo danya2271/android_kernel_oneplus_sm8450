@@ -142,7 +142,7 @@ static int op10_get_fw_old_version(struct op10_chip *chip, u8 version_info[]);
 #define MAX_DEVICE_VERSION_LENGTH 16
 #define MAX_DEVICE_MANU_LENGTH    60
 
-struct wakeup_source *op10_update_wake_lock = NULL;
+struct wakeup_source *op10_update_wake_lock_2 = NULL;
 
 #ifdef CONFIG_OPLUS_CHARGER_MTK
 #define GTP_SUPPORT_I2C_DMA		0
@@ -750,7 +750,7 @@ static int __op10_fw_check_then_recover(struct op10_chip *chip)
 		msleep(2500);
 		chip->boot_by_gpio = false;
 		op10_set_clock_sleep(chip);
-		__pm_stay_awake(op10_update_wake_lock);
+		__pm_stay_awake(op10_update_wake_lock_2);
 		if (!op10_fw_update_check(chip, chip->firmware_data,
 					  chip->fw_data_count)) {
 			chg_info("firmware update start\n");
@@ -776,7 +776,7 @@ static int __op10_fw_check_then_recover(struct op10_chip *chip)
 			chip->vooc_fw_check = true;
 			chg_info("fw check ok\n");
 		}
-		__pm_relax(op10_update_wake_lock);
+		__pm_relax(op10_update_wake_lock_2);
 		msleep(5);
 		chip->upgrading = false;
 		op10_set_reset_active(chip);
@@ -920,11 +920,11 @@ static int op10_init(struct oplus_chg_ic_dev *ic_dev)
 #endif
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
-	op10_update_wake_lock =
-		wakeup_source_register("op10_update_wake_lock");
+	op10_update_wake_lock_2 =
+		wakeup_source_register("op10_update_wake_lock_2");
 #else
-	op10_update_wake_lock =
-		wakeup_source_register(NULL, "op10_update_wake_lock");
+	op10_update_wake_lock_2 =
+		wakeup_source_register(NULL, "op10_update_wake_lock_2");
 #endif
 
 	register_vooc_devinfo();
@@ -947,7 +947,7 @@ static int op10_exit(struct oplus_chg_ic_dev *ic_dev)
 
 	chip = oplus_chg_ic_get_drvdata(ic_dev);
 	ic_dev->online = false;
-	wakeup_source_remove(op10_update_wake_lock);
+	wakeup_source_remove(op10_update_wake_lock_2);
 #ifdef CONFIG_OPLUS_CHARGER_MTK
 #if GTP_SUPPORT_I2C_DMA
 	dma_free_coherent(chip->dev, GTP_DMA_MAX_TRANSACTION_LENGTH,
@@ -1249,7 +1249,7 @@ static int op10_driver_probe(struct i2c_client *client, const struct i2c_device_
 	ic_cfg.virq_num = ARRAY_SIZE(op10_virq_table);
 	ic_cfg.of_node = node;
 	chip->ic_dev =
-		devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+		devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -1317,7 +1317,7 @@ static void op10_driver_remove(struct i2c_client *client)
 
 	if (chip->ic_dev->online)
 		op10_exit(chip->ic_dev);
-	devm_oplus_chg_ic_unregister(&client->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&client->dev, chip->ic_dev);
 	i2c_set_clientdata(client, NULL);
 	devm_kfree(&client->dev, chip);
 
@@ -1349,7 +1349,7 @@ static const struct i2c_device_id op10_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, op10_id);
 
-struct i2c_driver op10_i2c_driver = {
+struct i2c_driver op10_i2c_driver_2 = {
 	.driver = {
 		.name = "op10-fastcg",
 		.owner = THIS_MODULE,
@@ -1368,7 +1368,7 @@ int op10_driver_init(void)
 	chg_debug("init start\n");
 	/* init_hw_version(); */
 
-	if (i2c_add_driver(&op10_i2c_driver) != 0) {
+	if (i2c_add_driver(&op10_i2c_driver_2) != 0) {
 		chg_err(" failed to register op10 i2c driver.\n");
 	} else {
 		chg_debug(" Success to register op10 i2c driver.\n");
@@ -1379,7 +1379,7 @@ int op10_driver_init(void)
 
 void op10_driver_exit(void)
 {
-	i2c_del_driver(&op10_i2c_driver);
+	i2c_del_driver(&op10_i2c_driver_2);
 }
 oplus_chg_module_register(op10_driver);
 

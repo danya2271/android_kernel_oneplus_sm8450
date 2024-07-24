@@ -893,7 +893,7 @@ static int oplus_vc_child_init(struct oplus_virtual_buck_ic *chip)
 	}
 
 	for (i = 0; i < chip->child_num; i++) {
-		chip->child_list[i].ic_dev = of_get_oplus_chg_ic(node, "oplus,buck_ic", i);
+		chip->child_list[i].ic_dev = of_get_oplus_chg_ic_2(node, "oplus,buck_ic", i);
 		if (chip->child_list[i].ic_dev == NULL) {
 			chg_err("not find buck ic %d\n", i);
 			rc = -EAGAIN;
@@ -6141,7 +6141,7 @@ static int oplus_virtual_buck_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = oplus_vb_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(oplus_vb_virq_table);
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -6192,7 +6192,7 @@ static int oplus_virtual_buck_remove(struct platform_device *pdev)
 #if IS_ENABLED(CONFIG_OPLUS_CHG_TEST_KIT)
 	oplus_virtual_buck_test_kit_exit(chip);
 #endif
-	devm_oplus_chg_ic_unregister(&pdev->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&pdev->dev, chip->ic_dev);
 	if (oplus_vc_ccdetect_gpio_support(chip))
 		gpio_free(chip->misc_gpio.ccdetect_gpio);
 	if (gpio_is_valid(chip->misc_gpio.vchg_trig_gpio))

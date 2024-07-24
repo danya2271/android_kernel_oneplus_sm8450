@@ -2654,7 +2654,7 @@ static void oplus_comm_check_fgreset(struct oplus_chg_comm *chip)
 	if (!chip->wired_online && !chip->wls_online)
 		is_need_check = false;
 
-	if (oplus_gauge_afi_update_done() == false) {
+	if (oplus_gauge_afi_update_done_2() == false) {
 		chg_info("zy gauge afi_update_done ing...\n");
 		is_need_check = false;
 	}

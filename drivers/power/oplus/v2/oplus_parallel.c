@@ -856,7 +856,7 @@ static int mos_track_debugfs_init(struct oplus_parallel_chip *chip)
 	struct dentry *debugfs_root;
 	struct dentry *debugfs_mos;
 
-	debugfs_root = oplus_chg_track_get_debugfs_root();
+	debugfs_root = oplus_chg_track_get_debugfs_root_2();
 	if (!debugfs_root) {
 		ret = -ENOENT;
 		return ret;
@@ -2359,7 +2359,7 @@ static void oplus_chg_parallel_init_work(struct work_struct *work)
 	static int retry = OPLUS_CHG_IC_INIT_RETRY_MAX;
 	int rc;
 
-	chip->ic_dev = of_get_oplus_chg_ic(node, "oplus,switching_ic", 0);
+	chip->ic_dev = of_get_oplus_chg_ic_2(node, "oplus,switching_ic", 0);
 	if (chip->ic_dev == NULL) {
 		chg_err("not find switching ic\n");
 		goto init_try_again;
