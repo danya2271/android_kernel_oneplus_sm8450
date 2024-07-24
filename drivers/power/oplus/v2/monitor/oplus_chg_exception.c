@@ -297,7 +297,7 @@ static int oplus_chg_olc_get_excep_reason(int type_reason, int flag_reason, int 
 	return excep_value;
 }
 
-int chg_exception_report(void *chg_exception_data, int type_reason, int flag_reason, void *summary, unsigned int summary_size)
+int chg_exception_report_2(void *chg_exception_data, int type_reason, int flag_reason, void *summary, unsigned int summary_size)
 {
 	int ret = -1;
 	int type_diff = 0;
@@ -375,7 +375,7 @@ int oplus_chg_set_app_info(const char *buf)
 	if (!buf)
 		return -1;
 
-	ret = oplus_chg_track_set_app_info(buf);
+	ret = oplus_chg_track_set_app_info_2(buf);
 	return ret;
 }
 

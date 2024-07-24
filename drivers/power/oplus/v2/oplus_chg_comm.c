@@ -5682,7 +5682,7 @@ static const struct proc_ops batt_param_noplug_proc_fops = {
 #define OPLUS_TBATT_HIGH_PWROFF_COUNT	(18)
 #define OPLUS_TBATT_EMERGENCY_PWROFF_COUNT	(6)
 
-DECLARE_WAIT_QUEUE_HEAD(oplus_tbatt_pwroff_wq);
+DECLARE_WAIT_QUEUE_HEAD(oplus_tbatt_pwroff_wq_2);
 
 static int oplus_comm_tbatt_power_off_kthread(void *arg)
 {
@@ -5711,7 +5711,7 @@ static int oplus_comm_tbatt_power_off_kthread(void *arg)
 		if (!tbatt_pwroff_enable) {
 			emergency_count = 0;
 			over_temp_count = 0;
-			wait_event_interruptible(oplus_tbatt_pwroff_wq,
+			wait_event_interruptible(oplus_tbatt_pwroff_wq_2,
 						 tbatt_pwroff_enable == 1);
 		}
 		/*
@@ -5795,7 +5795,7 @@ static ssize_t proc_tbatt_pwroff_write(struct file *file,
 		tbatt_pwroff_enable = 0;
 	} else if (buffer[0] == '1') {
 		tbatt_pwroff_enable = 1;
-		wake_up_interruptible(&oplus_tbatt_pwroff_wq);
+		wake_up_interruptible(&oplus_tbatt_pwroff_wq_2);
 	} else if (buffer[0] == '2') {
 		chg_info("flash_screen_ctrl_status close\n");
 	} else if (buffer[0] == '3') {

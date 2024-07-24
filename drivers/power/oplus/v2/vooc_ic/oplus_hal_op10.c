@@ -71,7 +71,7 @@ struct op10_chip {
 	char *fw_path;
 };
 
-extern int charger_abnormal_log;
+extern int charger_abnormal_log_2;
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0))
 int __attribute__((weak))
@@ -625,7 +625,7 @@ static int op10_fw_update(struct op10_chip *chip, const u8 *fw_buf, u32 fw_size)
 	return 0;
 
 update_fw_err:
-	charger_abnormal_log = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
+	charger_abnormal_log_2 = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
 	chg_err("fail\n");
 	return 1;
 }

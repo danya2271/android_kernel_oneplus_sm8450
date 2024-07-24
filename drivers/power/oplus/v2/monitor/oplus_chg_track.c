@@ -1247,7 +1247,7 @@ static int oplus_chg_track_match_app_info(u8 *app_name)
 	return TRACK_APP_TOP_INDEX_DEFAULT;
 }
 
-int oplus_chg_track_set_app_info(const char *buf)
+int oplus_chg_track_set_app_info_2(const char *buf)
 {
 	struct oplus_chg_track *track_chip = g_track_chip;
 	struct oplus_chg_track_app_status *p_app_status;
@@ -1720,7 +1720,7 @@ static int oplus_chg_track_ttf_info_init(struct oplus_chg_track *chip)
 	return 0;
 }
 
-int oplus_chg_track_set_hidl_info(const char *buf, size_t count)
+int oplus_chg_track_set_hidl_info_2(const char *buf, size_t count)
 {
 	struct oplus_chg_track *track_chip = g_track_chip;
 	struct oplus_chg_track_hidl_cmd *p_cmd;
@@ -3156,7 +3156,7 @@ static int oplus_chg_track_upload_trigger_data(oplus_chg_track_trigger data)
 		 chip->trigger_data.crux_info);
 	chip->trigger_data_ok = true;
 	oplus_chg_track_get_flag_tag(chip->trigger_data.flag_reason, flag_reason_tag);
-	chg_exception_report(&chip->track_cfg.exception_data, chip->trigger_data.type_reason,
+	chg_exception_report_2(&chip->track_cfg.exception_data, chip->trigger_data.type_reason,
 				chip->trigger_data.flag_reason, flag_reason_tag, sizeof(flag_reason_tag));
 	mutex_unlock(&chip->trigger_data_lock);
 	reinit_completion(&chip->trigger_ack);

@@ -81,12 +81,12 @@ extern void mt_power_off(void);
 #define AICL_POINT_SWITCH_THRE		7500
 #define AICL_POINT_VOL_9V		8500
 
-struct chip_mp2650 *charger_ic = NULL;
-int reg_access_allow = 0;
+struct chip_mp2650 *charger_ic_2 = NULL;
+int reg_access_allow_2 = 0;
 int mp2650_reg = 0;
 static int aicl_result = 500;
-void mp2650_wireless_set_mps_otg_en_val(int value);
-int mp2650_get_vbus_voltage(void);
+void mp2650_wireless_set_mps_otg_en_val_2(int value);
+int mp2650_get_vbus_voltage_2(void);
 static int mp2650_set_charger_vsys_threshold(struct chip_mp2650 *chip, int val);
 static int mp2650_burst_mode_enable(bool enable);
 static int mp2650_reg_dump_internal(void);
@@ -112,7 +112,7 @@ static int mp2650_wait_resume(struct chip_mp2650 *chip)
 static int __tongfeng_test_mp2650_write_reg(int reg, int val)
 {
 	int ret = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (!chip) {
 		chg_err("chip is NULL\n");
@@ -142,7 +142,7 @@ static ssize_t mp2650_reg_access_show(struct device *dev,
 #endif
 #endif
 
-	return snprintf(buf, PAGE_SIZE, "0x%02x\n", reg_access_allow);
+	return snprintf(buf, PAGE_SIZE, "0x%02x\n", reg_access_allow_2);
 }
 static ssize_t mp2650_reg_access_store(struct device *dev,
 				       struct device_attribute *attr,
@@ -165,7 +165,7 @@ static ssize_t mp2650_reg_access_store(struct device *dev,
 		return rc;
 
 	chg_err("%s: value=%d\n", __FUNCTION__, val);
-	reg_access_allow = val;
+	reg_access_allow_2 = val;
 
 	return count;
 }
@@ -241,7 +241,7 @@ static struct attribute_group mp2650_attribute_group = {
 static int __mp2650_read_reg(int reg, int *returnData)
 {
 	int ret = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	ret = i2c_smbus_read_byte_data(chip->client, (unsigned char)reg);
 	if (ret < 0) {
@@ -257,7 +257,7 @@ static int __mp2650_read_reg(int reg, int *returnData)
 static int mp2650_read_reg(int reg, int *returnData)
 {
 	int ret = 0;
-	/*    struct chip_mp2650 *chip = charger_ic; */
+	/*    struct chip_mp2650 *chip = charger_ic_2; */
 
 	mutex_lock(&mp2650_i2c_access);
 	ret = __mp2650_read_reg(reg, returnData);
@@ -268,9 +268,9 @@ static int mp2650_read_reg(int reg, int *returnData)
 static int __mp2650_write_reg(int reg, int val)
 {
 	int ret = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
-	if (reg_access_allow != 0) {
+	if (reg_access_allow_2 != 0) {
 		return 0;
 	}
 	ret = i2c_smbus_write_byte_data(chip->client, reg, val);
@@ -368,7 +368,7 @@ int mp2650_mms_set_vindpm_vol(struct oplus_chg_ic_dev *ic_dev, int vol_mv) /* de
 {
 	int rc;
 	int tmp = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -383,11 +383,11 @@ int mp2650_mms_set_vindpm_vol(struct oplus_chg_ic_dev *ic_dev, int vol_mv) /* de
 	return rc;
 }
 
-int mp2650_set_vindpm_vol(int vol) /* default 4.5V */
+int mp2650_set_vindpm_vol_2(int vol) /* default 4.5V */
 {
 	int rc;
 	int tmp = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -402,14 +402,14 @@ int mp2650_set_vindpm_vol(int vol) /* default 4.5V */
 	return rc;
 }
 
-int mp2650_usbin_input_current_limit[] = {
+int mp2650_usbin_input_current_limit_2[] = {
 	500, 800, 1000, 1200, 1500, 1750, 2000, 2200, 2500, 2750, 3000,
 };
 
-int mp2650_input_Ilimit_disable(void)
+int mp2650_input_Ilimit_disable_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1)
 		return 0;
@@ -417,12 +417,12 @@ int mp2650_input_Ilimit_disable(void)
 	return rc;
 }
 
-int mp2650_input_current_limit_ctrl_by_vooc_write(int current_ma)
+int mp2650_input_current_limit_ctrl_by_vooc_write_2(int current_ma)
 {
 	int rc = 0;
 	int tmp = 0;
 	int count = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -505,12 +505,12 @@ static int mp2650_get_charger_vol(struct chip_mp2650 *chip)
 	return vbus;
 }
 
-int mp2650_get_pre_icl_index(void)
+int mp2650_get_pre_icl_index_2(void)
 {
 	int reg_val = 0;
 	int icl_index = 0;
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1)
 		return 0;
@@ -563,7 +563,7 @@ int mp2650_get_pre_icl_index(void)
 	}
 
 	chg_debug("pre icl=%d setting %02x\n",
-		  mp2650_usbin_input_current_limit[icl_index], icl_index);
+		  mp2650_usbin_input_current_limit_2[icl_index], icl_index);
 	return icl_index;
 }
 
@@ -599,9 +599,9 @@ static int mp2650_input_current_limit_write(struct chip_mp2650 *chip,
 		return 0;
 	}
 
-	for (i = ARRAY_SIZE(mp2650_usbin_input_current_limit) - 1; i >= 0;
+	for (i = ARRAY_SIZE(mp2650_usbin_input_current_limit_2) - 1; i >= 0;
 	     i--) {
-		if (mp2650_usbin_input_current_limit[i] <= current_ma) {
+		if (mp2650_usbin_input_current_limit_2[i] <= current_ma) {
 			break;
 		} else if (i == 0) {
 			break;
@@ -611,7 +611,7 @@ static int mp2650_input_current_limit_write(struct chip_mp2650 *chip,
 	chg_info("usb input max current limit=%d setting %02x\n", current_ma,
 		  i);
 
-	pre_icl_index = mp2650_get_pre_icl_index();
+	pre_icl_index = mp2650_get_pre_icl_index_2();
 	if (pre_icl_index < 2) {
 		/* <1.2A, have been set 500 in bqmp2650_hardware_init */
 	} else {
@@ -911,15 +911,15 @@ static int mp2650_input_current_limit_write(struct chip_mp2650 *chip,
 aicl_pre_step:
 	chg_info(
 		"usb input max current limit aicl chg_vol=%d j[%d]=%d sw_aicl_point:%d aicl_pre_step\n",
-		chg_vol, i, mp2650_usbin_input_current_limit[i], sw_aicl_point);
+		chg_vol, i, mp2650_usbin_input_current_limit_2[i], sw_aicl_point);
 	goto aicl_rerun;
 aicl_end:
 	chg_info(
 		"usb input max current limit aicl chg_vol=%d j[%d]=%d sw_aicl_point:%d aicl_end\n",
-		chg_vol, i, mp2650_usbin_input_current_limit[i], sw_aicl_point);
+		chg_vol, i, mp2650_usbin_input_current_limit_2[i], sw_aicl_point);
 	goto aicl_rerun;
 aicl_rerun:
-	aicl_result = mp2650_usbin_input_current_limit[i];
+	aicl_result = mp2650_usbin_input_current_limit_2[i];
 	switch (i) {
 	case INPUT_CURRENT_LIMIT_INDEX_0:
 		rc = mp2650_config_interface(
@@ -1035,15 +1035,15 @@ aicl_rerun:
 		break;
 	}
 
-	mp2650_set_vindpm_vol(hw_aicl_point);
+	mp2650_set_vindpm_vol_2(hw_aicl_point);
 	return rc;
 }
 
-int mp2650_charging_current_write_fast(int chg_cur)
+int mp2650_charging_current_write_fast_2(int chg_cur)
 {
 	int rc = 0;
 	int tmp = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
@@ -1066,13 +1066,13 @@ int mp2650_charging_current_write_fast(int chg_cur)
  * If charger was suspended, it must return 0(mA).
  * It meets the requirements in SDM660 platform.
  */
-int mp2650_chg_get_dyna_aicl_result(void)
+int mp2650_chg_get_dyna_aicl_result_2(void)
 {
 	return aicl_result;
 }
 #endif /* CONFIG_OPLUS_SHORT_C_BATT_CHECK */
 
-int mp2650_set_aicl_point(struct oplus_chg_ic_dev *ic_dev, int vbatt)
+int mp2650_set_aicl_point_2(struct oplus_chg_ic_dev *ic_dev, int vbatt)
 {
 	struct chip_mp2650 *chip = NULL;
 	int chg_type = oplus_wired_get_chg_type();
@@ -1096,17 +1096,17 @@ int mp2650_set_aicl_point(struct oplus_chg_ic_dev *ic_dev, int vbatt)
 	if (chg_vol > AICL_POINT_SWITCH_THRE &&
 	    (chg_type == OPLUS_CHG_USB_TYPE_PD || chg_type == OPLUS_CHG_USB_TYPE_QC2)) {
 		chip->hw_aicl_point = AICL_POINT_VOL_9V;
-		mp2650_set_vindpm_vol(chip->hw_aicl_point);
+		mp2650_set_vindpm_vol_2(chip->hw_aicl_point);
 	} else if (chip->hw_aicl_point == HW_AICL_POINT_LOW &&
 		   vbatt > SWITCH_AICL_POINT_VBAT_HIGH) {
 		chip->hw_aicl_point = HW_AICL_POINT_HIGH;
 		chip->sw_aicl_point = SW_AICL_POINT_HIGH;
-		mp2650_set_vindpm_vol(chip->hw_aicl_point);
+		mp2650_set_vindpm_vol_2(chip->hw_aicl_point);
 	} else if (chip->hw_aicl_point == HW_AICL_POINT_HIGH &&
 		   vbatt < SWITCH_AICL_POINT_VBAT_LOW) {
 		chip->hw_aicl_point = HW_AICL_POINT_LOW;
 		chip->sw_aicl_point = SW_AICL_POINT_LOW;
-		mp2650_set_vindpm_vol(chip->hw_aicl_point);
+		mp2650_set_vindpm_vol_2(chip->hw_aicl_point);
 	}
 
 	chg_debug("hw_aicl=%d, sw_aicl=%d, chg_vol=%d chg_type=%s\n",
@@ -1116,10 +1116,10 @@ int mp2650_set_aicl_point(struct oplus_chg_ic_dev *ic_dev, int vbatt)
 	return 0;
 }
 
-int mp2650_set_enable_volatile_writes(void)
+int mp2650_set_enable_volatile_writes_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1129,10 +1129,10 @@ int mp2650_set_enable_volatile_writes(void)
 	return rc;
 }
 
-int mp2650_set_complete_charge_timeout(int val)
+int mp2650_set_complete_charge_timeout_2(int val)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
@@ -1157,11 +1157,11 @@ int mp2650_set_complete_charge_timeout(int val)
 	return 0;
 }
 
-int mp2650_float_voltage_write(int vfloat_mv)
+int mp2650_float_voltage_write_2(int vfloat_mv)
 {
 	int rc = 0;
 	int tmp = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1190,10 +1190,10 @@ int mp2650_float_voltage_write(int vfloat_mv)
 	return rc;
 }
 
-int mp2650_set_prechg_voltage_threshold(void)
+int mp2650_set_prechg_voltage_threshold_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1206,11 +1206,11 @@ int mp2650_set_prechg_voltage_threshold(void)
 	return 0;
 }
 
-int mp2650_set_prechg_current(int ipre_mA)
+int mp2650_set_prechg_current_2(int ipre_mA)
 {
 	int tmp = 0;
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1226,12 +1226,12 @@ int mp2650_set_prechg_current(int ipre_mA)
 	return 0;
 }
 
-int mp2650_set_termchg_current(int term_curr)
+int mp2650_set_termchg_current_2(int term_curr)
 {
 	int rc = 0;
 	int tmp = 0;
 
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
@@ -1247,11 +1247,11 @@ int mp2650_set_termchg_current(int term_curr)
 	return 0;
 }
 
-int mp2650_set_rechg_voltage(int recharge_mv)
+int mp2650_set_rechg_voltage_2(int recharge_mv)
 {
 	int rc = 0;
 	int tmp = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
@@ -1271,10 +1271,10 @@ int mp2650_set_rechg_voltage(int recharge_mv)
 	return rc;
 }
 
-int mp2650_set_wdt_timer(int reg)
+int mp2650_set_wdt_timer_2(int reg)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1289,10 +1289,10 @@ int mp2650_set_wdt_timer(int reg)
 	return 0;
 }
 
-int mp2650_set_chging_term_disable(void)
+int mp2650_set_chging_term_disable_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
@@ -1305,10 +1305,10 @@ int mp2650_set_chging_term_disable(void)
 	return rc;
 }
 
-int mp2650_set_chging_term_enable(void)
+int mp2650_set_chging_term_enable_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
@@ -1321,7 +1321,7 @@ int mp2650_set_chging_term_enable(void)
 	return rc;
 }
 
-int mp2650_kick_wdt(struct oplus_chg_ic_dev *ic_dev)
+int mp2650_kick_wdt_2(struct oplus_chg_ic_dev *ic_dev)
 {
 	struct chip_mp2650 *chip;
 	int rc = 0;
@@ -1344,10 +1344,10 @@ int mp2650_kick_wdt(struct oplus_chg_ic_dev *ic_dev)
 	return rc;
 }
 
-int mp2650_otg_disable(void)
+int mp2650_otg_disable_2(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	rc = mp2650_wait_resume(chip);
 	if (rc < 0) {
@@ -1355,50 +1355,50 @@ int mp2650_otg_disable(void)
 		return rc;
 	}
 
-	mp2650_wireless_set_mps_otg_en_val(0); /* set disable output 5V vbus */
+	mp2650_wireless_set_mps_otg_en_val_2(0); /* set disable output 5V vbus */
 	rc = mp2650_config_interface(REG08_MP2650_ADDRESS,
 				     REG08_MP2650_OTG_EN_DISABLE,
 				     REG08_MP2650_OTG_EN_MASK);
 	if (rc < 0) {
-		chg_err("Couldn't mp2650_otg_disable  rc = %d\n", rc);
+		chg_err("Couldn't mp2650_otg_disable_2  rc = %d\n", rc);
 	}
 
-	mp2650_set_wdt_timer(REG09_MP2650_WTD_TIMER_40S);
+	mp2650_set_wdt_timer_2(REG09_MP2650_WTD_TIMER_40S);
 
 	return rc;
 }
 
-int mp2650_enable_charging(void)
+int mp2650_enable_charging_2(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
 
-	mp2650_otg_disable();
+	mp2650_otg_disable_2();
 	rc = mp2650_config_interface(REG08_MP2650_ADDRESS,
 				     REG08_MP2650_CHG_EN_ENABLE,
 				     REG08_MP2650_CHG_EN_MASK);
 	if (rc < 0) {
-		chg_err("Couldn't mp2650_enable_charging rc = %d\n", rc);
+		chg_err("Couldn't mp2650_enable_charging_2 rc = %d\n", rc);
 	}
 
-	chg_err("mp2650_enable_charging \n");
+	chg_err("mp2650_enable_charging_2 \n");
 	return rc;
 }
 
-int mp2650_disable_charging(void)
+int mp2650_disable_charging_2(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (!chip) {
 		return 0;
 	}
 
-	chg_err(" mp2650_disable_charging \n");
+	chg_err(" mp2650_disable_charging_2 \n");
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		chg_err(" charger_suspended \n");
@@ -1408,17 +1408,17 @@ int mp2650_disable_charging(void)
 				     REG08_MP2650_CHG_EN_DISABLE,
 				     REG08_MP2650_CHG_EN_MASK);
 	if (rc < 0) {
-		chg_err("Couldn't mp2650_disable_charging  rc = %d\n", rc);
+		chg_err("Couldn't mp2650_disable_charging_2  rc = %d\n", rc);
 	}
 
 	return rc;
 }
 
-int mp2650_check_charging_enable(void)
+int mp2650_check_charging_enable_2(void)
 {
 	int rc = 0;
 	int reg_val = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	bool charging_enable = false;
 
@@ -1439,37 +1439,37 @@ int mp2650_check_charging_enable(void)
 	return charging_enable;
 }
 
-int mp2650_enable_adc_detect(bool enable)
+int mp2650_enable_adc_detect_2(bool enable)
 {
 	int rc;
 
-	chg_err("mp2650_enable_adc_detect enable= %d\n", enable);
+	chg_err("mp2650_enable_adc_detect_2 enable= %d\n", enable);
 	/* Enable or disable adc detect */
 	if (enable) {
 		rc = mp2650_config_interface(REG0B_MP2650_ADDRESS, 0x3, REG0B_MP2650_PROCHOT_PSYS_CFG_MASK);
 		if (rc < 0)
-			chg_err("Couldn't mp2650_enable_adc_detect rc = %d\n", rc);
+			chg_err("Couldn't mp2650_enable_adc_detect_2 rc = %d\n", rc);
 	} else {
 		rc = mp2650_config_interface(REG0B_MP2650_ADDRESS, 0, REG0B_MP2650_PROCHOT_PSYS_CFG_MASK);
 		if (rc < 0)
-			chg_err("Couldn't mp2650_enable_adc_detect rc = %d\n", rc);
+			chg_err("Couldn't mp2650_enable_adc_detect_2 rc = %d\n", rc);
 	}
 	return rc;
 }
 
-int mp2650_get_vbus_voltage(void)
+int mp2650_get_vbus_voltage_2(void)
 {
 	int vol_high = 0;
 	int vol_low = 0;
 	int vbus_vol = 0;
 	int retry = 3;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (!chip)
 		return 0;
 
 	if (oplus_is_rf_ftm_mode()) {
-		mp2650_enable_adc_detect(true);
+		mp2650_enable_adc_detect_2(true);
 		msleep(1);
 	}
 
@@ -1500,12 +1500,12 @@ int mp2650_get_vbus_voltage(void)
 	chg_debug("vbus_vol = %d \n", vbus_vol);
 
 	if (oplus_is_rf_ftm_mode())
-		mp2650_enable_adc_detect(false);
+		mp2650_enable_adc_detect_2(false);
 
 	return vbus_vol;
 }
 
-int mp2650_get_ibus_current(void)
+int mp2650_get_ibus_current_2(void)
 {
 	int cur_high = 0;
 	int cur_low = 0;
@@ -1529,7 +1529,7 @@ int mp2650_get_ibus_current(void)
 	return ibus_curr;
 }
 
-int mp2650_get_termchg_voltage(void)
+int mp2650_get_termchg_voltage_2(void)
 {
 	int vol_data = 0;
 	int rc = 0;
@@ -1549,7 +1549,7 @@ int mp2650_get_termchg_voltage(void)
 	return vol_data;
 }
 
-int mp2650_get_termchg_current(void)
+int mp2650_get_termchg_current_2(void)
 {
 	int cur_data = 0;
 	int rc = 0;
@@ -1568,10 +1568,10 @@ int mp2650_get_termchg_current(void)
 	return cur_data;
 }
 
-bool mp2650_check_suspend_charger(void)
+bool mp2650_check_suspend_charger_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	int data = 0;
 
 	if (!chip) {
@@ -1597,10 +1597,10 @@ bool mp2650_check_suspend_charger(void)
 	return rc;
 }
 
-int mp2650_suspend_charger(void)
+int mp2650_suspend_charger_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (!chip) {
 		return 0;
@@ -1616,15 +1616,15 @@ int mp2650_suspend_charger(void)
 
 	chg_err(" rc = %d\n", rc);
 	if (rc < 0) {
-		chg_err("Couldn't mp2650_suspend_charger rc = %d\n", rc);
+		chg_err("Couldn't mp2650_suspend_charger_2 rc = %d\n", rc);
 	}
 
 	return rc;
 }
-int mp2650_unsuspend_charger(void)
+int mp2650_unsuspend_charger_2(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1636,14 +1636,14 @@ int mp2650_unsuspend_charger(void)
 
 	chg_err(" rc = %d\n", rc);
 	if (rc < 0) {
-		chg_err("Couldn't mp2650_unsuspend_charger rc = %d\n", rc);
+		chg_err("Couldn't mp2650_unsuspend_charger_2 rc = %d\n", rc);
 	}
 	return rc;
 }
 
 bool mp2650_check_charger_resume(void)
 {
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return false;
 	} else {
@@ -1654,7 +1654,7 @@ bool mp2650_check_charger_resume(void)
 int mp2650_reset_charger_for_wired_charge(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1675,7 +1675,7 @@ int mp2650_reset_charger_for_wired_charge(void)
 int mp2650_otg_ilim_set(int ilim)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1705,7 +1705,7 @@ static int mp2650_push_buck_err(struct oplus_chg_ic_dev *ic_dev,
 int mp2650_otg_enable(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	int retry = 0;
 	int reg_value = 0;
 	bool i2c_err = false;
@@ -1724,7 +1724,7 @@ int mp2650_otg_enable(void)
 	chg_info("otg enable\n");
 	rc = mp2650_burst_mode_enable(true);
 
-	mp2650_set_wdt_timer(REG09_MP2650_WTD_TIMER_DISABLE);
+	mp2650_set_wdt_timer_2(REG09_MP2650_WTD_TIMER_DISABLE);
 
 	mutex_lock(&mp2650_i2c_access);
 	rc = mp2650_config_interface_without_lock(REG53_MP2650_ADDRESS, 0x95, 0xff);
@@ -1732,7 +1732,7 @@ int mp2650_otg_enable(void)
 	rc = mp2650_config_interface_without_lock(REG53_MP2650_ADDRESS, 0x00, 0xff);
 	mutex_unlock(&mp2650_i2c_access);
 
-	mp2650_wireless_set_mps_otg_en_val(1); /* set output 5V vbus */
+	mp2650_wireless_set_mps_otg_en_val_2(1); /* set output 5V vbus */
 
 	rc = mp2650_otg_ilim_set(REG07_MP2650_OTG_CURRENT_LIMIT_1250MA);
 	if (rc < 0) {
@@ -1798,7 +1798,7 @@ int mp2650_otg_wait_vbus_decline(void)
 #else
 	int rc;
 	int vbus_volt = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1808,7 +1808,7 @@ int mp2650_otg_wait_vbus_decline(void)
 
 	do {
 		msleep(200);
-		vbus_volt = mp2650_get_vbus_voltage();
+		vbus_volt = mp2650_get_vbus_voltage_2();
 	} while (vbus_volt >= 3200);
 
 	return rc;
@@ -1818,7 +1818,7 @@ int mp2650_otg_wait_vbus_decline(void)
 int mp2650_reset_charger(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (!chip) {
 		chg_err("chip is NULL\n");
@@ -1876,7 +1876,7 @@ int mp2650_reset_charger(void)
 int mp2650_otg_vlim_set(int vlim)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1890,7 +1890,7 @@ int mp2650_set_switching_frequency(void)
 {
 	/* int value; */
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1906,7 +1906,7 @@ int mp2650_set_prochot_psys_cfg(void)
 {
 	/* int value; */
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1921,7 +1921,7 @@ int mp2650_set_prochot_psys_cfg(void)
 int mp2650_set_mps_otg_current(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1936,7 +1936,7 @@ int mp2650_set_mps_otg_current(void)
 int mp2650_set_mps_otg_voltage(bool is_9v)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1957,7 +1957,7 @@ int mp2650_set_mps_otg_voltage(bool is_9v)
 int mp2650_set_mps_second_otg_voltage(bool is_750mv)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1981,7 +1981,7 @@ int mp2650_set_mps_otg_enable(void)
 {
 	/* int value; */
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -1998,7 +1998,7 @@ int mp2650_set_mps_otg_disable(void)
 {
 	/* int value; */
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2014,7 +2014,7 @@ int mp2650_set_mps_otg_disable(void)
 int mp2650_enable_hiz(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2035,7 +2035,7 @@ int mp2650_enable_hiz(void)
 int mp2650_disable_hiz(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2056,7 +2056,7 @@ int mp2650_disable_hiz(void)
 int mp2650_enable_buck_switch(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2077,7 +2077,7 @@ int mp2650_enable_buck_switch(void)
 int mp2650_disable_buck_switch(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2098,7 +2098,7 @@ int mp2650_disable_buck_switch(void)
 int mp2650_enable_async_mode(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2119,7 +2119,7 @@ int mp2650_enable_async_mode(void)
 int mp2650_disable_async_mode(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2140,7 +2140,7 @@ int mp2650_disable_async_mode(void)
 static int mp2650_vbus_avoid_electric_config(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
 	}
@@ -2161,7 +2161,7 @@ int mp2650_check_learn_mode(void)
 	int rc = 0;
 	int reg_val = 0;
 	bool learn_mode = false;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2200,7 +2200,7 @@ static int mp2650_set_charger_vsys_threshold(struct chip_mp2650 *chip, int val)
 static int mp2650_burst_mode_enable(bool enable)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2244,7 +2244,7 @@ error:
 int mp2650_other_registers_init(void)
 {
 	int rc;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		return 0;
@@ -2263,7 +2263,7 @@ void mp2650_dump_registers(void)
 	int rc;
 	int addr;
 	static int dump_count = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	unsigned int val_buf[MP2650_DUMP_MAX_REG + 5] = { 0x0 };
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
@@ -2334,7 +2334,7 @@ int mp2650_get_chg_current_step(void)
 int mp2650_input_current_limit_init(void)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		chg_err("mp2650_input_current_limit_init: in suspended\n");
@@ -2382,7 +2382,7 @@ static int mp2650_input_current_limit_without_aicl(struct chip_mp2650 *chip, int
 int mp2650_set_voltage_slew_rate(int value)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		chg_err("mp2650_set_voltage_slew_rate: in suspended\n");
@@ -2404,7 +2404,7 @@ int mp2650_set_voltage_slew_rate(int value)
 static int mp2650_set_option(int option)
 {
 	int rc = 0;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (atomic_read(&chip->charger_suspended) == 1) {
 		chg_err("mp2650_set_voltage_slew_rate: in suspended\n");
@@ -2424,7 +2424,7 @@ static int mp2650_set_option(int option)
 
 int mp2650_hardware_init(void)
 {
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	chg_err("init mp2650 hardware! \n");
 
@@ -2434,37 +2434,37 @@ int mp2650_hardware_init(void)
 
 	mp2650_reset_charger();
 
-	mp2650_disable_charging();
+	mp2650_disable_charging_2();
 
-	mp2650_set_chging_term_disable();
+	mp2650_set_chging_term_disable_2();
 
 	mp2650_input_current_limit_init();
 
-	mp2650_float_voltage_write(WPC_TERMINATION_VOLTAGE);
+	mp2650_float_voltage_write_2(WPC_TERMINATION_VOLTAGE);
 
 	mp2650_otg_ilim_set(REG07_MP2650_OTG_CURRENT_LIMIT_1250MA);
 
-	mp2650_set_enable_volatile_writes();
+	mp2650_set_enable_volatile_writes_2();
 
-	mp2650_set_complete_charge_timeout(OVERTIME_DISABLED);
+	mp2650_set_complete_charge_timeout_2(OVERTIME_DISABLED);
 
 	mp2650_set_option(1);
 
-	mp2650_set_prechg_voltage_threshold();
+	mp2650_set_prechg_voltage_threshold_2();
 
-	mp2650_set_prechg_current(WPC_PRECHARGE_CURRENT);
+	mp2650_set_prechg_current_2(WPC_PRECHARGE_CURRENT);
 
-	mp2650_charging_current_write_fast(WPC_CHARGE_CURRENT_DEFAULT);
+	mp2650_charging_current_write_fast_2(WPC_CHARGE_CURRENT_DEFAULT);
 
-	mp2650_set_termchg_current(WPC_TERMINATION_CURRENT);
+	mp2650_set_termchg_current_2(WPC_TERMINATION_CURRENT);
 
-	mp2650_set_rechg_voltage(WPC_RECHARGE_VOLTAGE_OFFSET);
+	mp2650_set_rechg_voltage_2(WPC_RECHARGE_VOLTAGE_OFFSET);
 
 	mp2650_set_switching_frequency();
 
 	mp2650_set_prochot_psys_cfg();
 
-	mp2650_set_vindpm_vol(chip->hw_aicl_point);
+	mp2650_set_vindpm_vol_2(chip->hw_aicl_point);
 
 	mp2650_set_mps_otg_current();
 
@@ -2475,11 +2475,11 @@ int mp2650_hardware_init(void)
 
 	mp2650_other_registers_init();
 
-	mp2650_unsuspend_charger();
+	mp2650_unsuspend_charger_2();
 
-	mp2650_enable_charging();
+	mp2650_enable_charging_2();
 
-	mp2650_set_wdt_timer(REG09_MP2650_WTD_TIMER_40S);
+	mp2650_set_wdt_timer_2(REG09_MP2650_WTD_TIMER_40S);
 
 	mp2650_input_current_limit_without_aicl(chip, 500);
 
@@ -2558,9 +2558,9 @@ static void register_charger_devinfo(void)
 		chg_err("register_charger_devinfo fail\n");
 }
 
-bool oplus_charger_ic_chip_is_null(void)
+bool oplus_charger_ic_2_chip_is_null(void)
 {
-	if (!charger_ic) {
+	if (!charger_ic_2) {
 		return true;
 	} else {
 		return false;
@@ -2710,9 +2710,9 @@ free_otg_gpio:
 	return rc;
 }
 
-void mp2650_wireless_set_mps_otg_en_val(int value)
+void mp2650_wireless_set_mps_otg_en_val_2(int value)
 {
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	if (!chip) {
 		printk(KERN_ERR "[OPLUS_CHG][%s]: chip_mp2650 not ready!\n",
 		       __func__);
@@ -2746,7 +2746,7 @@ void mp2650_wireless_set_mps_otg_en_val(int value)
 
 int mp2650_wireless_get_mps_otg_en_val(void)
 {
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 
 	if (!chip) {
 		printk(KERN_ERR "[OPLUS_CHG][%s]: chip_mp2650 not ready!\n",
@@ -2971,7 +2971,7 @@ static int mp2650_reg_dump_internal(void)
 {
 	int rc = 0;
 	int addr;
-	struct chip_mp2650 *chip = charger_ic;
+	struct chip_mp2650 *chip = charger_ic_2;
 	int val_buf[MP2650_DUMP_REG_COUNT + 2] = { 0x0 };
 
 	if (!chip)
@@ -3145,7 +3145,7 @@ static int mp2650_output_suspend(struct oplus_chg_ic_dev *ic_dev, bool suspend)
 {
 	int rc = 0;
 
-	rc = suspend ? mp2650_disable_charging() : mp2650_enable_charging();
+	rc = suspend ? mp2650_disable_charging_2() : mp2650_enable_charging_2();
 
 	return rc;
 }
@@ -3153,7 +3153,7 @@ static int mp2650_output_suspend(struct oplus_chg_ic_dev *ic_dev, bool suspend)
 static int mp2650_output_is_suspend(struct oplus_chg_ic_dev *ic_dev,
 				    bool *suspend)
 {
-	*suspend = mp2650_check_charging_enable();
+	*suspend = mp2650_check_charging_enable_2();
 
 	return 0;
 }
@@ -3175,7 +3175,7 @@ static int mp2650_set_icl(struct oplus_chg_ic_dev *ic_dev,
 	}
 
 	if (vooc_mode && icl_ma > 0) {
-		rc = mp2650_input_current_limit_ctrl_by_vooc_write(icl_ma);
+		rc = mp2650_input_current_limit_ctrl_by_vooc_write_2(icl_ma);
 		return rc;
 	}
 
@@ -3203,7 +3203,7 @@ static int mp2650_get_icl(struct oplus_chg_ic_dev *ic_dev, int *icl_ma)
 static int mp2650_set_fcc(struct oplus_chg_ic_dev *ic_dev, int fcc_ma)
 {
 	int rc = 0;
-	rc = mp2650_charging_current_write_fast(fcc_ma);
+	rc = mp2650_charging_current_write_fast_2(fcc_ma);
 
 	return rc;
 }
@@ -3211,7 +3211,7 @@ static int mp2650_set_fcc(struct oplus_chg_ic_dev *ic_dev, int fcc_ma)
 static int mp2650_set_fv(struct oplus_chg_ic_dev *ic_dev, int fv_mv)
 {
 	int rc = 0;
-	rc = mp2650_float_voltage_write(fv_mv);
+	rc = mp2650_float_voltage_write_2(fv_mv);
 
 	return rc;
 }
@@ -3219,7 +3219,7 @@ static int mp2650_set_fv(struct oplus_chg_ic_dev *ic_dev, int fv_mv)
 static int mp2650_set_iterm(struct oplus_chg_ic_dev *ic_dev, int iterm_ma)
 {
 	int rc = 0;
-	rc = mp2650_set_termchg_current(iterm_ma);
+	rc = mp2650_set_termchg_current_2(iterm_ma);
 
 	return rc;
 }
@@ -3227,21 +3227,21 @@ static int mp2650_set_iterm(struct oplus_chg_ic_dev *ic_dev, int iterm_ma)
 static int mp2650_set_rechg_vol(struct oplus_chg_ic_dev *ic_dev, int vol_mv)
 {
 	int rc = 0;
-	rc = mp2650_set_rechg_voltage(vol_mv);
+	rc = mp2650_set_rechg_voltage_2(vol_mv);
 
 	return rc;
 }
 
 static int mp2650_get_input_curr(struct oplus_chg_ic_dev *ic_dev, int *curr_ma)
 {
-	*curr_ma = mp2650_get_ibus_current() / 1000;
+	*curr_ma = mp2650_get_ibus_current_2() / 1000;
 
 	return 0;
 }
 
 static int mp2650_get_input_vol(struct oplus_chg_ic_dev *ic_dev, int *vol_mv)
 {
-	*vol_mv = mp2650_get_vbus_voltage();
+	*vol_mv = mp2650_get_vbus_voltage_2();
 
 	return 0;
 }
@@ -3253,7 +3253,7 @@ static int mp2650_otg_boost_enable(struct oplus_chg_ic_dev *ic_dev, bool en)
 	if (en)
 		rc = mp2650_otg_enable();
 	else
-		rc = mp2650_otg_disable();
+		rc = mp2650_otg_disable_2();
 	if (rc < 0)
 		chg_err("can't %s otg boost, rc=%d\n",
 			en ? "enable" : "disable", rc);
@@ -3277,7 +3277,7 @@ static int mp2650_curr_drop(struct oplus_chg_ic_dev *ic_dev)
 		return 0;
 	}
 
-	pre_icl_index = mp2650_get_pre_icl_index();
+	pre_icl_index = mp2650_get_pre_icl_index_2();
 	if (pre_icl_index < 2) {
 		/* <1.2A, have been set 500 in bqmp2650_hardware_init */
 	} else {
@@ -3327,9 +3327,9 @@ static int mp2650_wdt_enable(struct oplus_chg_ic_dev *ic_dev, bool enable)
 		return 0;
 
 	if (enable)
-		mp2650_set_wdt_timer(REG09_MP2650_WTD_TIMER_40S);
+		mp2650_set_wdt_timer_2(REG09_MP2650_WTD_TIMER_40S);
 	else
-		mp2650_set_wdt_timer(REG09_MP2650_WTD_TIMER_DISABLE);
+		mp2650_set_wdt_timer_2(REG09_MP2650_WTD_TIMER_DISABLE);
 
 	chg_info("mp2650_wdt_enable[%d]\n", enable);
 
@@ -3448,11 +3448,11 @@ static void *oplus_chg_get_func(struct oplus_chg_ic_dev *ic_dev,
 		break;
 	case OPLUS_IC_FUNC_BUCK_KICK_WDT:
 		func = OPLUS_CHG_IC_FUNC_CHECK(OPLUS_IC_FUNC_BUCK_KICK_WDT,
-					       mp2650_kick_wdt);
+					       mp2650_kick_wdt_2);
 		break;
 	case OPLUS_IC_FUNC_BUCK_SET_AICL_POINT:
 		func = OPLUS_CHG_IC_FUNC_CHECK(OPLUS_IC_FUNC_BUCK_SET_AICL_POINT,
-					       mp2650_set_aicl_point);
+					       mp2650_set_aicl_point_2);
 		break;
 	case OPLUS_IC_FUNC_BUCK_SET_VINDPM:
 		func = OPLUS_CHG_IC_FUNC_CHECK(OPLUS_IC_FUNC_BUCK_SET_VINDPM,
@@ -3502,7 +3502,7 @@ static int mp2650_driver_probe(struct i2c_client *client,
 	complete_all(&chg_ic->resume_ack);
 	INIT_DELAYED_WORK(&chg_ic->plugin_work, mp2650_plugin_work);
 
-	charger_ic = chg_ic;
+	charger_ic_2 = chg_ic;
 	atomic_set(&chg_ic->charger_suspended, 0);
 
 	mp2650_dump_registers();
@@ -3534,7 +3534,7 @@ static int mp2650_driver_probe(struct i2c_client *client,
 		goto reg_ic_err;
 	}
 	battlog_buck_ic_ops.dev_data = (void *)chg_ic;
-	battery_log_ops_register(&battlog_buck_ic_ops);
+	battery_log_ops_register_2(&battlog_buck_ic_ops);
 	ic_cfg.name = node->name;
 	ic_cfg.index = ic_index;
 	snprintf(ic_cfg.manu_name, OPLUS_CHG_IC_MANU_NAME_MAX - 1, "buck-mp2762");
@@ -3638,7 +3638,7 @@ static int mp2650_suspend(struct i2c_client *client, pm_message_t mesg)
 #define VBUS_VOLT_VALID_THRESHOLD	2000
 static void mp2650_shutdown(struct i2c_client *client)
 {
-	mp2650_otg_disable();
+	mp2650_otg_disable_2();
 	chg_info("shutdown\n");
 }
 

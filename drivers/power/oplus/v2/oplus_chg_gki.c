@@ -453,7 +453,7 @@ static int oplus_gki_get_ui_soc(struct oplus_gki_device *chip)
 }
 
 #define OPLUS_NS_TO_MS (1000 * 1000)
-int oplus_chg_get_curr_time_ms(unsigned long *time_ms)
+int oplus_chg_get_curr_time_ms_2(unsigned long *time_ms)
 {
 	u64 ts_nsec;
 
@@ -616,7 +616,7 @@ static int battery_psy_get_prop(struct power_supply *psy,
 		else
 			pval->intval = oplus_wired_get_vbus();
 		if (oplus_is_power_off_charging() &&
-		    oplus_chg_get_curr_time_ms(&cur_chg_time) < FORCE_VBUS_5V_TIME)
+		    oplus_chg_get_curr_time_ms_2(&cur_chg_time) < FORCE_VBUS_5V_TIME)
 			pval->intval = KPOC_FORCE_VBUS_MV;
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_MIN:

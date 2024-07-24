@@ -295,7 +295,7 @@ int oplus_api_vooc_set_reset_sleep(struct oplus_mms *topic);
 void oplus_api_vooc_turn_off_fastchg(struct oplus_mms *topic);
 int oplus_vooc_current_to_level(struct oplus_mms *topic, int curr);
 int oplus_vooc_level_to_current(struct oplus_mms *topic, int level);
-int oplus_vooc_get_batt_curve_current(struct oplus_mms *topic);
+int oplus_vooc_get_batt_curve_current_2(struct oplus_mms *topic);
 bool oplus_vooc_get_bcc_support_for_smartchg(struct oplus_mms *topic);
 
 #endif /* __OPLUS_CHG_VOOC_H__ */

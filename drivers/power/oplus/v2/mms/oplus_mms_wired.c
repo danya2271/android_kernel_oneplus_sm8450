@@ -563,7 +563,7 @@ int oplus_wired_set_aicl_point(void)
 		return -ENODEV;
 	}
 
-	vbatt = oplus_gauge_get_batt_mvolts();
+	vbatt = oplus_gauge_get_batt_mvolts_2();
 	rc = oplus_chg_ic_func(chip->buck_ic,
 				OPLUS_IC_FUNC_BUCK_SET_AICL_POINT,
 				vbatt);
@@ -2964,7 +2964,7 @@ static void oplus_usbtemp_thread_init(struct oplus_mms_wired *chip)
 		chg_err("failed to cread oplus_usbtemp_kthread\n");
 }
 
-void oplus_wake_up_usbtemp_thread(struct oplus_mms_wired *chip)
+void oplus_wake_up_usbtemp_thread_2(struct oplus_mms_wired *chip)
 {
 	if (oplus_usbtemp_check_is_support(chip))
 		wake_up_interruptible(&chip->oplus_usbtemp_wq);
@@ -3648,7 +3648,7 @@ skip_present:
 	chip->wired_online = online;
 	chip->usbtemp_check = online;
 	if (chip->usbtemp_check)
-		oplus_wake_up_usbtemp_thread(chip);
+		oplus_wake_up_usbtemp_thread_2(chip);
 	/* TODO: add otg */
 
 	msg = oplus_mms_alloc_msg(MSG_TYPE_ITEM, MSG_PRIO_MEDIUM,
@@ -3767,7 +3767,7 @@ static void oplus_mms_wired_ccdetect_work(struct work_struct *work)
 		}
 		if (chip->wired_online && !chip->usbtemp_check) {
 			chip->usbtemp_check = true;
-			oplus_wake_up_usbtemp_thread(chip);
+			oplus_wake_up_usbtemp_thread_2(chip);
 		}
 	} else {
 		chip->usbtemp_check = false;

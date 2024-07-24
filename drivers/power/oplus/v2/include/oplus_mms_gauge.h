@@ -34,22 +34,22 @@ enum gauge_type_id {
 	DEVICE_ZY0603,
 };
 
-int oplus_gauge_get_batt_mvolts(void);
-int oplus_gauge_get_batt_fc(void);
-int oplus_gauge_get_batt_qm(void);
-int oplus_gauge_get_batt_pd(void);
+int oplus_gauge_get_batt_mvolts_2(void);
+int oplus_gauge_get_batt_fc_2(void);
+int oplus_gauge_get_batt_qm_2(void);
+int oplus_gauge_get_batt_pd_2(void);
 int oplus_gauge_get_batt_rcu(void);
 int oplus_gauge_get_batt_rcf(void);
-int oplus_gauge_get_batt_fcu(void);
-int oplus_gauge_get_batt_fcf(void);
+int oplus_gauge_get_batt_fc_2u(void);
+int oplus_gauge_get_batt_fc_2f(void);
 int oplus_gauge_get_batt_sou(void);
 int oplus_gauge_get_batt_do0(void);
 int oplus_gauge_get_batt_doe(void);
 int oplus_gauge_get_batt_trm(void);
 int oplus_gauge_get_batt_pc(void);
 int oplus_gauge_get_batt_qs(void);
-int oplus_gauge_get_batt_mvolts_2cell_max(void);
-int oplus_gauge_get_batt_mvolts_2cell_min(void);
+int oplus_gauge_get_batt_mvolts_2_2cell_max(void);
+int oplus_gauge_get_batt_mvolts_2_2cell_min(void);
 
 int oplus_gauge_get_batt_soc(void);
 int oplus_gauge_get_batt_current(void);
@@ -57,7 +57,7 @@ int oplus_gauge_get_remaining_capacity(void);
 int oplus_gauge_get_device_type(void);
 int oplus_gauge_get_device_type_for_vooc(void);
 
-int oplus_gauge_get_batt_fcc(void);
+int oplus_gauge_get_batt_fc_2c(void);
 
 int oplus_gauge_get_batt_cc(void);
 int oplus_gauge_get_batt_soh(void);
