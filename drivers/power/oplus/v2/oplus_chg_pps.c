@@ -431,7 +431,7 @@ static int32_t oplus_pps_get_curve_vbus(struct oplus_pps *chip)
 	if (chip->strategy == NULL)
 		return -EINVAL;
 
-	rc = oplus_chg_strategy_get_data(chip->strategy, &data);
+	rc = oplus_chg_strategy_get_data_2(chip->strategy, &data);
 	if (rc < 0) {
 		chg_err("can't get curve vbus, rc=%d\n", rc);
 		return rc;
@@ -449,7 +449,7 @@ static int32_t oplus_pps_get_curve_ibus(struct oplus_pps *chip)
 	if (chip->strategy == NULL)
 		return -EINVAL;
 
-	rc = oplus_chg_strategy_get_data(chip->strategy, &data);
+	rc = oplus_chg_strategy_get_data_2(chip->strategy, &data);
 	if (rc < 0) {
 		chg_err("can't get curve ibus, rc=%d\n", rc);
 		return rc;
@@ -1380,7 +1380,7 @@ static int oplus_pps_charge_start(struct oplus_pps *chip)
 						chip->strategy = chip->oplus_curve_strategy;
 					else
 						chip->strategy = chip->third_curve_strategy;
-					rc = oplus_chg_strategy_init(chip->strategy);
+					rc = oplus_chg_strategy_init_2(chip->strategy);
 					if (rc < 0) {
 						chg_err("strategy_init error, not support pps fast charge\n");
 						return rc;
@@ -1508,7 +1508,7 @@ static int oplus_pps_set_current_warm_range(struct oplus_pps *chip,
 			chip->pps_temp_cur_range = PPS_TEMP_RANGE_INIT;
 			ret = chip->limits.pps_strategy_normal_current;
 			oplus_pps_reset_temp_range(chip);
-			(void)oplus_chg_strategy_init(chip->strategy);
+			(void)oplus_chg_strategy_init_2(chip->strategy);
 			chip->limits.pps_normal_high_temp +=
 				PPS_TEMP_WARM_RANGE_THD;
 			chg_err("switch temp range:%d", vbat_temp_cur);
@@ -1622,7 +1622,7 @@ oplus_pps_set_current_temp_normal_range(struct oplus_pps *chip,
 						PPS_TEMP_RANGE_INIT;
 					ret = chip->limits.pps_strategy_high_current2;
 					oplus_pps_reset_temp_range(chip);
-					(void)oplus_chg_strategy_init(chip->strategy);
+					(void)oplus_chg_strategy_init_2(chip->strategy);
 					chip->limits.pps_normal_high_temp -=
 						PPS_TEMP_WARM_RANGE_THD;
 					chg_err("switch temp range:%d", vbat_temp_cur);
@@ -1779,7 +1779,7 @@ oplus_pps_set_current_temp_little_cool_range(struct oplus_pps *chip,
 					PPS_BAT_TEMP_SWITCH_CURVE;
 				chip->pps_temp_cur_range =
 					PPS_TEMP_RANGE_INIT;
-				(void)oplus_chg_strategy_init(chip->strategy);
+				(void)oplus_chg_strategy_init_2(chip->strategy);
 				chg_err("switch temp range:%d", vbat_temp_cur);
 			}
 		} else {
@@ -1826,7 +1826,7 @@ static int oplus_pps_set_current_temp_cool_range(struct oplus_pps *chip,
 					PPS_BAT_TEMP_SWITCH_CURVE;
 				chip->pps_temp_cur_range =
 					PPS_TEMP_RANGE_INIT;
-				(void)oplus_chg_strategy_init(chip->strategy);
+				(void)oplus_chg_strategy_init_2(chip->strategy);
 				chg_info("switch temp range:%d", vbat_temp_cur);
 			} else {
 				chip->pps_fastchg_batt_temp_status =
@@ -2567,7 +2567,7 @@ static void oplus_pps_monitor_work(struct work_struct *work)
 		if (rc < 0)
 			goto exit;
 
-		rc = oplus_chg_strategy_get_data(chip->strategy, &data);
+		rc = oplus_chg_strategy_get_data_2(chip->strategy, &data);
 		if (rc < 0) {
 			chg_err("can't get strategy data, rc=%d", rc);
 			goto exit;
@@ -3262,7 +3262,7 @@ static void oplus_pps_dpdm_switch_reg_callback(struct oplus_chg_ic_dev *ic, void
 	}
 	chip->dpdm_switch = ic;
 
-	name = of_get_oplus_chg_ic_name(chip->dev->of_node, "oplus,pps_ic", 0);
+	name = of_get_oplus_chg_ic_2_name(chip->dev->of_node, "oplus,pps_ic", 0);
 	oplus_chg_ic_wait_ic(name, oplus_pps_ic_reg_callback, chip);
 }
 
@@ -3293,7 +3293,7 @@ static void oplus_pps_cp_ic_reg_callback(struct oplus_chg_ic_dev *ic, void *data
 	}
 	chip->cp_ic = ic;
 
-	name = of_get_oplus_chg_ic_name(chip->dev->of_node, "oplus,dpdm_switch_ic", 0);
+	name = of_get_oplus_chg_ic_2_name(chip->dev->of_node, "oplus,dpdm_switch_ic", 0);
 	oplus_chg_ic_wait_ic(name, oplus_pps_dpdm_switch_reg_callback, chip);
 }
 
@@ -4031,7 +4031,7 @@ static int oplus_pps_probe(struct platform_device *pdev)
 		goto oplus_startegy_err;
 	}
 
-	name = of_get_oplus_chg_ic_name(pdev->dev.of_node, "oplus,cp_ic", 0);
+	name = of_get_oplus_chg_ic_2_name(pdev->dev.of_node, "oplus,cp_ic", 0);
 	oplus_chg_ic_wait_ic(name, oplus_pps_cp_ic_reg_callback, chip);
 	if (of_property_read_bool(chip->dev->of_node, "oplus,impedance_unit")) {
 		vote(chip->pps_not_allow_votable, IMP_VOTER, true, 1, false);

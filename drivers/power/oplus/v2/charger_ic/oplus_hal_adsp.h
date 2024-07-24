@@ -621,10 +621,10 @@ struct qcom_pmic {
 };
 
 #ifdef OPLUS_FEATURE_CHG_BASIC
-int oplus_adsp_voocphy_get_fast_chg_type(void);
-int oplus_adsp_voocphy_enable(bool enable);
-int oplus_adsp_voocphy_reset_again(void);
-int oplus_adsp_batt_curve_current(void);
+int oplus_adsp_voocphy_get_fast_chg_type_2(void);
+int oplus_adsp_voocphy_enable_2(bool enable);
+int oplus_adsp_voocphy_reset_again_2(void);
+int oplus_adsp_batt_curve_current_2(void);
 void oplus_chg_set_match_temp_ui_soc_to_voocphy(void);
 void oplus_chg_set_ap_fastchg_allow_to_voocphy(int allow);
 int oplus_adsp_voocphy_set_cool_down(int cool_down);

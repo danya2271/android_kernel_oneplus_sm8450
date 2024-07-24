@@ -260,7 +260,7 @@ static void oplus_monitor_charge_info_update_work(struct work_struct *work)
 	 * collected data is normal
 	 */
 	if (oplus_monitor_all_topic_is_ready(chip))
-		oplus_chg_track_comm_monitor(chip);
+		oplus_chg_track_comm_monitor_2(chip);
 
 	printk(KERN_INFO "OPLUS_CHG[oplus_charge_info]: "
 		"BATTERY[%d %d %d %d %d %d %d %d %d %d %d 0x%x], "
@@ -583,7 +583,7 @@ static void oplus_monitor_wired_plugin_work(struct work_struct *work)
 {
 	struct oplus_monitor *chip =
 		container_of(work, struct oplus_monitor, wired_plugin_work);
-	oplus_chg_track_check_wired_charging_break(chip->wired_online);
+	oplus_chg_track_check_wired_charging_break_2(chip->wired_online);
 
 	if (chip->liquid_inlet_detection_switch) {
 		chg_info("wired_online:%d", chip->wired_online);
@@ -721,7 +721,7 @@ static void oplus_monitor_wls_subs_callback(struct mms_subscribe *subs,
 			oplus_mms_get_item_data(chip->wls_topic, id, &data, false);
 			chip->wls_online = !!data.intval;
 			schedule_work(&chip->charge_info_update_work);
-			oplus_chg_track_check_wls_charging_break(!!data.intval);
+			oplus_chg_track_check_wls_charging_break_2(!!data.intval);
 			break;
 		default:
 			break;
@@ -1018,7 +1018,7 @@ static void oplus_monitor_vooc_subs_callback(struct mms_subscribe *subs,
 		case VOOC_ITEM_BREAK_CODE:
 			oplus_mms_get_item_data(chip->vooc_topic, id, &data,
 						false);
-			oplus_chg_track_set_fastchg_break_code(data.intval);
+			oplus_chg_track_set_fastchg_break_code_2(data.intval);
 			break;
 		case VOOC_ITEM_VOOC_BY_NORMAL_PATH:
 			oplus_mms_get_item_data(chip->vooc_topic, id, &data,

@@ -224,7 +224,7 @@ int oplus_gauge_get_batt_pd_2(void)
 	return pd;
 }
 
-int oplus_gauge_get_batt_rcu(void)
+int oplus_gauge_get_batt_rcu_2(void)
 {
 	int rc;
 	int rcu;
@@ -241,7 +241,7 @@ int oplus_gauge_get_batt_rcu(void)
 	return rcu;
 }
 
-int oplus_gauge_get_batt_rcf(void)
+int oplus_gauge_get_batt_rcf_2(void)
 {
 	int rc;
 	int rcf;
@@ -292,7 +292,7 @@ int oplus_gauge_get_batt_fc_2f(void)
 	return fcf;
 }
 
-int oplus_gauge_get_batt_sou(void)
+int oplus_gauge_get_batt_sou_2(void)
 {
 	int rc;
 	int sou;
@@ -309,7 +309,7 @@ int oplus_gauge_get_batt_sou(void)
 	return sou;
 }
 
-int oplus_gauge_get_batt_do0(void)
+int oplus_gauge_get_batt_do0_2(void)
 {
 	int rc;
 	int do0;
@@ -326,7 +326,7 @@ int oplus_gauge_get_batt_do0(void)
 	return do0;
 }
 
-int oplus_gauge_get_batt_doe(void)
+int oplus_gauge_get_batt_doe_2(void)
 {
 	int rc;
 	int doe;
@@ -343,7 +343,7 @@ int oplus_gauge_get_batt_doe(void)
 	return doe;
 }
 
-int oplus_gauge_get_batt_trm(void)
+int oplus_gauge_get_batt_trm_2(void)
 {
 	int rc;
 	int trm;
@@ -360,7 +360,7 @@ int oplus_gauge_get_batt_trm(void)
 	return trm;
 }
 
-int oplus_gauge_get_batt_pc(void)
+int oplus_gauge_get_batt_pc_2(void)
 {
 	int rc;
 	int pc;
@@ -377,7 +377,7 @@ int oplus_gauge_get_batt_pc(void)
 	return pc;
 }
 
-int oplus_gauge_get_batt_qs(void)
+int oplus_gauge_get_batt_qs_2(void)
 {
 	int rc;
 	int qs;
@@ -511,7 +511,7 @@ static int oplus_gauge_get_batt_temperature(struct oplus_mms_gauge *chip)
 	return temp;
 }
 
-int oplus_gauge_get_batt_soc(void)
+int oplus_gauge_get_batt_soc_2(void)
 {
 	int rc;
 	int soc;
@@ -528,7 +528,7 @@ int oplus_gauge_get_batt_soc(void)
 	return soc;
 }
 
-int oplus_gauge_get_bcc_parameters(char *buf)
+int oplus_gauge_get_bcc_parameters_2(char *buf)
 {
 	int rc;
 	bool gauge_locked;
@@ -551,7 +551,7 @@ int oplus_gauge_get_bcc_parameters(char *buf)
 	return 0;
 }
 
-int oplus_gauge_fastchg_update_bcc_parameters(char *buf)
+int oplus_gauge_fastchg_update_bcc_parameters_2(char *buf)
 {
 	int rc;
 
@@ -568,7 +568,7 @@ int oplus_gauge_fastchg_update_bcc_parameters(char *buf)
 	return 0;
 }
 
-int oplus_gauge_get_prev_bcc_parameters(char *buf)
+int oplus_gauge_get_prev_bcc_parameters_2(char *buf)
 {
 	int rc;
 
@@ -585,7 +585,7 @@ int oplus_gauge_get_prev_bcc_parameters(char *buf)
 	return 0;
 }
 
-int oplus_gauge_set_bcc_parameters(const char *buf)
+int oplus_gauge_set_bcc_parameters_2(const char *buf)
 {
 	int rc;
 
@@ -602,7 +602,7 @@ int oplus_gauge_set_bcc_parameters(const char *buf)
 	return 0;
 }
 
-int oplus_gauge_protect_check(void)
+int oplus_gauge_protect_check_2(void)
 {
 	int rc;
 
@@ -619,7 +619,7 @@ int oplus_gauge_protect_check(void)
 	return 0;
 }
 
-bool oplus_gauge_afi_update_done(void)
+bool oplus_gauge_afi_update_done_2(void)
 {
 	int rc;
 	bool status = true;
@@ -675,7 +675,7 @@ bool oplus_gauge_reset(void)
 }
 
 
-int oplus_gauge_get_batt_current(void)
+int oplus_gauge_get_batt_current_2(void)
 {
 	int rc;
 	int curr_ma;
@@ -703,7 +703,7 @@ int oplus_gauge_get_batt_current(void)
 	return curr_ma;
 }
 
-int oplus_gauge_get_remaining_capacity(void)
+int oplus_gauge_get_remaining_capacity_2(void)
 {
 	int rc;
 	int rm;
@@ -720,14 +720,14 @@ int oplus_gauge_get_remaining_capacity(void)
 	return rm;
 }
 
-int oplus_gauge_get_device_type(void)
+int oplus_gauge_get_device_type_2(void)
 {
 	if (!g_mms_gauge)
 		return 0;
 	return g_mms_gauge->device_type;
 }
 
-int oplus_gauge_get_device_type_for_vooc(void)
+int oplus_gauge_get_device_type_2_for_vooc(void)
 {
 	if (!g_mms_gauge)
 		return 0;
@@ -751,7 +751,7 @@ int oplus_gauge_get_batt_fc_2c(void)
 	return fcc;
 }
 
-int oplus_gauge_get_batt_cc(void)
+int oplus_gauge_get_batt_cc_2(void)
 {
 	int rc;
 	int cc;
@@ -768,7 +768,7 @@ int oplus_gauge_get_batt_cc(void)
 	return cc;
 }
 
-int oplus_gauge_get_batt_soh(void)
+int oplus_gauge_get_batt_soh_2(void)
 {
 	int rc;
 	int soh;
@@ -785,7 +785,7 @@ int oplus_gauge_get_batt_soh(void)
 	return soh;
 }
 
-bool oplus_gauge_get_batt_hmac(void)
+bool oplus_gauge_get_batt_hmac_2(void)
 {
 	int rc;
 	bool pass;
@@ -802,7 +802,7 @@ bool oplus_gauge_get_batt_hmac(void)
 	return pass;
 }
 
-bool oplus_gauge_get_batt_authenticate(void)
+bool oplus_gauge_get_batt_authenticate_2(void)
 {
 	int rc;
 	bool pass;
@@ -871,7 +871,7 @@ int oplus_gauge_get_batt_capacity_mah(struct oplus_mms *topic)
 	return cap_mah;
 }
 
-void oplus_gauge_set_batt_full(bool full)
+void oplus_gauge_set_batt_full_2(bool full)
 {
 	int rc;
 
@@ -902,13 +902,13 @@ static void oplus_mms_gauge_set_batt_full_work(struct work_struct *work)
 	     chip->batt_temp_region == TEMP_REGION_LITTLE_COOL ||
 	     chip->batt_temp_region == TEMP_REGION_PRE_NORMAL ||
 	     chip->batt_temp_region == TEMP_REGION_NORMAL) && chip->batt_full) {
-		oplus_gauge_set_batt_full(true);
+		oplus_gauge_set_batt_full_2(true);
 	} else {
-		oplus_gauge_set_batt_full(false);
+		oplus_gauge_set_batt_full_2(false);
 	}
 }
 
-bool oplus_gauge_check_chip_is_null(void)
+bool oplus_gauge_check_chip_is_null_2(void)
 {
 	if (!g_mms_gauge) {
 		return true;
@@ -917,7 +917,7 @@ bool oplus_gauge_check_chip_is_null(void)
 	}
 }
 
-int oplus_gauge_update_battery_dod0(void)
+int oplus_gauge_update_battery_dod0_2(void)
 {
 	int rc;
 
@@ -931,7 +931,7 @@ int oplus_gauge_update_battery_dod0(void)
 	return 0;
 }
 
-int oplus_gauge_update_soc_smooth_parameter(void)
+int oplus_gauge_update_soc_smooth_parameter_2(void)
 {
 	int rc;
 
@@ -947,7 +947,7 @@ int oplus_gauge_update_soc_smooth_parameter(void)
 	return rc;
 }
 
-int oplus_gauge_get_battery_cb_status(void)
+int oplus_gauge_get_battery_cb_status_2(void)
 {
 	int rc;
 	int cb_status;
@@ -964,17 +964,17 @@ int oplus_gauge_get_battery_cb_status(void)
 	return cb_status;
 }
 
-int oplus_gauge_get_i2c_err(void)
+int oplus_gauge_get_i2c_err_2(void)
 {
 	return 0; /* nick.hu TODO */
 }
 
-void oplus_gauge_clear_i2c_err(void)
+void oplus_gauge_clear_i2c_err_2(void)
 {
 	/* nick.hu TODO */
 }
 
-int oplus_gauge_get_passedchg(int *val)
+int oplus_gauge_get_passedchg_2(int *val)
 {
 	int rc;
 
@@ -1254,7 +1254,7 @@ int oplus_gauge_get_gauge_type(struct oplus_mms *mms, int index, int *val)
 	return 0;
 }
 
-int oplus_gauge_dump_register(void)
+int oplus_gauge_dump_register_2(void)
 {
 	int rc;
 
@@ -1396,7 +1396,7 @@ static void oplus_mms_gauge_init_work(struct work_struct *work)
 		goto init_try_again;
 	}
 	for (i = 0; i < chip->child_num; i++) {
-		chip->child_list[i].ic_dev = of_get_oplus_chg_ic(node, "oplus,gauge_ic", i);
+		chip->child_list[i].ic_dev = of_get_oplus_chg_ic_2(node, "oplus,gauge_ic", i);
 		if (chip->child_list[i].ic_dev == NULL) {
 			chg_err("not find gauge ic %d\n", i);
 			goto init_try_again;
@@ -1750,7 +1750,7 @@ end:
 static bool is_voocphy_ic_available(struct oplus_mms_gauge *chip)
 {
 	if (!chip->voocphy_ic)
-		chip->voocphy_ic = of_get_oplus_chg_ic(chip->dev->of_node,
+		chip->voocphy_ic = of_get_oplus_chg_ic_2(chip->dev->of_node,
 						       "oplus,voocphy_ic", 0);
 
 	return !!chip->voocphy_ic;

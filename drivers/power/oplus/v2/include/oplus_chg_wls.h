@@ -408,7 +408,7 @@ ssize_t oplus_chg_wls_upgrade_fw_store_2(struct oplus_mms *mms, const char *buf,
 #endif
 
 int oplus_chg_wls_set_status_keep(struct oplus_mms *mms, enum wls_status_keep_type status_keep);
-int oplus_chg_wls_get_break_sub_crux_info(struct oplus_mms *mms, char *crux_info);
+int oplus_chg_wls_get_break_sub_crux_info_2(struct oplus_mms *mms, char *crux_info);
 ssize_t oplus_chg_wls_send_mutual_cmd(struct oplus_mms *mms, char *buf);
 void oplus_chg_wls_response_mutual_cmd(struct oplus_mms *mms, const char *buf, size_t count);
 #endif /* __OPLUS_CHG_WLS_H__ */

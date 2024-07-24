@@ -868,7 +868,7 @@ static void oplus_wired_strategy_update(struct oplus_chg_wired *chip)
 	if (strategy == NULL)
 		return;
 
-	rc = oplus_chg_strategy_get_data(strategy, &tmp);
+	rc = oplus_chg_strategy_get_data_2(strategy, &tmp);
 	if (rc < 0) {
 		vote(chip->icl_votable, STRATEGY_VOTER, false, 0, true);
 		chg_err("get strategy data error, rc=%d", rc);
@@ -925,7 +925,7 @@ static void oplus_wired_gauge_update_work(struct work_struct *work)
 	}
 
 	if (oplus_wired_get_afi_condition())
-		oplus_gauge_protect_check();
+		oplus_gauge_protect_check_2();
 
 	oplus_wired_strategy_update(chip);
 	oplus_wired_vbus_check(chip);
@@ -1109,7 +1109,7 @@ static void oplus_wired_plugin_work(struct work_struct *work)
 
 		oplus_wired_current_set(chip, false);
 		if (chip->vooc_strategy != NULL)
-			oplus_chg_strategy_init(chip->vooc_strategy);
+			oplus_chg_strategy_init_2(chip->vooc_strategy);
 	} else {
 		/*
 		 * Set during plug out to prevent untimely settings

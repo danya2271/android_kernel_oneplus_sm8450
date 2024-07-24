@@ -149,7 +149,7 @@ static int da9313_config_interface(int RegNum, int val, int MASK)
 	return ret;
 }
 
-void da9313_dump_registers(void)
+void da9313_dump_registers_2(void)
 {
 	int rc;
 	int addr;
@@ -296,12 +296,12 @@ static int da9313_work_mode_set(int work_mode)
 	return rc;
 }
 
-int oplus_set_divider_work_mode(int work_mode)
+int oplus_set_divider_work_mode_2(int work_mode)
 {
 	return da9313_work_mode_set(work_mode);
 }
 
-int da9313_hardware_init(void)
+int da9313_hardware_init_2(void)
 {
 	int rc = 0;
 	struct chip_da9313 *divider_ic = the_chip;
@@ -319,7 +319,7 @@ int da9313_hardware_init(void)
 	return rc;
 }
 
-int max77932_hardware_init(void)
+int max77932_hardware_init_2(void)
 {
 	int rc = 0;
 	struct chip_da9313 *divider_ic = the_chip;
@@ -341,7 +341,7 @@ int max77932_hardware_init(void)
 	return rc;
 }
 
-int max77938_hardware_init(void)
+int max77938_hardware_init_2(void)
 {
 	int rc = 0;
 	struct chip_da9313 *divider_ic = the_chip;
@@ -359,7 +359,7 @@ int max77938_hardware_init(void)
 	return rc;
 }
 
-int sd77313_hardware_init(void)
+int sd77313_hardware_init_2(void)
 {
 	int rc = 0;
 	struct chip_da9313 *divider_ic = the_chip;
@@ -373,11 +373,11 @@ int sd77313_hardware_init(void)
 	}
 
 	chg_info("sd77313 hardware init\n");
-	da9313_dump_registers();
+	da9313_dump_registers_2();
 	return rc;
 }
 
-int read_value_from_reg(int reg_num)
+int read_value_from_reg_2(int reg_num)
 {
 	int reg_value = 0;
 
@@ -401,7 +401,7 @@ static int get_hwid(struct chip_da9313 *chip)
 
 	if (chip->da9313_hwid_gpio <= 0) {
 		chg_err("da9313_hwid_gpio not exist, return\n");
-		ret = read_value_from_reg(REG01_DA9313_ADDRESS);
+		ret = read_value_from_reg_2(REG01_DA9313_ADDRESS);
 		if (ret == HWID_DA9313) {
 			chip->hwid = HWID_DA9313;
 		}
@@ -432,7 +432,7 @@ static int get_hwid(struct chip_da9313 *chip)
 		gpio_state_pull_down, chip->da9313_hwid_gpio);
 
 	if (gpio_state_pull_up == 0 && gpio_state_pull_down == 0) {
-		ret = read_value_from_reg(REG01_DA9313_ADDRESS);
+		ret = read_value_from_reg_2(REG01_DA9313_ADDRESS);
 		if (ret == HWID_DA9313) {
 			chip->hwid = HWID_DA9313;
 		}
@@ -442,7 +442,7 @@ static int get_hwid(struct chip_da9313 *chip)
 		chg_debug("reg01 value is %d\n", chip->hwid);
 		return chip->hwid;
 	} else if (gpio_state_pull_up == 1 && gpio_state_pull_down == 1) {
-		ret = read_value_from_reg(REG16_DA9313_ADDRESS);
+		ret = read_value_from_reg_2(REG16_DA9313_ADDRESS);
 		if (ret == HWID_MAX77932) {
 			chip->hwid = HWID_MAX77932;
 		}
@@ -498,16 +498,16 @@ HWID_HANDLE:
 	get_hwid(chip);
 	switch (chip->hwid) {
 	case HWID_DA9313:
-		da9313_hardware_init();
+		da9313_hardware_init_2();
 		break;
 	case HWID_MAX77932:
-		max77932_hardware_init();
+		max77932_hardware_init_2();
 		break;
 	case HWID_MAX77938:
-		max77938_hardware_init();
+		max77938_hardware_init_2();
 		break;
 	case HWID_SD77313:
-		sd77313_hardware_init();
+		sd77313_hardware_init_2();
 		break;
 	default:
 		chg_err("No half voltage chip hwid matched!!!\n");
@@ -785,7 +785,7 @@ static int init_da9313_proc(struct chip_da9313 *da)
 	return 0;
 }
 
-static int da9313_driver_probe(struct i2c_client *client,
+static int da9313_driver_2_probe(struct i2c_client *client,
 			       const struct i2c_device_id *id)
 {
 	struct chip_da9313 *divider_ic;
@@ -805,7 +805,7 @@ static int da9313_driver_probe(struct i2c_client *client,
 	divider_ic->fixed_mode_set_by_dev_file = false;
 	halfv_chip_init(divider_ic);
 
-	da9313_hardware_init();
+	da9313_hardware_init_2();
 	init_da9313_proc(divider_ic);
 
 	ret = sysfs_create_group(&divider_ic->dev->kobj, &da9313_attribute_group);
@@ -861,7 +861,7 @@ static int da9313_suspend(struct i2c_client *client, pm_message_t mesg)
 
 static struct i2c_driver da9313_i2c_driver;
 
-static int da9313_driver_remove(struct i2c_client *client)
+static int da9313_driver_2_remove(struct i2c_client *client)
 {
 	int ret = 0;
 
@@ -935,8 +935,8 @@ static struct i2c_driver da9313_i2c_driver = {
 		.pm = &da9313_pm_ops,
 #endif
 	},
-	.probe = da9313_driver_probe,
-	.remove = da9313_driver_remove,
+	.probe = da9313_driver_2_probe,
+	.remove = da9313_driver_2_remove,
 	.id_table = da9313_id,
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0))
 	.resume = da9313_resume,
@@ -948,7 +948,7 @@ static struct i2c_driver da9313_i2c_driver = {
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
 module_i2c_driver(da9313_i2c_driver);
 #else
-int da9313_driver_init(void)
+int da9313_driver_2_init(void)
 {
 	int ret = 0;
 
@@ -963,11 +963,11 @@ int da9313_driver_init(void)
 	return ret;
 }
 
-void da9313_driver_exit(void)
+void da9313_driver_2_exit(void)
 {
 	i2c_del_driver(&da9313_i2c_driver);
 }
-oplus_chg_module_register(da9313_driver);
+oplus_chg_module_register(da9313_driver_2);
 #endif /*LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)*/
 MODULE_DESCRIPTION("Driver for da9313 divider chip");
 MODULE_LICENSE("GPL v2");

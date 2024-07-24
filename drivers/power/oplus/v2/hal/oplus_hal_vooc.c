@@ -197,7 +197,7 @@ void oplus_vooc_set_shutdown_mode(struct oplus_chg_ic_dev *vooc_ic)
 		chg_err("shutdown switch to normal fail\n");
 }
 
-void oplus_vooc_eint_register(struct oplus_chg_ic_dev *vooc_ic)
+void oplus_vooc_eint_register_2(struct oplus_chg_ic_dev *vooc_ic)
 {
 	int rc;
 
@@ -211,7 +211,7 @@ void oplus_vooc_eint_register(struct oplus_chg_ic_dev *vooc_ic)
 		chg_err("eint register error, rc=%d\n", rc);
 }
 
-void oplus_vooc_eint_unregister(struct oplus_chg_ic_dev *vooc_ic)
+void oplus_vooc_eint_unregister_2(struct oplus_chg_ic_dev *vooc_ic)
 {
 	int rc;
 
@@ -455,7 +455,7 @@ set_vooc_chargerid_switch_val(struct oplus_chg_ic_dev *vooc_ic, int value)
 		return;
 }
 
-void switch_fast_chg(struct oplus_chg_ic_dev *vooc_ic)
+void switch_fast_chg_2(struct oplus_chg_ic_dev *vooc_ic)
 {
 	if (vooc_ic == NULL) {
 		chg_err("vooc_ic is NULL\n");

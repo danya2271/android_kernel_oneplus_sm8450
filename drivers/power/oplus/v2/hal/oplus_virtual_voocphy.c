@@ -132,7 +132,7 @@ static int oplus_chg_vphy_init(struct oplus_chg_ic_dev *ic_dev)
 	node = va->dev->of_node;
 
 	if (va->use_dpdm_switch_ic) {
-		va->dpdm_switch = of_get_oplus_chg_ic(node, "oplus,dpdm_switch_ic", 0);
+		va->dpdm_switch = of_get_oplus_chg_ic_2(node, "oplus,dpdm_switch_ic", 0);
 		if (va->dpdm_switch == NULL) {
 			chg_debug("dpdm_switch_ic not found\n");
 			return -EAGAIN;
@@ -144,7 +144,7 @@ static int oplus_chg_vphy_init(struct oplus_chg_ic_dev *ic_dev)
 		if (va->vphy_list[i].initialized)
 			continue;
 		va->vphy_list[i].ic_dev =
-			of_get_oplus_chg_ic(node, "oplus,vphy_ic", i);
+			of_get_oplus_chg_ic_2(node, "oplus,vphy_ic", i);
 		if (va->vphy_list[i].ic_dev == NULL) {
 			chg_debug("vphy[%d] not found\n", i);
 			retry = true;
@@ -1072,7 +1072,7 @@ static int oplus_virtual_vphy_probe(struct platform_device *pdev)
 	ic_cfg.virq_num = ARRAY_SIZE(oplus_vphy_virq_table);
 	ic_cfg.of_node = node;
 	chip->ic_dev =
-		devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+		devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -1109,7 +1109,7 @@ static int oplus_virtual_vphy_remove(struct platform_device *pdev)
 
 	if (chip->ic_dev->online)
 		oplus_chg_vphy_exit(chip->ic_dev);
-	devm_oplus_chg_ic_unregister(&pdev->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&pdev->dev, chip->ic_dev);
 	if (gpio_is_valid(chip->gpio.vphy_id_gpio))
 		gpio_free(chip->gpio.vphy_id_gpio);
 	if (gpio_is_valid(chip->gpio.vphy_switch2_gpio))

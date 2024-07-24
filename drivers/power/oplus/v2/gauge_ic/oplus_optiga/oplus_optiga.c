@@ -683,7 +683,7 @@ static int oplus_optiga_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = optiga_guage_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(optiga_guage_virq_table);
 	ic_cfg.of_node = g_oplus_optiga_chip->dev->of_node;
-	g_oplus_optiga_chip->ic_dev = devm_oplus_chg_ic_register(g_oplus_optiga_chip->dev, &ic_cfg);
+	g_oplus_optiga_chip->ic_dev = devm_oplus_chg_ic_register_2(g_oplus_optiga_chip->dev, &ic_cfg);
 	if (!g_oplus_optiga_chip->ic_dev) {
 		ret = -ENODEV;
 		chg_err("register %s error\n", g_oplus_optiga_chip->dev->of_node->name);

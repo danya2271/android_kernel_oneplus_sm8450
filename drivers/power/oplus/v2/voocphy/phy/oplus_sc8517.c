@@ -1497,7 +1497,7 @@ static int sc8517_ic_register(struct sc8517_device *chip)
 			chg_err("not support ic_type(=%d)\n", ic_type);
 			continue;
 		}
-		ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+		ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 		if (!ic_dev) {
 			rc = -ENODEV;
 			chg_err("register %s error\n", child->name);

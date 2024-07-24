@@ -445,7 +445,7 @@ static int mt6375_guage_driver_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = mt6375_guage_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(mt6375_guage_virq_table);
 	ic_cfg.of_node = chip->dev->of_node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", chip->dev->of_node->name);
@@ -455,7 +455,7 @@ static int mt6375_guage_driver_probe(struct platform_device *pdev)
 
 #ifndef CONFIG_OPLUS_CHARGER_MTK
 	oplus_vooc_get_fastchg_started_pfunc(&oplus_vooc_get_fastchg_started);
-	oplus_vooc_get_fastchg_ing_pfunc(&oplus_vooc_get_fastchg_ing);
+	oplus_vooc_get_fastchg_ing_2_pfunc(&oplus_vooc_get_fastchg_ing_2);
 #endif
 
 	oplus_mt6375_guage_init(chip->ic_dev);

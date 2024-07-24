@@ -41,8 +41,8 @@ __maybe_unused static bool is_batt_psy_available(struct oplus_voocphy_manager *c
 }
 
 static struct oplus_voocphy_operations oplus_adsp_voocphy_ops = {
-	.adsp_voocphy_enable = oplus_adsp_voocphy_enable,
-	.adsp_voocphy_reset_again = oplus_adsp_voocphy_reset_again,
+	.adsp_voocphy_enable = oplus_adsp_voocphy_enable_2,
+	.adsp_voocphy_reset_again = oplus_adsp_voocphy_reset_again_2,
 	.adsp_set_ap_fastchg_allow = oplus_chg_set_ap_fastchg_allow_to_voocphy,
 };
 
@@ -296,7 +296,7 @@ static void oplus_adsp_voocphy_handle_ongoing_event(struct oplus_voocphy_manager
 	chip->fastchg_notify_status = FAST_NOTIFY_ONGOING;
 	if (chip->fast_chg_type == FASTCHG_CHARGER_TYPE_UNKOWN) {
 		chip->fastchg_start = true;
-		chip->fast_chg_type = oplus_adsp_voocphy_get_fast_chg_type();
+		chip->fast_chg_type = oplus_adsp_voocphy_get_fast_chg_type_2();
 		if (is_batt_psy_available(chip))
 			power_supply_changed(chip->batt_psy);
 	}

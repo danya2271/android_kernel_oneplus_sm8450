@@ -1228,9 +1228,9 @@ skip_vooc_warm_check:
 	return chip->fastchg_allow;
 }
 
-static void oplus_vooc_switch_fast_chg(struct oplus_chg_vooc *chip)
+static void oplus_vooc_switch_fast_chg_2(struct oplus_chg_vooc *chip)
 {
-	switch_fast_chg(chip->vooc_ic);
+	switch_fast_chg_2(chip->vooc_ic);
 	if (!is_client_vote_enabled(chip->vooc_disable_votable,
 				    UPGRADE_FW_VOTER) &&
 	    !oplus_vooc_asic_fw_status(chip->vooc_ic)) {
@@ -1591,7 +1591,7 @@ static void oplus_vooc_switch_check_work(struct work_struct *work)
 		chg_err("switch to fastchg, jiffies=%lu\n", fastchg_check_timeout);
 
 		chip->switch_retry_count++;
-		oplus_vooc_switch_fast_chg(chip);
+		oplus_vooc_switch_fast_chg_2(chip);
 		schedule_delayed_work(&chip->vooc_switch_check_work, msecs_to_jiffies(5000));
 		return;
 
@@ -1629,7 +1629,7 @@ static void oplus_vooc_switch_check_work(struct work_struct *work)
 		if (chip->wired_online &&
 		    (oplus_chg_vooc_get_switch_mode(chip->vooc_ic) !=
 		     VOOC_SWITCH_MODE_VOOC)) {
-			switch_fast_chg(chip->vooc_ic);
+			switch_fast_chg_2(chip->vooc_ic);
 			chg_err("D+D- did not switch to VOOC mode, try switching\n");
 		}
 		oplus_vooc_set_reset_active(chip->vooc_ic);
@@ -2201,7 +2201,7 @@ static int oplus_vooc_fastchg_process(struct oplus_chg_vooc *chip)
 		if (chip->gauge_topic != NULL)
 			oplus_mms_topic_update(chip->gauge_topic, false);
 		if (oplus_vooc_get_bcc_support(chip)) {
-			oplus_gauge_fastchg_update_bcc_parameters(buf);
+			oplus_gauge_fastchg_update_bcc_parameters_2(buf);
 			oplus_smart_chg_get_fastchg_battery_bcc_parameters(buf);
 		}
 		oplus_gauge_lock();
@@ -2618,7 +2618,7 @@ static void oplus_vooc_fastchg_work(struct work_struct *work)
 
 	usleep_range(2000, 2000);
 	/* TODO: check data gpio val */
-	oplus_vooc_eint_unregister(chip->vooc_ic);
+	oplus_vooc_eint_unregister_2(chip->vooc_ic);
 	data = oplus_vooc_read_ap_data(chip->vooc_ic);
 
 	if (((data & 0xf0) != 0x50) && ((data & 0xf0) != 0x70) && (!fw_ver_info) &&
@@ -2659,7 +2659,7 @@ static void oplus_vooc_fastchg_work(struct work_struct *work)
 				vote(chip->wired_icl_votable, ADSP_CRASH_VOTER, false, 0, false);
 			oplus_vooc_set_vooc_charging(chip, false);
 			if (chip->general_strategy != NULL)
-				oplus_chg_strategy_init(chip->general_strategy);
+				oplus_chg_strategy_init_2(chip->general_strategy);
 			oplus_vooc_setup_watchdog_timer(chip, 25000);
 		} else {
 			chg_info("not allow fastchg\n");
@@ -2717,7 +2717,7 @@ static void oplus_vooc_fastchg_work(struct work_struct *work)
 			break;
 		}
 		if (chip->general_strategy != NULL) {
-			rc = oplus_chg_strategy_get_data(chip->general_strategy,
+			rc = oplus_chg_strategy_get_data_2(chip->general_strategy,
 							 &ret_tmp);
 			if (rc < 0)
 				chg_err("get strategy data error, rc=%d", rc);
@@ -2796,7 +2796,7 @@ static void oplus_vooc_fastchg_work(struct work_struct *work)
 		}
 
 		if (oplus_vooc_get_bcc_support(chip)) {
-			oplus_gauge_fastchg_update_bcc_parameters(buf);
+			oplus_gauge_fastchg_update_bcc_parameters_2(buf);
 			oplus_smart_chg_get_fastchg_battery_bcc_parameters(buf);
 		}
 
@@ -2952,7 +2952,7 @@ static void oplus_vooc_fastchg_work(struct work_struct *work)
 					      vooc_curr);
 	else
 		oplus_vooc_reply_data(chip->vooc_ic, ret_info,
-				      oplus_gauge_get_device_type_for_vooc(),
+				      oplus_gauge_get_device_type_2_for_vooc(),
 				      chip->config.data_width,
 				      vooc_curr);
 
@@ -3000,7 +3000,7 @@ out:
 				      msecs_to_jiffies(3000));
 	}
 
-	oplus_vooc_eint_register(chip->vooc_ic);
+	oplus_vooc_eint_register_2(chip->vooc_ic);
 
 	if (!chip->fastchg_started)
 		oplus_vooc_set_awake(chip, false);
@@ -4495,7 +4495,7 @@ static void oplus_vooc_init_work(struct work_struct *work)
 	struct oplus_chg_ic_dev *real_vooc_ic = NULL;
 	int rc;
 
-	chip->vooc_ic = of_get_oplus_chg_ic(node, "oplus,vooc_ic", 0);
+	chip->vooc_ic = of_get_oplus_chg_ic_2(node, "oplus,vooc_ic", 0);
 	if (chip->vooc_ic == NULL) {
 		if (retry > 0) {
 			retry--;
@@ -4566,7 +4566,7 @@ static void oplus_vooc_init_work(struct work_struct *work)
 	rc = oplus_chg_vooc_virq_register(chip);
 	if (rc < 0)
 		goto virq_reg_err;
-	oplus_vooc_eint_register(chip->vooc_ic);
+	oplus_vooc_eint_register_2(chip->vooc_ic);
 
 	oplus_mcu_bcc_svooc_batt_curves_2(chip, real_vooc_ic->dev->of_node);
 	oplus_mcu_bcc_stop_curr_dt_2(chip, real_vooc_ic->dev->of_node);

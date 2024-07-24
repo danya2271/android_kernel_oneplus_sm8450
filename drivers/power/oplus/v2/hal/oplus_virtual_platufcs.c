@@ -342,7 +342,7 @@ static int oplus_chg_vpu_child_init(struct oplus_virtual_ufcs_ic *chip)
 		chip->child_list[i].parent = chip->ic_dev;
 		INIT_WORK(&chip->child_list[i].online_work, oplus_vpu_online_work);
 		INIT_WORK(&chip->child_list[i].offline_work, oplus_vpu_offline_work);
-		name = of_get_oplus_chg_ic_name(node, "oplus,ufcs_ic", i);
+		name = of_get_oplus_chg_ic_2_name(node, "oplus,ufcs_ic", i);
 		rc = oplus_chg_ic_wait_ic_timeout(name, oplus_vpu_child_reg_callback, &chip->child_list[i],
 						  msecs_to_jiffies(UFCS_REG_TIMEOUT_MS));
 		if (rc < 0) {
@@ -1069,7 +1069,7 @@ static int oplus_virtual_platufcs_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = oplus_vpu_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(oplus_vpu_virq_table);
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -1102,7 +1102,7 @@ static int oplus_virtual_platufcs_remove(struct platform_device *pdev)
 	if (chip->ic_dev->online)
 		oplus_chg_vpu_exit(chip->ic_dev);
 
-	devm_oplus_chg_ic_unregister(&pdev->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&pdev->dev, chip->ic_dev);
 	devm_kfree(&pdev->dev, chip);
 	platform_set_drvdata(pdev, NULL);
 

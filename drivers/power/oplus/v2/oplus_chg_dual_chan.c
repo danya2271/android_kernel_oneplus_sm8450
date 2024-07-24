@@ -141,7 +141,7 @@ static bool is_sub_gauge_topic_available(struct oplus_dual_chan_chip *chip)
 static bool is_voocphy_ic_available(struct oplus_dual_chan_chip *chip)
 {
 	if (!chip->voocphy_ic)
-		chip->voocphy_ic = of_get_oplus_chg_ic(chip->dev->of_node,
+		chip->voocphy_ic = of_get_oplus_chg_ic_2(chip->dev->of_node,
 						       "oplus,voocphy_ic", 0);
 
 	return !!chip->voocphy_ic;
@@ -781,7 +781,7 @@ static int dual_chan_track_debugfs_init(struct oplus_dual_chan_chip *chip)
 	struct dentry *debugfs_root;
 	struct dentry *debugfs_dual_chan;
 
-	debugfs_root = oplus_chg_track_get_debugfs_root();
+	debugfs_root = oplus_chg_track_get_debugfs_root_2();
 	if (!debugfs_root) {
 		ret = -ENOENT;
 		return ret;

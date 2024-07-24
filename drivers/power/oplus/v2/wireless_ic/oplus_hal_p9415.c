@@ -147,7 +147,7 @@ __maybe_unused static bool is_nor_ic_available(struct oplus_p9415 *chip)
 	}
 	node = chip->dev->of_node;
 	if (!chip->nor_ic)
-		chip->nor_ic = of_get_oplus_chg_ic(node, "oplus,nor_ic", 0);
+		chip->nor_ic = of_get_oplus_chg_ic_2(node, "oplus,nor_ic", 0);
 	return !!chip->nor_ic;
 }
 
@@ -504,7 +504,7 @@ static int p9415_track_debugfs_init(struct oplus_p9415 *chip)
 	struct dentry *debugfs_root;
 	struct dentry *debugfs_p9415;
 
-	debugfs_root = oplus_chg_track_get_debugfs_root();
+	debugfs_root = oplus_chg_track_get_debugfs_root_2();
 	if (!debugfs_root) {
 		ret = -ENOENT;
 		return ret;
@@ -532,7 +532,7 @@ static int p9415_set_trx_boost_enable(struct oplus_p9415 *chip, bool en)
 		chg_err("nor_ic is NULL\n");
 		return -ENODEV;
 	}
-	return oplus_chg_wls_nor_set_boost_en(chip->nor_ic, en);
+	return oplus_chg_wls_nor_set_boost_en_2(chip->nor_ic, en);
 }
 
 static int p9415_set_trx_boost_vol(struct oplus_p9415 *chip, int vol_mv)
@@ -545,7 +545,7 @@ static int p9415_set_trx_boost_vol(struct oplus_p9415 *chip, int vol_mv)
 		chg_err("nor_ic is NULL\n");
 		return -ENODEV;
 	}
-	return oplus_chg_wls_nor_set_boost_vol(chip->nor_ic, vol_mv);
+	return oplus_chg_wls_nor_set_boost_vol_2(chip->nor_ic, vol_mv);
 }
 
 __maybe_unused static int p9415_set_trx_boost_curr_limit(struct oplus_p9415 *chip, int curr_ma)
@@ -558,7 +558,7 @@ __maybe_unused static int p9415_set_trx_boost_curr_limit(struct oplus_p9415 *chi
 		chg_err("nor_ic is NULL\n");
 		return -ENODEV;
 	}
-	return oplus_chg_wls_nor_set_boost_curr_limit(chip->nor_ic, curr_ma);
+	return oplus_chg_wls_nor_set_boost_curr_limit_2(chip->nor_ic, curr_ma);
 }
 
 __maybe_unused static int p9415_get_rx_event_gpio_val(struct oplus_p9415 *chip)
@@ -2454,7 +2454,7 @@ static int p9415_driver_probe(struct i2c_client *client,
 	ic_cfg.virq_num = ARRAY_SIZE(p9415_virq_table);
 	ic_cfg.get_func = oplus_chg_get_func;
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -2489,7 +2489,7 @@ static int p9415_driver_probe(struct i2c_client *client,
 	return 0;
 
 gpio_init_err:
-	devm_oplus_chg_ic_unregister(chip->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(chip->dev, chip->ic_dev);
 reg_ic_err:
 	i2c_set_clientdata(client, NULL);
 	return rc;
@@ -2511,7 +2511,7 @@ static void p9415_driver_remove(struct i2c_client *client)
 	disable_irq(chip->rx_event_irq);
 	if (!gpio_is_valid(chip->rx_event_gpio))
 		gpio_free(chip->rx_event_gpio);
-	devm_oplus_chg_ic_unregister(chip->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(chip->dev, chip->ic_dev);
 	i2c_set_clientdata(client, NULL);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0))
 	return 0;
