@@ -434,7 +434,7 @@ static struct device_attribute *oplus_usb_attributes[] = {
 static ssize_t authenticate_show(struct device *dev,
 				 struct device_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%d\n", oplus_gauge_get_batt_authenticate());
+	return sprintf(buf, "%d\n", oplus_gauge_get_batt_authenticate_2());
 }
 static DEVICE_ATTR_RO(authenticate);
 
@@ -975,12 +975,12 @@ static ssize_t bcc_exception_store(struct device *dev, struct device_attribute *
 }
 static DEVICE_ATTR_WO(bcc_exception);
 
-int __attribute__((weak)) oplus_gauge_get_bcc_parameters(char *buf)
+int __attribute__((weak)) oplus_gauge_get_bcc_parameters_2(char *buf)
 {
 	return 0;
 }
 
-int __attribute__((weak)) oplus_gauge_set_bcc_parameters(const char *buf)
+int __attribute__((weak)) oplus_gauge_set_bcc_parameters_2(const char *buf)
 {
 	return 0;
 }
@@ -1023,10 +1023,10 @@ static ssize_t bcc_parms_show(struct device *dev, struct device_attribute *attr,
 	   only SVOOC charging need to get the bcc parameters.*/
 	if ((vooc_project == VOOC_MCU_PROJECT || vooc_project == VOOC_MCU_PROJECT_100W)
 		&& chg_type == OPLUS_CHG_USB_TYPE_SVOOC && voocphy_support != ADSP_VOOCPHY) {
-		val = oplus_gauge_get_prev_bcc_parameters(buf);
+		val = oplus_gauge_get_prev_bcc_parameters_2(buf);
 		val = oplus_smart_chg_get_prev_battery_bcc_parameters(buf);
 	} else {
-		val = oplus_gauge_get_bcc_parameters(buf);
+		val = oplus_gauge_get_bcc_parameters_2(buf);
 		val = oplus_smart_chg_get_battery_bcc_parameters(buf);
 	}
 
@@ -1046,7 +1046,7 @@ static ssize_t bcc_parms_store(struct device *dev, struct device_attribute *attr
 		return -EINVAL;
 	}
 
-	ret = oplus_gauge_set_bcc_parameters(buf);
+	ret = oplus_gauge_set_bcc_parameters_2(buf);
 	ret = oplus_smart_chg_set_bcc_debug_parameters(buf);
 	if (ret < 0) {
 		chg_err("error\n");
@@ -1756,7 +1756,7 @@ static ssize_t chg_olc_config_store(struct device *dev, struct device_attribute 
 		return -EINVAL;
 	}
 
-	oplus_chg_olc_config_set(buf);
+	oplus_chg_olc_config_set_2(buf);
 	return count;
 }
 
@@ -1770,7 +1770,7 @@ static ssize_t chg_olc_config_show(struct device *dev, struct device_attribute *
 		return -EINVAL;
 	}
 
-	len = oplus_chg_olc_config_get(buf);
+	len = oplus_chg_olc_config_get_2(buf);
 	return len;
 }
 static DEVICE_ATTR_RW(chg_olc_config);
@@ -1832,7 +1832,7 @@ static ssize_t battlog_push_config_store(struct device *dev,
 	}
 
 	if (!!val) {
-		rc = oplus_chg_batterylog_exception_push();
+		rc = oplus_chg_batterylog_exception_push_2();
 		if (rc < 0)
 			chg_err("push batterylog failed, rc=%d\n", rc);
 		else
@@ -2095,7 +2095,7 @@ static void oplus_common_dir_destroy(struct device *dir_dev)
 /**********************************************************************
 * configfs init APIs
 **********************************************************************/
-int oplus_usb_node_add(struct device_attribute **usb_attributes)
+int oplus_usb_node_add_2(struct device_attribute **usb_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;
@@ -2122,7 +2122,7 @@ int oplus_usb_node_add(struct device_attribute **usb_attributes)
 	return 0;
 }
 
-int oplus_usb_node_delete(struct device_attribute **usb_attributes)
+int oplus_usb_node_delete_2(struct device_attribute **usb_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;
@@ -2140,7 +2140,7 @@ int oplus_usb_node_delete(struct device_attribute **usb_attributes)
 	return 0;
 }
 
-int oplus_battery_node_add(struct device_attribute **battery_attributes)
+int oplus_battery_node_add_2(struct device_attribute **battery_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;
@@ -2167,7 +2167,7 @@ int oplus_battery_node_add(struct device_attribute **battery_attributes)
 	return 0;
 }
 
-int oplus_battery_node_delete(struct device_attribute **battery_attributes)
+int oplus_battery_node_delete_2(struct device_attribute **battery_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;
@@ -2185,7 +2185,7 @@ int oplus_battery_node_delete(struct device_attribute **battery_attributes)
 	return 0;
 }
 
-int oplus_wireless_node_add(struct device_attribute **wireless_attributes)
+int oplus_wireless_node_add_2(struct device_attribute **wireless_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;
@@ -2212,7 +2212,7 @@ int oplus_wireless_node_add(struct device_attribute **wireless_attributes)
 	return 0;
 }
 
-int oplus_wireless_node_delete(struct device_attribute **wireless_attributes)
+int oplus_wireless_node_delete_2(struct device_attribute **wireless_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;
@@ -2230,7 +2230,7 @@ int oplus_wireless_node_delete(struct device_attribute **wireless_attributes)
 	return 0;
 }
 
-int oplus_common_node_add(struct device_attribute **common_attributes)
+int oplus_common_node_add_2(struct device_attribute **common_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;
@@ -2257,7 +2257,7 @@ int oplus_common_node_add(struct device_attribute **common_attributes)
 	return 0;
 }
 
-int oplus_common_node_delete(struct device_attribute **common_attributes)
+int oplus_common_node_delete_2(struct device_attribute **common_attributes)
 {
 	struct oplus_configfs_device *chip = g_cfg_dev;
 	struct device_attribute **attrs;

@@ -342,7 +342,7 @@ int chg_exception_report_2(void *chg_exception_data, int type_reason, int flag_r
 
 #define COUNT_TIMELIMIT	60
 #define SUCCESS_COUNT	100
-int oplus_chg_batterylog_exception_push(void)
+int oplus_chg_batterylog_exception_push_2(void)
 {
 	int ret = -1;
 	static int count = 0;
@@ -379,7 +379,7 @@ int oplus_chg_set_app_info(const char *buf)
 	return ret;
 }
 
-int oplus_chg_olc_config_set(const char *buf)
+int oplus_chg_olc_config_set_2(const char *buf)
 {
 	int ret = 0;
 
@@ -390,7 +390,7 @@ int oplus_chg_olc_config_set(const char *buf)
 	return ret;
 }
 
-int oplus_chg_olc_config_get(char *buf)
+int oplus_chg_olc_config_get_2(char *buf)
 {
 	int ret = 0;
 

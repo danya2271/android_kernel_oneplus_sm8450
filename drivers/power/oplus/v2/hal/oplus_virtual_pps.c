@@ -129,7 +129,7 @@ static int oplus_vpps_child_init(struct oplus_virtual_pps_ic *chip)
 	for (i = 0; i < chip->child_num; i++) {
 		chip->child_list[i].index = i;
 		chip->child_list[i].parent = chip->ic_dev;
-		name = of_get_oplus_chg_ic_name(node, "oplus,pps_ic", i);
+		name = of_get_oplus_chg_ic_2_name(node, "oplus,pps_ic", i);
 		rc = oplus_chg_ic_wait_ic_timeout(name, oplus_vpps_child_reg_callback, &chip->child_list[i],
 						  msecs_to_jiffies(PPS_REG_TIMEOUT_MS));
 		if (rc < 0) {
@@ -583,7 +583,7 @@ static int oplus_virtual_pps_probe(struct platform_device *pdev)
 	ic_cfg.get_func = oplus_chg_pps_get_func;
 	ic_cfg.virq_data = oplus_pps_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(oplus_pps_virq_table);
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -624,7 +624,7 @@ static int oplus_virtual_pps_remove(struct platform_device *pdev)
 	if (chip->ic_dev->online)
 		oplus_chg_pps_exit(chip->ic_dev);
 
-	devm_oplus_chg_ic_unregister(&pdev->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(&pdev->dev, chip->ic_dev);
 	devm_kfree(&pdev->dev, chip);
 	platform_set_drvdata(pdev, NULL);
 

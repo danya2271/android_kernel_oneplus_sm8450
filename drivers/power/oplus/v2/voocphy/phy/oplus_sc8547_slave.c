@@ -705,7 +705,7 @@ static int sc8547_slave_ic_register(struct sc8547a_slave_device *device)
 			continue;
 		}
 
-		ic_dev = devm_oplus_chg_ic_register(device->slave_dev, &ic_cfg);
+		ic_dev = devm_oplus_chg_ic_register_2(device->slave_dev, &ic_cfg);
 		if (!ic_dev) {
 			rc = -ENODEV;
 			chg_err("register %s error\n", child->name);

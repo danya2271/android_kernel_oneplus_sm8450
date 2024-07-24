@@ -68,12 +68,12 @@ void oplus_chg_ic_free_minor(unsigned int minor)
 }
 #endif
 
-void oplus_chg_ic_list_lock(void)
+void oplus_chg_ic_list_lock_2(void)
 {
 	mutex_lock(&list_lock);
 }
 
-void oplus_chg_ic_list_unlock(void)
+void oplus_chg_ic_list_unlock_2(void)
 {
 	mutex_unlock(&list_lock);
 }
@@ -101,7 +101,7 @@ struct oplus_chg_ic_dev *oplus_chg_ic_find_by_name(const char *name)
 	return NULL;
 }
 
-struct oplus_chg_ic_dev *of_get_oplus_chg_ic(struct device_node *node,
+struct oplus_chg_ic_dev *of_get_oplus_chg_ic_2(struct device_node *node,
 					     const char *prop_name, int index)
 {
 	struct device_node *ic_node;
@@ -114,7 +114,7 @@ struct oplus_chg_ic_dev *of_get_oplus_chg_ic(struct device_node *node,
 	return oplus_chg_ic_find_by_name(ic_node->name);
 }
 
-const char *of_get_oplus_chg_ic_name(struct device_node *node,
+const char *of_get_oplus_chg_ic_2_name(struct device_node *node,
 				     const char *prop_name, int index)
 {
 	struct device_node *ic_node;
@@ -1194,7 +1194,7 @@ static void oplus_chg_ic_get_cfg(struct oplus_chg_ic_dev *ic_dev, struct oplus_c
 }
 
 static struct oplus_chg_ic_dev *
-__oplus_chg_ic_register(struct device *dev, struct oplus_chg_ic_cfg *cfg)
+__oplus_chg_ic_register_2(struct device *dev, struct oplus_chg_ic_cfg *cfg)
 {
 	struct oplus_chg_ic_dev *dev_temp;
 	struct oplus_chg_ic_dev *ic_dev;
@@ -1296,13 +1296,13 @@ get_minor_err:
 	return NULL;
 }
 
-struct oplus_chg_ic_dev *oplus_chg_ic_register(struct device *dev,
+struct oplus_chg_ic_dev *oplus_chg_ic_register_2(struct device *dev,
 					       struct oplus_chg_ic_cfg *cfg)
 {
-	return __oplus_chg_ic_register(dev, cfg);
+	return __oplus_chg_ic_register_2(dev, cfg);
 }
 
-int oplus_chg_ic_unregister(struct oplus_chg_ic_dev *ic_dev)
+int oplus_chg_ic_unregister_2(struct oplus_chg_ic_dev *ic_dev)
 {
 #ifdef CONFIG_OPLUS_CHG_IC_DEBUG
 	struct device_attribute **attrs;
@@ -1371,7 +1371,7 @@ static int devm_oplus_chg_ic_match(struct device *dev, void *res, void *data)
 	return this->ic_dev == match->ic_dev;
 }
 
-struct oplus_chg_ic_dev *devm_oplus_chg_ic_register(struct device *dev,
+struct oplus_chg_ic_dev *devm_oplus_chg_ic_register_2(struct device *dev,
 						    struct oplus_chg_ic_cfg *cfg)
 {
 	struct ic_devres *dr;
@@ -1384,7 +1384,7 @@ struct oplus_chg_ic_dev *devm_oplus_chg_ic_register(struct device *dev,
 		return NULL;
 	}
 
-	ic_dev = __oplus_chg_ic_register(dev, cfg);
+	ic_dev = __oplus_chg_ic_register_2(dev, cfg);
 	if (ic_dev == NULL) {
 		devres_free(dr);
 		return NULL;
@@ -1395,9 +1395,9 @@ struct oplus_chg_ic_dev *devm_oplus_chg_ic_register(struct device *dev,
 
 	return ic_dev;
 }
-EXPORT_SYMBOL(devm_oplus_chg_ic_register);
+EXPORT_SYMBOL(devm_oplus_chg_ic_register_2);
 
-int devm_oplus_chg_ic_unregister(struct device *dev,
+int devm_oplus_chg_ic_unregister_2_2(struct device *dev,
 				 struct oplus_chg_ic_dev *ic_dev)
 {
 	struct ic_devres match_data = { ic_dev };
@@ -1416,7 +1416,7 @@ int devm_oplus_chg_ic_unregister(struct device *dev,
 
 	return 0;
 }
-EXPORT_SYMBOL(devm_oplus_chg_ic_unregister);
+EXPORT_SYMBOL(devm_oplus_chg_ic_unregister_2_2);
 
 static __init int oplus_chg_ic_class_init(void)
 {

@@ -678,7 +678,7 @@ static int hl7227_driver_probe(struct i2c_client *client, const struct i2c_devic
 	ic_cfg.virq_num = ARRAY_SIZE(hl7227_virq_table);
 	ic_cfg.get_func = oplus_chg_get_func;
 	ic_cfg.of_node = node;
-	chip->ic_dev = devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+	chip->ic_dev = devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);
@@ -755,7 +755,7 @@ static void hl7227_driver_remove(struct i2c_client *client)
 	disable_irq(chip->cp_int_irq);
 	if (!gpio_is_valid(chip->cp_int_gpio))
 		gpio_free(chip->cp_int_gpio);
-	devm_oplus_chg_ic_unregister(chip->dev, chip->ic_dev);
+	devm_oplus_chg_ic_unregister_2_2(chip->dev, chip->ic_dev);
 	devm_kfree(&client->dev, chip);
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0))

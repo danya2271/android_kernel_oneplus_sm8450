@@ -1103,7 +1103,7 @@ static int cp_track_debugfs_init(struct vphy_chip *chip)
 	struct dentry *debugfs_root;
 	struct dentry *debugfs_cp;
 
-	debugfs_root = oplus_chg_track_get_debugfs_root();
+	debugfs_root = oplus_chg_track_get_debugfs_root_2();
 	if (!debugfs_root) {
 		ret = -ENOENT;
 		return ret;
@@ -1164,7 +1164,7 @@ struct vphy_chip *oplus_chglib_register_vphy(struct device *dev, struct hw_vphy_
 	ic_cfg.virq_num = ARRAY_SIZE(vphy_virq_table);
 	ic_cfg.of_node = node;
 	chip->ic_dev =
-		devm_oplus_chg_ic_register(chip->dev, &ic_cfg);
+		devm_oplus_chg_ic_register_2(chip->dev, &ic_cfg);
 	if (!chip->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", node->name);

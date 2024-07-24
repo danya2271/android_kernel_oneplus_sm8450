@@ -35,7 +35,7 @@ struct exception_data {
 int chg_exception_report_2(void *chg_exception_data, int type_reason, int flag_reason,
 				void *summary, unsigned int summary_size);
 int oplus_chg_set_app_info(const char *buf);
-int oplus_chg_olc_config_set(const char *buf);
-int oplus_chg_olc_config_get(char *buf);
-int oplus_chg_batterylog_exception_push(void);
+int oplus_chg_olc_config_set_2(const char *buf);
+int oplus_chg_olc_config_get_2(char *buf);
+int oplus_chg_batterylog_exception_push_2(void);
 #endif /*__OPLUS_CHG_EXCEPTION_H__*/

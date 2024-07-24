@@ -334,8 +334,8 @@ static void handle_oem_read_buffer(struct battery_chg_dev *bcdev,
 	complete(&bcdev->oem_read_ack);
 }
 
-static bool oplus_vooc_get_fastchg_ing(struct battery_chg_dev *bcdev);
-static int oplus_vooc_get_fast_chg_type(struct battery_chg_dev *bcdev);
+static bool oplus_vooc_get_fastchg_ing_2(struct battery_chg_dev *bcdev);
+static int oplus_vooc_get_fast_chg_type_2(struct battery_chg_dev *bcdev);
 static int bcc_battery_chg_write(struct battery_chg_dev *bcdev, void *data,
 	int len)
 {
@@ -416,8 +416,8 @@ static void handle_bcc_read_buffer(struct battery_chg_dev *bcdev,
 	}
 	memcpy(bcdev->bcc_read_buffer_dump.data_buffer, resp_msg->data_buffer, buf_len);
 
-	if (oplus_vooc_get_fastchg_ing(bcdev)
-		&& oplus_vooc_get_fast_chg_type(bcdev) != CHARGER_SUBTYPE_FASTCHG_VOOC) {
+	if (oplus_vooc_get_fastchg_ing_2(bcdev)
+		&& oplus_vooc_get_fast_chg_type_2(bcdev) != CHARGER_SUBTYPE_FASTCHG_VOOC) {
 		bcdev->bcc_read_buffer_dump.data_buffer[15] = 1;
 	} else {
 		bcdev->bcc_read_buffer_dump.data_buffer[15] = 0;
@@ -934,7 +934,7 @@ static int oplus_chg_get_voocphy_support(struct battery_chg_dev *bcdev)
 	return voocphy_support;
 }
 
-static bool oplus_vooc_get_fastchg_ing(struct battery_chg_dev *bcdev)
+static bool oplus_vooc_get_fastchg_ing_2(struct battery_chg_dev *bcdev)
 {
 	bool fastchg_status;
 	union mms_msg_data data = { 0 };
@@ -952,7 +952,7 @@ static bool oplus_vooc_get_fastchg_ing(struct battery_chg_dev *bcdev)
 	return fastchg_status;
 }
 
-static int oplus_vooc_get_fast_chg_type(struct battery_chg_dev *bcdev)
+static int oplus_vooc_get_fast_chg_type_2(struct battery_chg_dev *bcdev)
 {
 	int svooc_type = 0;
 	union mms_msg_data data = { 0 };
@@ -981,8 +981,8 @@ static void oplus_recheck_input_current_work(struct work_struct *work)
 {
 	struct battery_chg_dev *bcdev = container_of(work,
 		struct battery_chg_dev, recheck_input_current_work.work);
-	bool fastchg_ing = oplus_vooc_get_fastchg_ing(bcdev);
-	int fast_chg_type = oplus_vooc_get_fast_chg_type(bcdev);
+	bool fastchg_ing = oplus_vooc_get_fastchg_ing_2(bcdev);
+	int fast_chg_type = oplus_vooc_get_fast_chg_type_2(bcdev);
 	int chg_vol = 0;
 	int ibus_curr = 0;
 	static int count = 0;
@@ -1081,7 +1081,7 @@ static void oplus_adsp_voocphy_status_func(struct work_struct *work)
 #define DISCONNECT			0
 #define STANDARD_TYPEC_DEV_CONNECT	BIT(0)
 #define OTG_DEV_CONNECT			BIT(1)
-int oplus_get_otg_online_status_with_cid_scheme(struct battery_chg_dev *bcdev)
+int oplus_get_otg_online_status_with_cid_scheme_2(struct battery_chg_dev *bcdev)
 {
 	int rc = 0;
 	int cid_status = 0;
@@ -1138,7 +1138,7 @@ static int oplus_otg_ap_enable(struct battery_chg_dev *bcdev, bool enable)
 	} else {
 		chg_err("oplus_otg_ap_enable, rc=%d\n", rc);
 	}
-	oplus_get_otg_online_status_with_cid_scheme(bcdev);
+	oplus_get_otg_online_status_with_cid_scheme_2(bcdev);
 	if (bcdev->cid_status != 0) {
 		chg_err("Oplus_otg_ap_enable,flag bcdev->cid_status != 0\n");
 		oplus_ccdetect_enable(bcdev);
@@ -1625,7 +1625,7 @@ static void oplus_set_wrx_otg_en_val(struct battery_chg_dev *bcdev, int value)
 		gpio_get_value(bcdev->oplus_custom_gpio.wrx_otg_en_gpio));
 }
 
-int oplus_adsp_batt_curve_current(void)
+int oplus_adsp_batt_curve_current_2(void)
 {
 	int rc;
 	static int batt_current = 0;
@@ -1648,7 +1648,7 @@ int oplus_adsp_batt_curve_current(void)
 	return batt_current * 100;
 }
 
-int oplus_adsp_voocphy_get_fast_chg_type(void)
+int oplus_adsp_voocphy_get_fast_chg_type_2(void)
 {
 	int rc = 0;
 	struct battery_chg_dev *bcdev = g_bcdev;
@@ -1671,7 +1671,7 @@ int oplus_adsp_voocphy_get_fast_chg_type(void)
 	return fast_chg_type;
 }
 
-int oplus_adsp_voocphy_enable(bool enable)
+int oplus_adsp_voocphy_enable_2(bool enable)
 {
 	int rc = 0;
 	struct battery_chg_dev *bcdev = g_bcdev;
@@ -2077,7 +2077,7 @@ static void oplus_switch_to_wired_charge(struct battery_chg_dev *bcdev)
 
 	if (oplus_wpc_get_otg_charging()) {
 		/*oplus_wpc_dis_wireless_chg(1);*/
-		mp2650_wireless_set_mps_otg_en_val(0);
+		mp2650_2_wireless_set_mps_otg_en_val(0);
 		oplus_wpc_set_wrx_otg_en_value(0);
 
 		cancel_delayed_work_sync(&bcdev->wait_wired_charge_on);
@@ -2728,7 +2728,7 @@ void oplus_chg_set_ap_fastchg_allow_to_voocphy(int allow)
 	chg_err("set_ap_fastchg_allow_to_voocphy allow:%d\n", allow);
 }
 
-int oplus_set_bcc_curr_to_voocphy(struct oplus_chg_ic_dev *ic_dev, int *bcc_curr)
+int oplus_set_bcc_curr_to_voocphy_2(struct oplus_chg_ic_dev *ic_dev, int *bcc_curr)
 {
 	int rc = 0;
 	struct battery_chg_dev *bcdev;
@@ -2812,7 +2812,7 @@ int oplus_get_fast_chg_type(void)
 {
 	int fast_chg_type = 0;
 
-	fast_chg_type = oplus_vooc_get_fast_chg_type();
+	fast_chg_type = oplus_vooc_get_fast_chg_type_2();
 	if (fast_chg_type == 0) {
 		fast_chg_type = oplus_chg_get_charger_subtype();
 	}
@@ -4292,7 +4292,7 @@ static int oplus_voocphy_enable(struct battery_chg_dev *bcdev, bool enable)
 }
 
 
-int oplus_adsp_voocphy_reset_again(void)
+int oplus_adsp_voocphy_reset_again_2(void)
 {
 	int rc = 0;
 	struct battery_chg_dev *bcdev = g_bcdev;
@@ -4321,7 +4321,7 @@ static void oplus_voocphy_err_work(struct work_struct *work)
 	int mmi_chg = 1;
 
 	chg_info("start voocphy error check\n");
-	if (oplus_vooc_get_fastchg_ing(bcdev) == false && bcdev->voocphy_err_check) {
+	if (oplus_vooc_get_fastchg_ing_2(bcdev) == false && bcdev->voocphy_err_check) {
 		chg_err("!!!happend\n");
 		bcdev->voocphy_err_check = false;
 		oplus_chg_suspend_charger(true, DEF_VOTER);
@@ -4331,7 +4331,7 @@ static void oplus_voocphy_err_work(struct work_struct *work)
 		if (mmi_chg) {
 			oplus_chg_suspend_charger(false, DEF_VOTER);
 			oplus_chg_disable_charger(false, DEF_VOTER);
-			oplus_adsp_voocphy_reset_again();
+			oplus_adsp_voocphy_reset_again_2();
 		}
 	}
 }
@@ -4367,7 +4367,7 @@ static int oplus_get_batt_full_status(struct battery_chg_dev *bcdev)
 	return data.intval;
 }
 
-void lcm_frequency_ctrl(struct battery_chg_dev *bcdev)
+void lcm_frequency_ctrl_2(struct battery_chg_dev *bcdev)
 {
 	static int lcm_en_flag = LCM_EN_DEAFULT;
 	static int  check_count = 0;
@@ -4409,7 +4409,7 @@ static void oplus_chg_ctrl_lcm_work(struct work_struct *work)
 	struct battery_chg_dev *bcdev = container_of(work,
 		struct battery_chg_dev, ctrl_lcm_frequency.work);
 
-	lcm_frequency_ctrl(bcdev);
+	lcm_frequency_ctrl_2(bcdev);
 }
 
 static void oplus_plugin_irq_work(struct work_struct *work)
@@ -5814,8 +5814,8 @@ static int oplus_chg_8350_set_fv(struct oplus_chg_ic_dev *ic_dev, int fv_mv)
 	pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
 
 	if (oplus_chg_get_voocphy_support(bcdev) == ADSP_VOOCPHY) {
-		bool fastchg_ing = oplus_vooc_get_fastchg_ing(bcdev);
-		int fast_chg_type = oplus_vooc_get_fast_chg_type(bcdev);
+		bool fastchg_ing = oplus_vooc_get_fastchg_ing_2(bcdev);
+		int fast_chg_type = oplus_vooc_get_fast_chg_type_2(bcdev);
 		if (fastchg_ing && (fast_chg_type == BCC_TYPE_IS_SVOOC)) {
 			chg_info("fastchg started, do not set fv\n");
 			return rc;
@@ -6292,7 +6292,7 @@ static int oplus_chg_8350_voocphy_enable(struct oplus_chg_ic_dev *ic_dev, bool e
 
 static int oplus_chg_8350_voocphy_reset_again(struct oplus_chg_ic_dev *ic_dev)
 {
-	/* return oplus_adsp_voocphy_reset_again; */
+	/* return oplus_adsp_voocphy_reset_again_2; */
 	return 0;
 }
 
@@ -7166,7 +7166,7 @@ static void *oplus_chg_8350_buck_get_func(struct oplus_chg_ic_dev *ic_dev, enum 
 		func = OPLUS_CHG_IC_FUNC_CHECK(OPLUS_IC_FUNC_BUCK_HARDWARE_INIT, oplus_chg_8350_hardware_init);
 		break;
 	case OPLUS_IC_FUNC_VOOCPHY_SET_BCC_CURR:
-		func = OPLUS_CHG_IC_FUNC_CHECK(OPLUS_IC_FUNC_VOOCPHY_SET_BCC_CURR, oplus_set_bcc_curr_to_voocphy);
+		func = OPLUS_CHG_IC_FUNC_CHECK(OPLUS_IC_FUNC_VOOCPHY_SET_BCC_CURR, oplus_set_bcc_curr_to_voocphy_2);
 		break;
 
 	case OPLUS_IC_FUNC_WLS_BOOST_ENABLE:
@@ -8118,15 +8118,15 @@ static int oplus_chg_adsp_dpdm_switch_set_switch_mode(struct oplus_chg_ic_dev *i
 	switch (mode) {
 	case DPDM_SWITCH_TO_AP:
 		chg_info("dpdm switch to ap\n");
-		rc = oplus_adsp_voocphy_enable(false);
+		rc = oplus_adsp_voocphy_enable_2(false);
 		break;
 	case DPDM_SWITCH_TO_VOOC:
 		chg_info("dpdm switch to vooc\n");
-		rc = oplus_adsp_voocphy_enable(true);
+		rc = oplus_adsp_voocphy_enable_2(true);
 		break;
 	case DPDM_SWITCH_TO_UFCS:
 		chg_info("dpdm switch to ufcs\n");
-		rc = oplus_adsp_voocphy_enable(false);
+		rc = oplus_adsp_voocphy_enable_2(false);
 		break;
 	default:
 		chg_err("not supported mode, mode=%d\n", mode);
@@ -8878,7 +8878,7 @@ static int oplus_sm8350_ic_register(struct battery_chg_dev *bcdev)
 			chg_err("not support ic_type(=%d)\n", ic_type);
 			continue;
 		}
-		ic_dev = devm_oplus_chg_ic_register(bcdev->dev, &ic_cfg);
+		ic_dev = devm_oplus_chg_ic_register_2(bcdev->dev, &ic_cfg);
 		if (!ic_dev) {
 			rc = -ENODEV;
 			chg_err("register %s error\n", child->name);
@@ -9277,7 +9277,7 @@ static struct platform_driver battery_chg_driver = {
 };
 
 #ifdef OPLUS_FEATURE_CHG_BASIC
-static int __init sm8350_chg_init(void)
+static int __init sm8350_chg_2_init(void)
 {
 	int ret;
 
@@ -9285,12 +9285,12 @@ static int __init sm8350_chg_init(void)
 	return ret;
 }
 
-static void __exit sm8350_chg_exit(void)
+static void __exit sm8350_chg_2_exit(void)
 {
 	platform_driver_unregister(&battery_chg_driver);
 }
 
-oplus_chg_module_register(sm8350_chg);
+oplus_chg_module_register(sm8350_chg_2);
 #else
 module_platform_driver(battery_chg_driver);
 #endif

@@ -550,7 +550,7 @@ struct chip_bq27541 {
 #endif
 };
 
-extern bool oplus_gauge_ic_chip_is_null(
+extern bool oplus_gauge_ic_chip_is_null_2(
 	struct oplus_chg_ic_dev *ic_dev);
 
 #endif /* __OPLUS_BQ27541_H__ */

@@ -253,7 +253,7 @@ static int oplus_mos_ctrl_probe(struct platform_device *pdev)
 	ic_cfg.virq_data = mos_ctl_virq_table;
 	ic_cfg.virq_num = ARRAY_SIZE(mos_ctl_virq_table);
 	ic_cfg.of_node = mos_ic->dev->of_node;
-	mos_ic->ic_dev = devm_oplus_chg_ic_register(mos_ic->dev, &ic_cfg);
+	mos_ic->ic_dev = devm_oplus_chg_ic_register_2(mos_ic->dev, &ic_cfg);
 	if (!mos_ic->ic_dev) {
 		rc = -ENODEV;
 		chg_err("register %s error\n", mos_ic->dev->of_node->name);

@@ -130,9 +130,9 @@ typedef struct {
 	unsigned char crux_info[OPLUS_CHG_TRACK_CURX_INFO_LEN];
 } __attribute__ ((packed)) oplus_chg_track_trigger;
 
-int oplus_chg_track_comm_monitor(struct oplus_monitor *monitor);
-int oplus_chg_track_check_wired_charging_break(int vbus_rising);
-int oplus_chg_track_set_fastchg_break_code(int fastchg_break_code);
+int oplus_chg_track_comm_monitor_2(struct oplus_monitor *monitor);
+int oplus_chg_track_check_wired_charging_break_2(int vbus_rising);
+int oplus_chg_track_set_fastchg_break_code_2(int fastchg_break_code);
 int oplus_chg_track_driver_init(struct oplus_monitor *monitor);
 int oplus_chg_track_driver_exit(struct oplus_monitor *monitor);
 int oplus_chg_track_set_uisoc_1_start(struct oplus_monitor *monitor);
@@ -151,8 +151,8 @@ int oplus_chg_track_olc_config_set(const char *buf);
 int oplus_chg_track_olc_config_get(char *buf);
 int oplus_chg_track_time_zone_set(const char *buf);
 int oplus_chg_track_time_zone_get(char *buf);
-struct dentry *oplus_chg_track_get_debugfs_root(void);
+struct dentry *oplus_chg_track_get_debugfs_root_2(void);
 int oplus_chg_track_set_hidl_info_2(const char *buf, size_t count);
-int oplus_chg_track_check_wls_charging_break(int wls_connect);
+int oplus_chg_track_check_wls_charging_break_2(int wls_connect);
 
 #endif /* __OPLUS_CHG_TRACK_H__ */
