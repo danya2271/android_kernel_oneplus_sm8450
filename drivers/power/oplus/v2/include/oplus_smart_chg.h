@@ -26,8 +26,8 @@ typedef enum {
 #define BCC_PARMS_COUNT_LEN   (BCC_PARMS_COUNT * sizeof(int))
 
 int oplus_smart_chg_set_normal_current(int curr);
-int oplus_smart_chg_set_normal_cool_down(int cool_down);
-int oplus_smart_chg_get_normal_cool_down(void);
+int oplus_smart_chg_set_normal_cool_down_2(int cool_down);
+int oplus_smart_chg_get_normal_cool_down_2(void);
 long oplus_smart_chg_get_quick_mode_time_gain(void);
 int oplus_smart_chg_get_quick_mode_percent_gain(void);
 int oplus_smart_chg_get_battery_bcc_parameters(char *buf);

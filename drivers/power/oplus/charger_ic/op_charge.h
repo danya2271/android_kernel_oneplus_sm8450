@@ -314,7 +314,7 @@ struct ntc_table_855 con_temp_volt_855[] = {
 	{1250, 46},
 };
 
-int con_temp_855_2[] = {
+int con_temp_855[] = {
 	-20,
 	-19,
 	-18,

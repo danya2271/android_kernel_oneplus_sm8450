@@ -1111,7 +1111,7 @@ static ssize_t bcc_current_store(struct device *dev, struct device_attribute *at
 }
 static DEVICE_ATTR_RW(bcc_current);
 
-static ssize_t normal_current_now_store(struct device *dev, struct device_attribute *attr, const char *buf,
+static ssize_t normal_current_now_2_store(struct device *dev, struct device_attribute *attr, const char *buf,
 					size_t count)
 {
 	int val = 0;
@@ -1130,9 +1130,9 @@ static ssize_t normal_current_now_store(struct device *dev, struct device_attrib
 
 	return count;
 }
-DEVICE_ATTR_WO(normal_current_now);
+DEVICE_ATTR_WO(normal_current_now_2);
 
-static ssize_t normal_cool_down_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+static ssize_t normal_cool_down_2_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	int val = 0;
 	int rc;
@@ -1142,13 +1142,13 @@ static ssize_t normal_cool_down_store(struct device *dev, struct device_attribut
 		return -EINVAL;
 	}
 	chg_info("val:%d\n", val);
-	rc = oplus_smart_chg_set_normal_cool_down(val);
+	rc = oplus_smart_chg_set_normal_cool_down_2(val);
 	if (rc < 0)
 		return rc;
 
 	return count;
 }
-DEVICE_ATTR_WO(normal_cool_down);
+DEVICE_ATTR_WO(normal_cool_down_2);
 
 static ssize_t get_quick_mode_time_gain_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -1488,8 +1488,8 @@ static struct device_attribute *oplus_battery_attributes[] = {
 	&dev_attr_bcc_parms,
 	&dev_attr_bcc_current,
 	&dev_attr_bcc_exception,
-	&dev_attr_normal_cool_down,
-	&dev_attr_normal_current_now,
+	&dev_attr_normal_cool_down_2,
+	&dev_attr_normal_current_now_2,
 	&dev_attr_get_quick_mode_time_gain,
 	&dev_attr_get_quick_mode_percent_gain,
 	&dev_attr_aging_ffc_data,

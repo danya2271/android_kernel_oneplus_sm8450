@@ -31,8 +31,8 @@ struct usb_temp {
 #define CRITICAL_RISE_INTERVAL		1500	/* rise 3Celsius in 1500ms */
 #define TEMPERATURE_LIST_LENGTH		30	/* 1.5s / 50ms */
 
-struct usb_temp temperature_list1[TEMPERATURE_LIST_LENGTH];	/* length = 1.5s / 50ms */
-struct usb_temp temperature_list2[TEMPERATURE_LIST_LENGTH];	/* length = 1.5s / 50ms */
+struct usb_temp temperature_list1_2[TEMPERATURE_LIST_LENGTH];	/* length = 1.5s / 50ms */
+struct usb_temp temperature_list2_2[TEMPERATURE_LIST_LENGTH];	/* length = 1.5s / 50ms */
 
 /*func:				check if dischg_enable
 *temperature1 temperature2:	usb_temp (0.1*Celsius)
@@ -62,15 +62,15 @@ struct usb_temp temperature_list2[TEMPERATURE_LIST_LENGTH];	/* length = 1.5s / 5
 #define add_temperature_list(temp1, temp2, time, i)							\
 	do {												\
 		for (i = TEMPERATURE_LIST_LENGTH - 1; i > 0; i --) {					\
-			temperature_list1[i].temperature = temperature_list1[i - 1].temperature;	\
-			temperature_list1[i].interval = temperature_list1[i - 1].interval;		\
-			temperature_list2[i].temperature = temperature_list2[i - 1].temperature;	\
-			temperature_list2[i].interval = temperature_list2[i - 1].interval;		\
+			temperature_list1_2[i].temperature = temperature_list1_2[i - 1].temperature;	\
+			temperature_list1_2[i].interval = temperature_list1_2[i - 1].interval;		\
+			temperature_list2_2[i].temperature = temperature_list2_2[i - 1].temperature;	\
+			temperature_list2_2[i].interval = temperature_list2_2[i - 1].interval;		\
 		}											\
-		temperature_list1[0].temperature = temp1;						\
-		temperature_list1[0].interval = time;							\
-		temperature_list2[0].temperature = temp2;						\
-		temperature_list2[0].interval = time;							\
+		temperature_list1_2[0].temperature = temp1;						\
+		temperature_list1_2[0].interval = time;							\
+		temperature_list2_2[0].temperature = temp2;						\
+		temperature_list2_2[0].interval = time;							\
 	} while (0)
 
 /* check if rise 3Cesius within 1500ms */
@@ -94,10 +94,10 @@ struct usb_temp temperature_list2[TEMPERATURE_LIST_LENGTH];	/* length = 1.5s / 5
 #define clear_temperature_list(i)					\
 	do {								\
 		for (i = 0; i < TEMPERATURE_LIST_LENGTH; i ++) {	\
-			temperature_list1[i].temperature = 0;		\
-			temperature_list1[i].interval = 0;		\
-			temperature_list2[i].temperature = 0;		\
-			temperature_list2[i].interval = 0;		\
+			temperature_list1_2[i].temperature = 0;		\
+			temperature_list1_2[i].interval = 0;		\
+			temperature_list2_2[i].temperature = 0;		\
+			temperature_list2_2[i].interval = 0;		\
 		}							\
 	} while (0)
 
@@ -187,7 +187,7 @@ struct adc_vol_temp_info {
 	.con_volt_table_size = ARRAY_SIZE(con_volt_##_name),		\
 }
 
-int con_temp_855[] = {
+int con_temp_855_2[] = {
 	-20,
 	-19,
 	-18,
@@ -336,7 +336,7 @@ int con_temp_855[] = {
 	125,
 };
 
-int con_volt_855[] = {
+int con_volt_855_2[] = {
 	1725,
 	1716,
 	1707,
@@ -485,7 +485,7 @@ int con_volt_855[] = {
 	46,
 };
 
-int con_temp_7250[] = {
+int con_temp_7250_2[] = {
 	-40,
 	-39,
 	-38,
@@ -629,7 +629,7 @@ int con_temp_7250[] = {
 	100,
 };
 
-int con_volt_7250[] = {
+int con_volt_7250_2[] = {
 	1699,
 	1696,
 	1693,
@@ -773,7 +773,7 @@ int con_volt_7250[] = {
 	32,
 };
 
-int con_volt_7250_svooc[] = {
+int con_volt_7250_2_svooc[] = {
 	1759,
 	1756,
 	1753,
@@ -917,7 +917,7 @@ int con_volt_7250_svooc[] = {
 	92,
 };
 
-int con_temp_18097[] = {
+int con_temp_18097_2[] = {
 	-40,
 	-39,
 	-38,
@@ -1086,7 +1086,7 @@ int con_temp_18097[] = {
 	125,
 };
 
-int con_volt_18097[] = {
+int con_volt_18097_2[] = {
 	1779,
 	1777,
 	1775,
@@ -1255,7 +1255,7 @@ int con_volt_18097[] = {
 	86,
 };
 
-int con_volt_18383[] = {
+int con_volt_18383_2[] = {
 	2670,
 	2668,
 	2666,
@@ -1424,7 +1424,7 @@ int con_volt_18383[] = {
 	139,
 };
 
-int con_temp_18383[] = {
+int con_temp_18383_2[] = {
 	-40,
 	-39,
 	-38,
@@ -1593,7 +1593,7 @@ int con_temp_18383[] = {
 	125,
 };
 
-int con_volt_6125[] = {
+int con_volt_6125_2[] = {
 	1832,
 	1829,
 	1826,
@@ -1762,7 +1762,7 @@ int con_volt_6125[] = {
 	47,
 };
 
-int con_temp_6125[] = {
+int con_temp_6125_2[] = {
 	-40,
 	-39,
 	-38,
@@ -2271,7 +2271,7 @@ int con_temp_default[] = {
 	125,
 };
 
-int con_volt_19165[] = {
+int con_volt_19165_2[] = {
 	1668,
 	1659,
 	1651,
@@ -2395,7 +2395,7 @@ int con_volt_19165[] = {
 	97,
 };
 
-int con_temp_19165[] = {
+int con_temp_19165_2[] = {
 	-20,
 	-19,
 	-18,
@@ -2519,7 +2519,7 @@ int con_temp_19165[] = {
 	100,
 };
 
-int con_temp_20131[] = {
+int con_temp_20131_2[] = {
 	-20,
 	-19,
 	-18,
@@ -2643,7 +2643,7 @@ int con_temp_20131[] = {
 	100,
 };
 
-int con_temp_20682[] = {
+int con_temp_20682_2[] = {
 	-40,
 	-39,
 	-38,
@@ -2812,7 +2812,7 @@ int con_temp_20682[] = {
 	125,
 };
 
-int con_volt_20682[] = {
+int con_volt_20682_2[] = {
 	1649,
 	1639,
 	1628,
@@ -2981,7 +2981,7 @@ int con_volt_20682[] = {
 	12,
 };
 
-int con_volt_20131[] = {
+int con_volt_20131_2[] = {
 	1667,
 	1659,
 	1650,
@@ -3445,8 +3445,8 @@ int con_volt_100k_1840mv[] = {
 
 struct adc_vol_temp_info adc_vol_temp_info_table[] = {
 	ADC_VOL_TEMP_INFO_ADD(default), /*The first element must be default*/
-	ADC_VOL_TEMP_INFO_ADD(855),
-	ADC_VOL_TEMP_INFO_ADD(20131),
+	ADC_VOL_TEMP_INFO_ADD(855_2),
+	ADC_VOL_TEMP_INFO_ADD(20131_2),
 	ADC_VOL_TEMP_INFO_ADD(100k_1840mv),
 };
 
