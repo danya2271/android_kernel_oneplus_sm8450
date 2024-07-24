@@ -159,7 +159,7 @@ static void oplus_smart_chg_quick_mode_check(struct oplus_smart_charge *smart_ch
 			chg_err("vooc topic not found\n");
 			return;
 		}
-		batt_curve_current = oplus_vooc_get_batt_curve_current(smart_chg->vooc_topic);
+		batt_curve_current = oplus_vooc_get_batt_curve_current_2(smart_chg->vooc_topic);
 		if (batt_curve_current < 0) {
 			chg_err("can't get batt_curve_current, rc=%d\n",
 				batt_curve_current);

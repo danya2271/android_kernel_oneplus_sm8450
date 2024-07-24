@@ -403,8 +403,8 @@ enum wls_topic_item {
 };
 
 #ifdef OPLUS_CHG_DEBUG
-ssize_t oplus_chg_wls_upgrade_fw_show(struct oplus_mms *mms, char *buf);
-ssize_t oplus_chg_wls_upgrade_fw_store(struct oplus_mms *mms, const char *buf, size_t count);
+ssize_t oplus_chg_wls_upgrade_fw_show_2(struct oplus_mms *mms, char *buf);
+ssize_t oplus_chg_wls_upgrade_fw_store_2(struct oplus_mms *mms, const char *buf, size_t count);
 #endif
 
 int oplus_chg_wls_set_status_keep(struct oplus_mms *mms, enum wls_status_keep_type status_keep);

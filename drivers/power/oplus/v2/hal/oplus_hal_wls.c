@@ -58,7 +58,7 @@ int oplus_chg_wls_rx_smt_test(struct oplus_chg_ic_dev *rx_ic, char buf[], int le
 }
 #endif
 
-int oplus_chg_wls_rx_enable(struct oplus_chg_ic_dev *rx_ic, bool en)
+int oplus_chg_wls_rx_enable_2(struct oplus_chg_ic_dev *rx_ic, bool en)
 {
 	int rc;
 
@@ -93,7 +93,7 @@ bool oplus_chg_wls_rx_is_enable(struct oplus_chg_ic_dev *rx_ic)
 	return enable;
 }
 
-bool oplus_chg_wls_rx_is_connected(struct oplus_chg_ic_dev *rx_ic)
+bool oplus_chg_wls_rx_is_connected_2(struct oplus_chg_ic_dev *rx_ic)
 {
 	int rc;
 	bool connected;

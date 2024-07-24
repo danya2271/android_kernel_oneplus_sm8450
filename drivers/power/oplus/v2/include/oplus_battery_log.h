@@ -56,7 +56,7 @@ struct battery_log_dev {
 	struct battery_log_ops *ops[BATTERY_LOG_DEVICE_ID_END];
 };
 
-int battery_log_ops_register(struct battery_log_ops *ops);
-int battery_log_common_operate(int type, char *buf, int size);
-int oplus_battery_log_support(void);
+int battery_log_ops_register_2(struct battery_log_ops *ops);
+int battery_log_common_operate_2(int type, char *buf, int size);
+int oplus_battery_log_support_2(void);
 #endif/*__OPLUS_BATTERY_LOG_H__*/

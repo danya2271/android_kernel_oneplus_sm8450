@@ -1260,7 +1260,7 @@ static int oplus_monitor_probe(struct platform_device *pdev)
 		goto track_init_err;
 	}
 	battlog_comm_ops.dev_data = (void *)chip;
-	battery_log_ops_register(&battlog_comm_ops);
+	battery_log_ops_register_2(&battlog_comm_ops);
 
 	chip->water_inlet_plugin_count = 0;
 	INIT_WORK(&chip->charge_info_update_work,

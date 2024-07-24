@@ -1231,11 +1231,11 @@ static ssize_t battery_log_head_show(struct device *dev, struct device_attribute
 		return -EINVAL;
 	}
 
-	if (oplus_battery_log_support() != true) {
+	if (oplus_battery_log_support_2() != true) {
 		return -ENODEV;
 	}
 
-	return battery_log_common_operate(BATTERY_LOG_DUMP_LOG_HEAD,
+	return battery_log_common_operate_2(BATTERY_LOG_DUMP_LOG_HEAD,
 		buf, BATTERY_LOG_MAX_SIZE);
 }
 static DEVICE_ATTR_RO(battery_log_head);
@@ -1250,11 +1250,11 @@ static ssize_t battery_log_content_show(struct device *dev, struct device_attrib
 		return -EINVAL;
 	}
 
-	if (oplus_battery_log_support() != true) {
+	if (oplus_battery_log_support_2() != true) {
 		return -ENODEV;
 	}
 
-	return battery_log_common_operate(BATTERY_LOG_DUMP_LOG_CONTENT,
+	return battery_log_common_operate_2(BATTERY_LOG_DUMP_LOG_CONTENT,
 		buf, BATTERY_LOG_MAX_SIZE);
 }
 static DEVICE_ATTR_RO(battery_log_content);
@@ -1658,13 +1658,13 @@ static DEVICE_ATTR_RW(status_keep);
 
 #ifdef WLS_QI_DEBUG
 ssize_t __attribute__((weak))
-oplus_chg_wls_upgrade_fw_show(struct oplus_mms *mms, char *buf)
+oplus_chg_wls_upgrade_fw_show_2(struct oplus_mms *mms, char *buf)
 {
 	return 0;
 }
 
 ssize_t __attribute__((weak))
-oplus_chg_wls_upgrade_fw_store(struct oplus_mms *mms, const char *buf, size_t count)
+oplus_chg_wls_upgrade_fw_store_2(struct oplus_mms *mms, const char *buf, size_t count)
 {
 	return 0;
 }
@@ -1678,7 +1678,7 @@ static ssize_t upgrade_firmware_show(struct device *dev, struct device_attribute
 		return -EINVAL;
 	}
 
-	return oplus_chg_wls_upgrade_fw_show(chip->wls_topic, buf);
+	return oplus_chg_wls_upgrade_fw_show_2(chip->wls_topic, buf);
 }
 
 static ssize_t upgrade_firmware_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
@@ -1690,7 +1690,7 @@ static ssize_t upgrade_firmware_store(struct device *dev, struct device_attribut
 		return -EINVAL;
 	}
 
-	count = oplus_chg_wls_upgrade_fw_store(chip->wls_topic, buf, count);
+	count = oplus_chg_wls_upgrade_fw_store_2(chip->wls_topic, buf, count);
 
 	return count;
 }
@@ -1735,7 +1735,7 @@ static ssize_t track_hidl_store(struct device *dev, struct device_attribute *att
 	}
 
 
-	oplus_chg_track_set_hidl_info(buf, count);
+	oplus_chg_track_set_hidl_info_2(buf, count);
 
 	return count;
 }

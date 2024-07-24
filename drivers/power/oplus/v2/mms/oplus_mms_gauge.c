@@ -151,7 +151,7 @@ bool is_support_parallel_battery(struct oplus_mms *topic)
 	return is_support_parallel(chip);
 }
 
-int oplus_gauge_get_batt_mvolts(void)
+int oplus_gauge_get_batt_mvolts_2(void)
 {
 	int rc;
 	int vol_mv;
@@ -173,7 +173,7 @@ int oplus_gauge_get_batt_mvolts(void)
 	return vol_mv;
 }
 
-int oplus_gauge_get_batt_fc(void)
+int oplus_gauge_get_batt_fc_2(void)
 {
 	int rc;
 	int fc;
@@ -190,7 +190,7 @@ int oplus_gauge_get_batt_fc(void)
 	return fc;
 }
 
-int oplus_gauge_get_batt_qm(void)
+int oplus_gauge_get_batt_qm_2(void)
 {
 	int rc;
 	int qm;
@@ -207,7 +207,7 @@ int oplus_gauge_get_batt_qm(void)
 	return qm;
 }
 
-int oplus_gauge_get_batt_pd(void)
+int oplus_gauge_get_batt_pd_2(void)
 {
 	int rc;
 	int pd;
@@ -258,7 +258,7 @@ int oplus_gauge_get_batt_rcf(void)
 	return rcf;
 }
 
-int oplus_gauge_get_batt_fcu(void)
+int oplus_gauge_get_batt_fc_2u(void)
 {
 	int rc;
 	int fcu;
@@ -275,7 +275,7 @@ int oplus_gauge_get_batt_fcu(void)
 	return fcu;
 }
 
-int oplus_gauge_get_batt_fcf(void)
+int oplus_gauge_get_batt_fc_2f(void)
 {
 	int rc;
 	int fcf;
@@ -394,7 +394,7 @@ int oplus_gauge_get_batt_qs(void)
 	return qs;
 }
 
-int oplus_gauge_get_batt_mvolts_2cell_max(void)
+int oplus_gauge_get_batt_mvolts_2_2cell_max(void)
 {
 	int rc;
 	int vol_mv;
@@ -416,7 +416,7 @@ int oplus_gauge_get_batt_mvolts_2cell_max(void)
 	return vol_mv;
 }
 
-int oplus_gauge_get_batt_mvolts_2cell_min(void)
+int oplus_gauge_get_batt_mvolts_2_2cell_min(void)
 {
 	int rc;
 	int vol_mv;
@@ -734,7 +734,7 @@ int oplus_gauge_get_device_type_for_vooc(void)
 	return g_mms_gauge->device_type_for_vooc;
 }
 
-int oplus_gauge_get_batt_fcc(void)
+int oplus_gauge_get_batt_fc_2c(void)
 {
 	int rc;
 	int fcc;

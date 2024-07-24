@@ -1639,7 +1639,7 @@ static int oplus_chg_wls_rx_disable_vote_callback(struct votable *votable, void 
 	struct oplus_chg_wls *wls_dev = data;
 	int rc;
 
-	rc = oplus_chg_wls_rx_enable(wls_dev->wls_rx->rx_ic, !disable);
+	rc = oplus_chg_wls_rx_enable_2(wls_dev->wls_rx->rx_ic, !disable);
 	if (rc < 0)
 		chg_err("can't %s wireless charge\n", disable ? "disable" : "enable");
 	else
@@ -3783,7 +3783,7 @@ struct oplus_chg_fw_head {
 	int size;
 };
 
-ssize_t oplus_chg_wls_upgrade_fw_show(struct oplus_mms *mms, char *buf)
+ssize_t oplus_chg_wls_upgrade_fw_show_2(struct oplus_mms *mms, char *buf)
 {
 	int rc = 0;
 
@@ -3796,7 +3796,7 @@ ssize_t oplus_chg_wls_upgrade_fw_show(struct oplus_mms *mms, char *buf)
 	return rc;
 }
 
-ssize_t oplus_chg_wls_upgrade_fw_store(struct oplus_mms *mms, const char *buf, size_t count)
+ssize_t oplus_chg_wls_upgrade_fw_store_2(struct oplus_mms *mms, const char *buf, size_t count)
 {
 	struct oplus_chg_wls *wls_dev = NULL;
 	u8 temp_buf[sizeof(struct oplus_chg_fw_head)];
@@ -8392,7 +8392,7 @@ static void oplus_chg_wls_rx_restart_work(struct work_struct *work)
 		retry_count++;
 		schedule_delayed_work(&wls_dev->rx_restart_work, msecs_to_jiffies(500));
 	}
-	if (!oplus_chg_wls_rx_is_connected(wls_dev->wls_rx->rx_ic)) {
+	if (!oplus_chg_wls_rx_is_connected_2(wls_dev->wls_rx->rx_ic)) {
 		chg_info("wireless charging is not connected\n");
 		return;
 	}
@@ -10596,7 +10596,7 @@ static void oplus_chg_wls_present_handler_work(struct work_struct *work)
 		return;
 	}
 
-	wls_dev->mms_info.rx_present = oplus_chg_wls_rx_is_connected(wls_dev->wls_rx->rx_ic);
+	wls_dev->mms_info.rx_present = oplus_chg_wls_rx_is_connected_2(wls_dev->wls_rx->rx_ic);
 	chg_info("wls present=%d\n", wls_dev->mms_info.rx_present);
 	oplus_chg_wls_wireless_notifier_call(wls_dev, WLS_ITEM_PRESENT);
 	msg = oplus_mms_alloc_msg(MSG_TYPE_ITEM, MSG_PRIO_MEDIUM, WLS_ITEM_PRESENT);
