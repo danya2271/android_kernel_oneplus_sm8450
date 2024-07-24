@@ -52,8 +52,8 @@ struct oplus_smart_charge {
 	bool ufcs_online;
 	bool ufcs_charging;
 
-	int normal_cool_down;
-	int smart_normal_cool_down;
+	int normal_cool_down_2;
+	int smart_normal_cool_down_2;
 	struct timespec quick_mode_time;
 	long start_time;
 	long quick_mode_start_time;
@@ -125,7 +125,7 @@ static void oplus_smart_chg_quick_mode_check(struct oplus_smart_charge *smart_ch
 	bool quick_mode_check = false;
 	struct timespec ts_now;
 	long diff_time, gain_time_ms;
-	int batt_curve_current, cool_down, current_cool_down, current_normal_cool_down;
+	int batt_curve_current, cool_down, current_cool_down, current_normal_cool_down_2;
 	int led_on = 0;
 	union mms_msg_data data = { 0 };
 
@@ -175,11 +175,11 @@ static void oplus_smart_chg_quick_mode_check(struct oplus_smart_charge *smart_ch
 				cool_down, current_cool_down);
 			return;
 		}
-		current_normal_cool_down =
-			oplus_vooc_level_to_current(smart_chg->vooc_topic, smart_chg->normal_cool_down);
-		if (current_normal_cool_down <= 0) {
-			chg_err("can't get current_normal_cool_down, cool_down=%d, rc=%d\n",
-				cool_down, current_normal_cool_down);
+		current_normal_cool_down_2 =
+			oplus_vooc_level_to_current(smart_chg->vooc_topic, smart_chg->normal_cool_down_2);
+		if (current_normal_cool_down_2 <= 0) {
+			chg_err("can't get current_normal_cool_down_2, cool_down=%d, rc=%d\n",
+				cool_down, current_normal_cool_down_2);
 			return;
 		}
 	} else {
@@ -187,14 +187,14 @@ static void oplus_smart_chg_quick_mode_check(struct oplus_smart_charge *smart_ch
 		return;
 	}
 
-	if ((current_cool_down != current_normal_cool_down) && (current_cool_down > 0)) {
+	if ((current_cool_down != current_normal_cool_down_2) && (current_cool_down > 0)) {
 		if (smart_chg->quick_mode_start_time == 0) {
 			smart_chg->quick_mode_start_time = ts_now.tv_sec;
 			smart_chg->quick_mode_start_cap = smart_chg->batt_rm;
 		}
 		smart_chg->quick_mode_need_update = true;
 	}
-	if ((current_cool_down == current_normal_cool_down) && smart_chg->quick_mode_need_update) {
+	if ((current_cool_down == current_normal_cool_down_2) && smart_chg->quick_mode_need_update) {
 		smart_chg->quick_mode_stop_time = ts_now.tv_sec;
 		smart_chg->quick_mode_stop_cap = smart_chg->batt_rm;
 		smart_chg->quick_mode_stop_temp = smart_chg->shell_temp;
@@ -203,21 +203,21 @@ static void oplus_smart_chg_quick_mode_check(struct oplus_smart_charge *smart_ch
 	}
 
 	if (current_cool_down > batt_curve_current) {
-		if (current_normal_cool_down > batt_curve_current) {
+		if (current_normal_cool_down_2 > batt_curve_current) {
 			gain_time_ms = 0;
 		} else {
-			gain_time_ms = ((batt_curve_current * diff_time * 1000) / current_normal_cool_down) -
+			gain_time_ms = ((batt_curve_current * diff_time * 1000) / current_normal_cool_down_2) -
 				       (diff_time * 1000);
 		}
 	} else {
-		gain_time_ms = ((current_cool_down * diff_time * 1000) / current_normal_cool_down) - (diff_time * 1000);
+		gain_time_ms = ((current_cool_down * diff_time * 1000) / current_normal_cool_down_2) - (diff_time * 1000);
 	}
 
-	if (current_cool_down == current_normal_cool_down) {
+	if (current_cool_down == current_normal_cool_down_2) {
 		gain_time_ms = 0;
 	} else if (current_cool_down == 0) {
-		if (current_normal_cool_down < batt_curve_current)
-			gain_time_ms = ((batt_curve_current * diff_time * 1000) / current_normal_cool_down) -
+		if (current_normal_cool_down_2 < batt_curve_current)
+			gain_time_ms = ((batt_curve_current * diff_time * 1000) / current_normal_cool_down_2) -
 				(diff_time * 1000);
 		else
 			gain_time_ms = 0;
@@ -1331,42 +1331,42 @@ int oplus_smart_chg_set_normal_current(int curr)
 	}
 	if (led_on)
 		return 0;
-	if (g_smart_chg->smart_normal_cool_down != 0)
+	if (g_smart_chg->smart_normal_cool_down_2 != 0)
 		return 0;
 
 	/* TODO: PPS */
 	if (g_smart_chg->vooc_topic) {
 		rc = oplus_vooc_current_to_level(g_smart_chg->vooc_topic, curr);
 		if (rc < 0) {
-			chg_err("can't get normal_cool_down, curr=%d, rc=%d\n",
+			chg_err("can't get normal_cool_down_2, curr=%d, rc=%d\n",
 				curr, rc);
 			return rc;
 		}
-		g_smart_chg->normal_cool_down = rc;
+		g_smart_chg->normal_cool_down_2 = rc;
 	}
-	chg_info("set normal_cool_down=%d\n", g_smart_chg->normal_cool_down);
+	chg_info("set normal_cool_down_2=%d\n", g_smart_chg->normal_cool_down_2);
 
 	return 0;
 }
 
-int oplus_smart_chg_set_normal_cool_down(int cool_down)
+int oplus_smart_chg_set_normal_cool_down_2(int cool_down)
 {
 	if (g_smart_chg == NULL)
 		return -ENODEV;
 
-	g_smart_chg->smart_normal_cool_down = cool_down;
-	g_smart_chg->normal_cool_down = cool_down;
-	chg_info("set normal_cool_down=%d\n", cool_down);
+	g_smart_chg->smart_normal_cool_down_2 = cool_down;
+	g_smart_chg->normal_cool_down_2 = cool_down;
+	chg_info("set normal_cool_down_2=%d\n", cool_down);
 
 	return 0;
 }
 
-int oplus_smart_chg_get_normal_cool_down(void)
+int oplus_smart_chg_get_normal_cool_down_2(void)
 {
 	if (g_smart_chg == NULL)
 		return -ENODEV;
 
-	return g_smart_chg->normal_cool_down;
+	return g_smart_chg->normal_cool_down_2;
 }
 
 long oplus_smart_chg_get_quick_mode_time_gain(void)
