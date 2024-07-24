@@ -108,7 +108,7 @@ struct oplus_monitor {
 	enum oplus_temp_region temp_region;
 	enum oplus_chg_ffc_status ffc_status;
 	int cool_down;
-	int normal_cool_down;
+	int normal_cool_down_2;
 	unsigned int notify_code;
 	unsigned int notify_flag;
 	bool led_on;

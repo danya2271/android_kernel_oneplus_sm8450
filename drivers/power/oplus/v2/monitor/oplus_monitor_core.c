@@ -166,7 +166,7 @@ static void oplus_monitor_update_charge_info(struct oplus_monitor *chip)
 	oplus_mms_get_item_data(chip->wired_topic, WIRED_ITEM_USB_STATUS, &data, true);
 	chip->usb_status = data.intval;
 
-	chip->normal_cool_down = oplus_smart_chg_get_normal_cool_down();
+	chip->normal_cool_down_2 = oplus_smart_chg_get_normal_cool_down_2();
 	chip->otg_switch_status = oplus_wired_get_otg_switch_status();
 
 	if (chip->wired_online) {
@@ -313,7 +313,7 @@ static int comm_info_dump_log_data(char *buffer, int size, void *dev_data)
 		chip->batt_soc, chip->ui_soc, chip->wired_online, chip->wired_charge_type, chip->notify_code,
 		chip->wired_ibus_ma, chip->wired_vbus_mv, chip->smooth_soc, chip->led_on, chip->fv_mv,
 		chip->fcc_ma, chip->wired_icl_ma, chip->otg_switch_status, chip->cool_down, chip->bcc_current,
-		chip->normal_cool_down, chip->chg_cycle_status, chip->mmi_chg, chip->usb_status, chip->cc_detect,
+		chip->normal_cool_down_2, chip->chg_cycle_status, chip->mmi_chg, chip->usb_status, chip->cc_detect,
 		chip->batt_full, chip->rechging, chip->pd_svooc, chip->batt_status);
 
 	return 0;
@@ -330,7 +330,7 @@ static int comm_info_get_log_head(char *buffer, int size, void *dev_data)
 		",batt_temp,shell_temp,vbat_mv,vbat_min_mv,ibat_ma,"
 		"batt_soc,ui_soc,wired_online,charge_type,notify_code,"
 		"wired_ibus_ma,wired_vbus_mv,smooth_soc,led_on,fv_mv,"
-		"fcc_ma,wired_icl_ma,otg_switch,cool_down,bcc_current,normal_cool_down,chg_cycle,"
+		"fcc_ma,wired_icl_ma,otg_switch,cool_down,bcc_current,normal_cool_down_2,chg_cycle,"
 		"mmi_chg,usb_status,cc_detect,batt_full,rechging,pd_svooc,prop_status");
 
 	return 0;

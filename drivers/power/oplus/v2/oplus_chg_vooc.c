@@ -250,7 +250,7 @@ struct oplus_chg_vooc {
 	bool enable_dual_chan;
 
 	bool support_fake_vooc_check;
-	int subboard_ntc_abnormal_cool_down;
+	int subboard_ntc_abnormal_cool_down_2;
 	int subboard_ntc_abnormal_current;
 
 	bool slow_chg_enable;
@@ -5075,7 +5075,7 @@ static int oplus_vooc_parse_dt(struct oplus_chg_vooc *chip)
 	rc = of_property_read_u32(node, "oplus,subboard_ntc_abnormal_current", &chip->subboard_ntc_abnormal_current);
 	if (rc)
 		chip->subboard_ntc_abnormal_current = SUBBOARD_TEMP_ABNORMAL_MAX_CURR;
-	chg_info("subboard_ntc_abnormal_cool_down:%d\n", chip->subboard_ntc_abnormal_current);
+	chg_info("subboard_ntc_abnormal_cool_down_2:%d\n", chip->subboard_ntc_abnormal_current);
 
 	chip->smart_chg_bcc_support =
 		of_property_read_bool(node, "oplus,smart_chg_bcc_support");
