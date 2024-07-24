@@ -312,16 +312,16 @@ static const char * const strategy_temp[] = {
 
 /*svooc curv*/
 /*0~50*/
-struct batt_bcc_curves bcc_curves_soc0_2_50[BATT_BCC_ROW_MAX] = { 0 };
+struct batt_bcc_curves bcc_curves_soc0_2_50_2[BATT_BCC_ROW_MAX] = { 0 };
 /*50~75*/
-struct batt_bcc_curves bcc_curves_soc50_2_75[BATT_BCC_ROW_MAX] = { 0 };
+struct batt_bcc_curves bcc_curves_soc50_2_75_2[BATT_BCC_ROW_MAX] = { 0 };
 /*75~85*/
-struct batt_bcc_curves bcc_curves_soc75_2_85[BATT_BCC_ROW_MAX] = { 0 };
+struct batt_bcc_curves bcc_curves_soc75_2_85_2[BATT_BCC_ROW_MAX] = { 0 };
 /*85~90*/
-struct batt_bcc_curves bcc_curves_soc85_2_90[BATT_BCC_ROW_MAX] = { 0 };
+struct batt_bcc_curves bcc_curves_soc85_2_90_2[BATT_BCC_ROW_MAX] = { 0 };
 
-struct batt_bcc_curves svooc_curves_target_soc_curve[BATT_BCC_ROW_MAX] = { 0 };
-struct batt_bcc_curves svooc_curves_target_curve[1] = { 0 };
+struct batt_bcc_curves svooc_curves_target_soc_curve_2[BATT_BCC_ROW_MAX] = { 0 };
+struct batt_bcc_curves svooc_curves_target_curve_2[1] = { 0 };
 
 static struct oplus_vooc_spec_config default_spec_config = {
 	.vooc_over_low_temp = -5,
@@ -458,13 +458,13 @@ static int oplus_vooc_get_bcc_temp_range(struct oplus_mms *topic,
 					 union mms_msg_data *data);
 static int oplus_vooc_get_svooc_type(struct oplus_mms *topic,
 				     union mms_msg_data *data);
-void oplus_vooc_cancel_bcc_update_work_sync(struct oplus_chg_vooc *chip);
-bool oplus_vooc_wake_bcc_update_work(struct oplus_chg_vooc *chip);
+void oplus_vooc_cancel_bcc_update_work_sync_2(struct oplus_chg_vooc *chip);
+bool oplus_vooc_wake_bcc_update_work_2(struct oplus_chg_vooc *chip);
 static void oplus_vooc_bcc_get_curve(struct oplus_chg_vooc *chip);
 static void oplus_vooc_bcc_get_curr_func(struct work_struct *work);
-int oplus_mcu_bcc_svooc_batt_curves(struct oplus_chg_vooc *chip,
+int oplus_mcu_bcc_svooc_batt_curves_2(struct oplus_chg_vooc *chip,
 				    struct device_node *node);
-int oplus_mcu_bcc_stop_curr_dt(struct oplus_chg_vooc *chip,
+int oplus_mcu_bcc_stop_curr_dt_2(struct oplus_chg_vooc *chip,
 			       struct device_node *node);
 static int oplus_vooc_afi_update_condition(struct oplus_mms *topic,
 					   union mms_msg_data *data);
@@ -1817,7 +1817,7 @@ static void oplus_vooc_fastchg_exit(struct oplus_chg_vooc *chip,
 
 	chip->bcc_curr_count = 0;
 	if (oplus_vooc_get_bcc_support(chip)) {
-		oplus_vooc_cancel_bcc_update_work_sync(chip);
+		oplus_vooc_cancel_bcc_update_work_sync_2(chip);
 	}
 
 	if (!restore_nor_chg)
@@ -2507,7 +2507,7 @@ static int oplus_vooc_push_break_code(struct oplus_chg_vooc *chip, int code)
 	return rc;
 }
 
-bool oplus_vooc_wake_bcc_update_work(struct oplus_chg_vooc *chip)
+bool oplus_vooc_wake_bcc_update_work_2(struct oplus_chg_vooc *chip)
 {
 	if (!chip) {
 		chg_err(" g_vooc_chip NULL,return\n");
@@ -2519,7 +2519,7 @@ bool oplus_vooc_wake_bcc_update_work(struct oplus_chg_vooc *chip)
 	return true;
 }
 
-void oplus_vooc_cancel_bcc_update_work_sync(struct oplus_chg_vooc *chip)
+void oplus_vooc_cancel_bcc_update_work_sync_2(struct oplus_chg_vooc *chip)
 {
 	if (!chip) {
 		return;
@@ -2748,7 +2748,7 @@ static void oplus_vooc_fastchg_work(struct work_struct *work)
 
 		if (oplus_vooc_get_bcc_support(chip) &&
 		    chip->bcc_wake_up_done == false) {
-			oplus_vooc_wake_bcc_update_work(chip);
+			oplus_vooc_wake_bcc_update_work_2(chip);
 		}
 		temp_curr = oplus_vooc_level_to_current(chip->vooc_topic, ret_info);
 		vooc_curr = vooc_curr < temp_curr ? vooc_curr : temp_curr;
@@ -4444,7 +4444,7 @@ static void oplus_vooc_fw_update_fix_work(struct work_struct *work)
 		vote(chip->vooc_boot_votable, UPGRADE_FW_VOTER, false, 0, false);
 }
 
-void oplus_vooc_fw_update_work_init(struct oplus_chg_vooc *chip)
+void oplus_vooc_fw_update_work_init_2(struct oplus_chg_vooc *chip)
 {
 	vote(chip->vooc_disable_votable, UPGRADE_FW_VOTER, true, 1, false);
 	schedule_delayed_work(&chip->fw_update_work,
@@ -4545,7 +4545,7 @@ static void oplus_vooc_init_work(struct work_struct *work)
 	}
 
 	battlog_vooc_ops.dev_data = (void *)chip;
-	battery_log_ops_register(&battlog_vooc_ops);
+	battery_log_ops_register_2(&battlog_vooc_ops);
 	rc = oplus_hal_vooc_init(chip->vooc_ic);
 	if (rc < 0)
 		goto hal_vooc_init_err;
@@ -4555,7 +4555,7 @@ static void oplus_vooc_init_work(struct work_struct *work)
 
 	if (config->voocphy_support == NO_VOOCPHY) {
 		if (!chip->vooc_fw_update_newmethod)
-			oplus_vooc_fw_update_work_init(chip);
+			oplus_vooc_fw_update_work_init_2(chip);
 		else
 			vote(chip->vooc_disable_votable, UPGRADE_FW_VOTER, true, 1, false);
 	}
@@ -4568,8 +4568,8 @@ static void oplus_vooc_init_work(struct work_struct *work)
 		goto virq_reg_err;
 	oplus_vooc_eint_register(chip->vooc_ic);
 
-	oplus_mcu_bcc_svooc_batt_curves(chip, real_vooc_ic->dev->of_node);
-	oplus_mcu_bcc_stop_curr_dt(chip, real_vooc_ic->dev->of_node);
+	oplus_mcu_bcc_svooc_batt_curves_2(chip, real_vooc_ic->dev->of_node);
+	oplus_mcu_bcc_stop_curr_dt_2(chip, real_vooc_ic->dev->of_node);
 
 	chip->check_curr_delay = false;
 	chip->enable_dual_chan = false;
@@ -4883,7 +4883,7 @@ static int oplus_abnormal_adapter_pase_dt(struct oplus_chg_vooc *chip)
 	return 0;
 }
 
-int oplus_mcu_bcc_svooc_batt_curves(struct oplus_chg_vooc *chip,
+int oplus_mcu_bcc_svooc_batt_curves_2(struct oplus_chg_vooc *chip,
 				    struct device_node *node)
 {
 	struct device_node *svooc_node, *soc_node;
@@ -4922,37 +4922,37 @@ int oplus_mcu_bcc_svooc_batt_curves(struct oplus_chg_vooc *chip,
 			case BCC_BATT_SOC_0_TO_50:
 				rc = of_property_read_u32_array(
 					soc_node, strategy_temp[j],
-					(u32 *)bcc_curves_soc0_2_50[j]
+					(u32 *)bcc_curves_soc0_2_50_2[j]
 						.batt_bcc_curve,
 					length);
-				bcc_curves_soc0_2_50[j].bcc_curv_num =
+				bcc_curves_soc0_2_50_2[j].bcc_curv_num =
 					length / 4;
 				break;
 			case BCC_BATT_SOC_50_TO_75:
 				rc = of_property_read_u32_array(
 					soc_node, strategy_temp[j],
-					(u32 *)bcc_curves_soc50_2_75[j]
+					(u32 *)bcc_curves_soc50_2_75_2[j]
 						.batt_bcc_curve,
 					length);
-				bcc_curves_soc50_2_75[j].bcc_curv_num =
+				bcc_curves_soc50_2_75_2[j].bcc_curv_num =
 					length / 4;
 				break;
 			case BCC_BATT_SOC_75_TO_85:
 				rc = of_property_read_u32_array(
 					soc_node, strategy_temp[j],
-					(u32 *)bcc_curves_soc75_2_85[j]
+					(u32 *)bcc_curves_soc75_2_85_2[j]
 						.batt_bcc_curve,
 					length);
-				bcc_curves_soc75_2_85[j].bcc_curv_num =
+				bcc_curves_soc75_2_85_2[j].bcc_curv_num =
 					length / 4;
 				break;
 			case BCC_BATT_SOC_85_TO_90:
 				rc = of_property_read_u32_array(
 					soc_node, strategy_temp[j],
-					(u32 *)bcc_curves_soc85_2_90[j]
+					(u32 *)bcc_curves_soc85_2_90_2[j]
 						.batt_bcc_curve,
 					length);
-				bcc_curves_soc85_2_90[j].bcc_curv_num =
+				bcc_curves_soc85_2_90_2[j].bcc_curv_num =
 					length / 4;
 				break;
 			default:
@@ -4964,7 +4964,7 @@ int oplus_mcu_bcc_svooc_batt_curves(struct oplus_chg_vooc *chip,
 	return rc;
 }
 
-int oplus_mcu_bcc_stop_curr_dt(struct oplus_chg_vooc *chip,
+int oplus_mcu_bcc_stop_curr_dt_2(struct oplus_chg_vooc *chip,
 			       struct device_node *node)
 {
 	struct oplus_vooc_spec_config *spec = &chip->spec;
@@ -5639,137 +5639,137 @@ static int oplus_vooc_choose_bcc_fastchg_curve(struct oplus_chg_vooc *chip)
 	if (batt_soc_plugin == FAST_SOC_0_TO_50) {
 		chg_err("soc is 0~50!\n");
 		for (i = 0; i < BATT_BCC_ROW_MAX; i++) {
-			svooc_curves_target_soc_curve[i].bcc_curv_num =
-				bcc_curves_soc0_2_50[i].bcc_curv_num;
-			memcpy((&svooc_curves_target_soc_curve[i])
+			svooc_curves_target_soc_curve_2[i].bcc_curv_num =
+				bcc_curves_soc0_2_50_2[i].bcc_curv_num;
+			memcpy((&svooc_curves_target_soc_curve_2[i])
 				       ->batt_bcc_curve,
-			       (&bcc_curves_soc0_2_50[i])->batt_bcc_curve,
+			       (&bcc_curves_soc0_2_50_2[i])->batt_bcc_curve,
 			       sizeof(struct batt_bcc_curve) *
-				       (bcc_curves_soc0_2_50[i].bcc_curv_num));
+				       (bcc_curves_soc0_2_50_2[i].bcc_curv_num));
 		}
 	} else if (batt_soc_plugin == FAST_SOC_50_TO_75) {
 		chg_err("soc is 50~75!\n");
 		for (i = 0; i < BATT_BCC_ROW_MAX; i++) {
-			svooc_curves_target_soc_curve[i].bcc_curv_num =
-				bcc_curves_soc50_2_75[i].bcc_curv_num;
-			memcpy((&svooc_curves_target_soc_curve[i])
+			svooc_curves_target_soc_curve_2[i].bcc_curv_num =
+				bcc_curves_soc50_2_75_2[i].bcc_curv_num;
+			memcpy((&svooc_curves_target_soc_curve_2[i])
 				       ->batt_bcc_curve,
-			       (&bcc_curves_soc50_2_75[i])->batt_bcc_curve,
+			       (&bcc_curves_soc50_2_75_2[i])->batt_bcc_curve,
 			       sizeof(struct batt_bcc_curve) *
-				       (bcc_curves_soc50_2_75[i].bcc_curv_num));
+				       (bcc_curves_soc50_2_75_2[i].bcc_curv_num));
 		}
 	} else if (batt_soc_plugin == FAST_SOC_75_TO_85) {
 		chg_err("soc is 75~85!\n");
 		for (i = 0; i < BATT_BCC_ROW_MAX; i++) {
-			svooc_curves_target_soc_curve[i].bcc_curv_num =
-				bcc_curves_soc75_2_85[i].bcc_curv_num;
-			memcpy((&svooc_curves_target_soc_curve[i])
+			svooc_curves_target_soc_curve_2[i].bcc_curv_num =
+				bcc_curves_soc75_2_85_2[i].bcc_curv_num;
+			memcpy((&svooc_curves_target_soc_curve_2[i])
 				       ->batt_bcc_curve,
-			       (&bcc_curves_soc75_2_85[i])->batt_bcc_curve,
+			       (&bcc_curves_soc75_2_85_2[i])->batt_bcc_curve,
 			       sizeof(struct batt_bcc_curve) *
-				       (bcc_curves_soc75_2_85[i].bcc_curv_num));
+				       (bcc_curves_soc75_2_85_2[i].bcc_curv_num));
 		}
 	} else if (batt_soc_plugin == FAST_SOC_85_TO_90) {
 		chg_err("soc is 85~90!\n");
 		for (i = 0; i < BATT_BCC_ROW_MAX; i++) {
-			svooc_curves_target_soc_curve[i].bcc_curv_num =
-				bcc_curves_soc85_2_90[i].bcc_curv_num;
-			memcpy((&svooc_curves_target_soc_curve[i])
+			svooc_curves_target_soc_curve_2[i].bcc_curv_num =
+				bcc_curves_soc85_2_90_2[i].bcc_curv_num;
+			memcpy((&svooc_curves_target_soc_curve_2[i])
 				       ->batt_bcc_curve,
-			       (&bcc_curves_soc85_2_90[i])->batt_bcc_curve,
+			       (&bcc_curves_soc85_2_90_2[i])->batt_bcc_curve,
 			       sizeof(struct batt_bcc_curve) *
-				       (bcc_curves_soc85_2_90[i].bcc_curv_num));
+				       (bcc_curves_soc85_2_90_2[i].bcc_curv_num));
 		}
 	}
 
 	switch (batt_temp_plugin) {
 	case FAST_TEMP_0_TO_50:
 		chg_err("bcc get curve, temp is 0-5!\n");
-		svooc_curves_target_curve[0].bcc_curv_num =
-			svooc_curves_target_soc_curve
+		svooc_curves_target_curve_2[0].bcc_curv_num =
+			svooc_curves_target_soc_curve_2
 				[BATT_BCC_CURVE_TEMP_LITTLE_COLD]
 					.bcc_curv_num;
-		memcpy((&svooc_curves_target_curve[0])->batt_bcc_curve,
-		       (&(svooc_curves_target_soc_curve
+		memcpy((&svooc_curves_target_curve_2[0])->batt_bcc_curve,
+		       (&(svooc_curves_target_soc_curve_2
 				  [BATT_BCC_CURVE_TEMP_LITTLE_COLD]))
 			       ->batt_bcc_curve,
 		       sizeof(struct batt_bcc_curve) *
-			       (svooc_curves_target_soc_curve
+			       (svooc_curves_target_soc_curve_2
 					[BATT_BCC_CURVE_TEMP_LITTLE_COLD]
 						.bcc_curv_num));
 		break;
 	case FAST_TEMP_50_TO_120:
 		chg_err("bcc get curve, temp is 5-12!\n");
-		svooc_curves_target_curve[0].bcc_curv_num =
-			svooc_curves_target_soc_curve[BATT_BCC_CURVE_TEMP_COOL]
+		svooc_curves_target_curve_2[0].bcc_curv_num =
+			svooc_curves_target_soc_curve_2[BATT_BCC_CURVE_TEMP_COOL]
 				.bcc_curv_num;
-		memcpy((&svooc_curves_target_curve[0])->batt_bcc_curve,
-		       (&(svooc_curves_target_soc_curve
+		memcpy((&svooc_curves_target_curve_2[0])->batt_bcc_curve,
+		       (&(svooc_curves_target_soc_curve_2
 				  [BATT_BCC_CURVE_TEMP_COOL]))
 			       ->batt_bcc_curve,
 		       sizeof(struct batt_bcc_curve) *
-			       (svooc_curves_target_soc_curve
+			       (svooc_curves_target_soc_curve_2
 					[BATT_BCC_CURVE_TEMP_COOL]
 						.bcc_curv_num));
 		break;
 	case FAST_TEMP_120_TO_200:
 		chg_err("bcc get curve, temp is 12-20!\n");
-		svooc_curves_target_curve[0].bcc_curv_num =
-			svooc_curves_target_soc_curve
+		svooc_curves_target_curve_2[0].bcc_curv_num =
+			svooc_curves_target_soc_curve_2
 				[BATT_BCC_CURVE_TEMP_LITTLE_COOL]
 					.bcc_curv_num;
-		memcpy((&svooc_curves_target_curve[0])->batt_bcc_curve,
-		       (&(svooc_curves_target_soc_curve
+		memcpy((&svooc_curves_target_curve_2[0])->batt_bcc_curve,
+		       (&(svooc_curves_target_soc_curve_2
 				  [BATT_BCC_CURVE_TEMP_LITTLE_COOL]))
 			       ->batt_bcc_curve,
 		       sizeof(struct batt_bcc_curve) *
-			       (svooc_curves_target_soc_curve
+			       (svooc_curves_target_soc_curve_2
 					[BATT_BCC_CURVE_TEMP_LITTLE_COOL]
 						.bcc_curv_num));
 		break;
 	case FAST_TEMP_200_TO_350:
 		chg_err("bcc get curve, temp is 20-35!\n");
-		svooc_curves_target_curve[0].bcc_curv_num =
-			svooc_curves_target_soc_curve
+		svooc_curves_target_curve_2[0].bcc_curv_num =
+			svooc_curves_target_soc_curve_2
 				[BATT_BCC_CURVE_TEMP_NORMAL_LOW]
 					.bcc_curv_num;
-		memcpy((&svooc_curves_target_curve[0])->batt_bcc_curve,
-		       (&(svooc_curves_target_soc_curve
+		memcpy((&svooc_curves_target_curve_2[0])->batt_bcc_curve,
+		       (&(svooc_curves_target_soc_curve_2
 				  [BATT_BCC_CURVE_TEMP_NORMAL_LOW]))
 			       ->batt_bcc_curve,
 		       sizeof(struct batt_bcc_curve) *
-			       (svooc_curves_target_soc_curve
+			       (svooc_curves_target_soc_curve_2
 					[BATT_BCC_CURVE_TEMP_NORMAL_LOW]
 						.bcc_curv_num));
 		break;
 	case FAST_TEMP_350_TO_430:
 		chg_err("bcc get curve, temp is 35-43!\n");
-		svooc_curves_target_curve[0].bcc_curv_num =
-			svooc_curves_target_soc_curve
+		svooc_curves_target_curve_2[0].bcc_curv_num =
+			svooc_curves_target_soc_curve_2
 				[BATT_BCC_CURVE_TEMP_NORMAL_HIGH]
 					.bcc_curv_num;
-		memcpy((&svooc_curves_target_curve[0])->batt_bcc_curve,
-		       (&(svooc_curves_target_soc_curve
+		memcpy((&svooc_curves_target_curve_2[0])->batt_bcc_curve,
+		       (&(svooc_curves_target_soc_curve_2
 				  [BATT_BCC_CURVE_TEMP_NORMAL_HIGH]))
 			       ->batt_bcc_curve,
 		       sizeof(struct batt_bcc_curve) *
-			       (svooc_curves_target_soc_curve
+			       (svooc_curves_target_soc_curve_2
 					[BATT_BCC_CURVE_TEMP_NORMAL_HIGH]
 						.bcc_curv_num));
 		break;
 	case FAST_TEMP_430_TO_530:
 		if (batt_soc_plugin == FAST_SOC_0_TO_50) {
 			chg_err("soc is 0-50 bcc get curve, temp is 43-53!\n");
-			svooc_curves_target_curve[0].bcc_curv_num =
-				svooc_curves_target_soc_curve
+			svooc_curves_target_curve_2[0].bcc_curv_num =
+				svooc_curves_target_soc_curve_2
 					[BATT_BCC_CURVE_TEMP_WARM]
 						.bcc_curv_num;
-			memcpy((&svooc_curves_target_curve[0])->batt_bcc_curve,
-			       (&(svooc_curves_target_soc_curve
+			memcpy((&svooc_curves_target_curve_2[0])->batt_bcc_curve,
+			       (&(svooc_curves_target_soc_curve_2
 					  [BATT_BCC_CURVE_TEMP_WARM]))
 				       ->batt_bcc_curve,
 			       sizeof(struct batt_bcc_curve) *
-				       (svooc_curves_target_soc_curve
+				       (svooc_curves_target_soc_curve_2
 						[BATT_BCC_CURVE_TEMP_WARM]
 							.bcc_curv_num));
 		}
@@ -5777,18 +5777,18 @@ static int oplus_vooc_choose_bcc_fastchg_curve(struct oplus_chg_vooc *chip)
 	default:
 		break;
 	}
-	for (idx = 0; idx < svooc_curves_target_curve[0].bcc_curv_num; idx++) {
-		chip->bcc_target_vbat = svooc_curves_target_curve[0]
+	for (idx = 0; idx < svooc_curves_target_curve_2[0].bcc_curv_num; idx++) {
+		chip->bcc_target_vbat = svooc_curves_target_curve_2[0]
 						.batt_bcc_curve[idx]
 						.target_volt;
-		chip->bcc_curve_max_current = svooc_curves_target_curve[0]
+		chip->bcc_curve_max_current = svooc_curves_target_curve_2[0]
 						      .batt_bcc_curve[idx]
 						      .max_ibus;
-		chip->bcc_curve_min_current = svooc_curves_target_curve[0]
+		chip->bcc_curve_min_current = svooc_curves_target_curve_2[0]
 						      .batt_bcc_curve[idx]
 						      .min_ibus;
 		chip->bcc_exit_curve =
-			svooc_curves_target_curve[0].batt_bcc_curve[idx].exit;
+			svooc_curves_target_curve_2[0].batt_bcc_curve[idx].exit;
 
 		chg_err("bcc para idx:%d, vbat:%d, max_ibus:%d, min_ibus:%d, exit:%d",
 			idx, chip->bcc_target_vbat, chip->bcc_curve_max_current,
@@ -5796,11 +5796,11 @@ static int oplus_vooc_choose_bcc_fastchg_curve(struct oplus_chg_vooc *chip)
 	}
 
 	chip->svooc_batt_curve[0].bcc_curv_num =
-		svooc_curves_target_curve[0].bcc_curv_num;
+		svooc_curves_target_curve_2[0].bcc_curv_num;
 	memcpy((&(chip->svooc_batt_curve[0]))->batt_bcc_curve,
-	       (&(svooc_curves_target_curve[0]))->batt_bcc_curve,
+	       (&(svooc_curves_target_curve_2[0]))->batt_bcc_curve,
 	       sizeof(struct batt_bcc_curve) *
-		       (svooc_curves_target_curve[0].bcc_curv_num));
+		       (svooc_curves_target_curve_2[0].bcc_curv_num));
 
 	for (idx = 0; idx < chip->svooc_batt_curve[0].bcc_curv_num; idx++) {
 		chg_err("chip svooc bcc para idx:%d vbat:%d, max_ibus:%d, min_ibus:%d, exit:%d curve num:%d\n",
@@ -6416,7 +6416,7 @@ int oplus_vooc_level_to_current(struct oplus_mms *topic, int level)
 	return curr;
 }
 
-int oplus_vooc_get_batt_curve_current(struct oplus_mms *topic)
+int oplus_vooc_get_batt_curve_current_2(struct oplus_mms *topic)
 {
 	struct oplus_chg_vooc *chip;
 	int curr = 0;

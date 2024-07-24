@@ -11336,7 +11336,7 @@ static int get_btb_temp(struct iio_channel *temp_chan)
 			break;
 	}
 
-	temp = con_temp_855[i];
+	temp = con_temp_855_2[i];
 
 	return temp;
 }
@@ -11496,7 +11496,7 @@ static void get_usb_temp(struct oplus_chg_chip *chg)
 			break;
 	}
 
-	chg->usb_temp_l = con_temp_855[i];
+	chg->usb_temp_l = con_temp_855_2[i];
 
 	for (i = ARRAY_SIZE(con_volt_855) - 1; i >= 0; i--) {
 		if (con_volt_855[i] >= chg->usbtemp_volt_r)
@@ -11505,7 +11505,7 @@ static void get_usb_temp(struct oplus_chg_chip *chg)
 			break;
 	}
 
-	chg->usb_temp_r = con_temp_855[i];
+	chg->usb_temp_r = con_temp_855_2[i];
 
 	//chg_err("usb_temp_l:%d, usb_temp_r:%d\n",chg->usb_temp_l, chg->usb_temp_r);
 }
@@ -17551,8 +17551,8 @@ static int smb5_probe(struct platform_device *pdev)
        oplus_chip->len_array = ARRAY_SIZE(con_temp_30k);
 #else
        oplus_chip->con_volt = con_volt_855;
-       oplus_chip->con_temp = con_temp_855;
-       oplus_chip->len_array = ARRAY_SIZE(con_temp_855);
+       oplus_chip->con_temp = con_temp_855_2;
+       oplus_chip->len_array = ARRAY_SIZE(con_temp_855_2);
 #endif
 	if (oplus_usbtemp_check_is_support() == true)
 		oplus_usbtemp_thread_init();

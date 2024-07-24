@@ -146,13 +146,13 @@ int oplus_chg_track_record_ffc_soc(struct oplus_monitor *monitor,
 int oplus_chg_track_record_dual_chan_start(struct oplus_monitor *monitor);
 int oplus_chg_track_record_dual_chan_end(struct oplus_monitor *monitor);
 int oplus_chg_water_inlet_detect(int reason, int plugin_count);
-int oplus_chg_track_set_app_info(const char *buf);
+int oplus_chg_track_set_app_info_2(const char *buf);
 int oplus_chg_track_olc_config_set(const char *buf);
 int oplus_chg_track_olc_config_get(char *buf);
 int oplus_chg_track_time_zone_set(const char *buf);
 int oplus_chg_track_time_zone_get(char *buf);
 struct dentry *oplus_chg_track_get_debugfs_root(void);
-int oplus_chg_track_set_hidl_info(const char *buf, size_t count);
+int oplus_chg_track_set_hidl_info_2(const char *buf, size_t count);
 int oplus_chg_track_check_wls_charging_break(int wls_connect);
 
 #endif /* __OPLUS_CHG_TRACK_H__ */

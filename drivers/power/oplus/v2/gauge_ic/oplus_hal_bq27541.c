@@ -98,7 +98,7 @@ static int zy0603_seal(struct chip_bq27541 *chip);
 static bool zy0603_afi_update_done(struct chip_bq27541 *chip);
 int oplus_vooc_get_fast_chg_type(void);
 int oplus_vooc_get_fastchg_ing(void);
-int oplus_vooc_get_vooc_by_normal_path(void);
+int oplus_vooc_get_vooc_by_normal_path_2(void);
 static int zy0603_static_checksum_check(struct chip_bq27541 *chip);
 static int zy0603_QmaxFgStatus_check(struct chip_bq27541 *chip);
 
@@ -149,7 +149,7 @@ static __inline__ void bq27541_i2c_err_clr(struct chip_bq27541 *chip)
 
 #ifndef CONFIG_OPLUS_CHARGER_MTK
 #if IS_ENABLED(CONFIG_OPLUS_ADSP_CHARGER)
-void __attribute__((weak)) oplus_vooc_get_fastchg_started_pfunc(int (*pfunc)(void))
+void __attribute__((weak)) oplus_vooc_get_fastchg_is_started_pfunc(int (*pfunc)(void))
 {
 	return;
 }
@@ -167,7 +167,7 @@ void __attribute__((weak)) oplus_set_fg_device_type(int device_type)
 	return;
 }
 #else /*IS_ENABLED(CONFIG_OPLUS_ADSP_CHARGER)*/
-void __attribute__((weak)) oplus_vooc_get_fastchg_started_pfunc(int (*pfunc)(void));
+void __attribute__((weak)) oplus_vooc_get_fastchg_is_started_pfunc(int (*pfunc)(void));
 void __attribute__((weak)) oplus_vooc_get_fastchg_ing_pfunc(int (*pfunc)(void));
 int __attribute__((weak)) oplus_get_fg_device_type(void);
 void __attribute__((weak)) oplus_set_fg_device_type(int device_type);
@@ -195,7 +195,7 @@ void __attribute__((weak)) oplus_set_fg_err_flag(struct i2c_adapter *adap, bool 
   *
   *********************************************************/
 
-int oplus_vooc_get_fastchg_started(void)
+int oplus_vooc_get_fastchg_is_started(void)
 {
 	int fastchg_started_status = 0;
 	struct oplus_mms *vooc_topic;
@@ -276,7 +276,7 @@ int bq27541_read_i2c(struct chip_bq27541 *chip, int cmd, int *returnData)
 	}
 }
 
-int bq27541_i2c_txsubcmd(struct chip_bq27541 *chip, int cmd, int writeData)
+int bq27541_i2c_txsubcmd_2(struct chip_bq27541 *chip, int cmd, int writeData)
 {
 	int rc = 0;
 	int retry = 3;
@@ -434,7 +434,7 @@ static int bq27541_read_i2c_onebyte(struct chip_bq27541 *chip, u8 cmd, u8 *retur
 	}
 }
 
-static int bq27541_i2c_txsubcmd_onebyte(struct chip_bq27541 *chip, u8 cmd, u8 writeData)
+static int bq27541_i2c_txsubcmd_2_onebyte(struct chip_bq27541 *chip, u8 cmd, u8 writeData)
 {
 	int rc = 0;
 	int retry = 3;
@@ -490,7 +490,7 @@ static bool zy0603_fg_condition_check(struct chip_bq27541 *chip)
 	}
 
 	if (oplus_vooc_get_fastchg_ing() &&
-	    oplus_vooc_get_vooc_by_normal_path() &&
+	    oplus_vooc_get_vooc_by_normal_path_2() &&
 	    oplus_vooc_get_fast_chg_type() == BCC_TYPE_IS_VOOC)
 		return true;
 
@@ -511,7 +511,7 @@ static int zy0603_read_altmac_block(struct chip_bq27541 *chip, u16 reg, u8* buf,
 	}
 
 	mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-	bq27541_i2c_txsubcmd(chip, ZY0603_CMD_ALTMAC, reg);
+	bq27541_i2c_txsubcmd_2(chip, ZY0603_CMD_ALTMAC, reg);
 	if (chip->i2c_err)
 		goto fg_read_altmac_block_end;
 
@@ -731,7 +731,7 @@ static bool zy0603_fg_softreset(struct chip_bq27541 *chip)
 
 	ret = zy0603_full_access_mode(chip);
 	if (ret == 0) {
-		bq27541_i2c_txsubcmd(chip, ZY0603_CMD_ALTMAC, ZY0603_SOFT_RESET_CMD);
+		bq27541_i2c_txsubcmd_2(chip, ZY0603_CMD_ALTMAC, ZY0603_SOFT_RESET_CMD);
 		pr_info("%s w 0x3E \n", __func__);
 		if (chip->i2c_err)
 			pr_info("%s soft reset fail", __func__);
@@ -1340,7 +1340,7 @@ static int zy0603_afi_param_update(struct chip_bq27541 *chip)
 
 #define OPLUS_AFI_UPDATE_INTERVAL_SEC 		5
 #define OPLUS_AFI_UPDATE_INTERVAL	round_jiffies_relative(msecs_to_jiffies(OPLUS_AFI_UPDATE_INTERVAL_SEC*1000))
-int oplus_vooc_get_vooc_by_normal_path(void)
+int oplus_vooc_get_vooc_by_normal_path_2(void)
 {
 	int vooc_by_normal = 0;
 	struct oplus_mms *vooc_topic;
@@ -1394,7 +1394,7 @@ error_occured:
 	msleep(M_DELAY_10_S);
 	gauge_locked = !!atomic_read(&chip->locked);
 	if (oplus_gauge_get_afi_condition()) {
-		if (!gauge_locked || (oplus_vooc_get_vooc_by_normal_path() &&
+		if (!gauge_locked || (oplus_vooc_get_vooc_by_normal_path_2() &&
 				oplus_vooc_get_fast_chg_type() == BCC_TYPE_IS_VOOC)) {
 			if (!zy0603_unseal(chip)) {
 				chip->afi_update_done = false;
@@ -1464,7 +1464,7 @@ static int zy0603_protect_check(struct oplus_chg_ic_dev *ic_dev)
 	/* if (oplus_vooc_get_allow_reading() && gauge_ic->disabled !error_occured) { */
 	gauge_locked = !!atomic_read(&chip->locked);
 	if ((!gauge_locked ||
-			(oplus_vooc_get_vooc_by_normal_path() &&
+			(oplus_vooc_get_vooc_by_normal_path_2() &&
 			oplus_vooc_get_fast_chg_type() == BCC_TYPE_IS_VOOC)) &&
 			chip->disabled && chip->need_check) {
 		if (zy0603_static_checksum_check(chip)) {
@@ -1701,7 +1701,7 @@ static int bq27541_soc_calibrate(struct chip_bq27541 *chip, int soc)
 
 static void bq27541_cntl_cmd(struct chip_bq27541 *chip, int subcmd)
 {
-	bq27541_i2c_txsubcmd(chip, BQ27541_BQ27411_REG_CNTL, subcmd);
+	bq27541_i2c_txsubcmd_2(chip, BQ27541_BQ27411_REG_CNTL, subcmd);
 }
 
 static int bq28z610_get_2cell_voltage(struct chip_bq27541 *chip);
@@ -2212,7 +2212,7 @@ static int bq28z610_get_device_chemistry(struct chip_bq27541 *chip)
 	if (chip->batt_bq28z610) {
 		if (atomic_read(&chip->locked) == 0) {
 			mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-			bq27541_i2c_txsubcmd(chip, BQ28Z610_DEVICE_CHEMISTRY_EN_ADDR,
+			bq27541_i2c_txsubcmd_2(chip, BQ28Z610_DEVICE_CHEMISTRY_EN_ADDR,
 					     BQ28Z610_DEVICE_CHEMISTRY_CMD);
 			usleep_range(1000, 1000);
 			ret = bq27541_read_i2c_block(chip,
@@ -2263,7 +2263,7 @@ static int bq28z610_get_balancing_config(struct chip_bq27541 *chip)
 	if (chip->batt_bq28z610) {
 		if (atomic_read(&chip->locked) == 0) {
 			mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-			bq27541_i2c_txsubcmd(chip, BQ28Z610_OPERATION_STATUS_EN_ADDR,
+			bq27541_i2c_txsubcmd_2(chip, BQ28Z610_OPERATION_STATUS_EN_ADDR,
 					     BQ28Z610_OPERATION_STATUS_CMD);
 			usleep_range(1000, 1000);
 			ret = bq27541_read_i2c_block(chip,
@@ -2574,7 +2574,7 @@ static int zy602_get_dod0_parameters(struct chip_bq27541 *chip, int *batt_dod0_1
 	}
 
 	mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-	bq27541_i2c_txsubcmd(chip, ZY602_MAC_CELL_DOD0_EN_ADDR, ZY602_MAC_CELL_DOD0_CMD);
+	bq27541_i2c_txsubcmd_2(chip, ZY602_MAC_CELL_DOD0_EN_ADDR, ZY602_MAC_CELL_DOD0_CMD);
 
 	usleep_range(1000, 1000);
 	bq27541_read_i2c_block(chip, ZY602_MAC_CELL_DOD0_ADDR, ZY602_MAC_CELL_DOD0_SIZE, dod0_buffer);
@@ -2596,7 +2596,7 @@ static int bq28z610_get_dod0_parameters(
 	}
 
 	mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_MAC_CELL_DOD0_EN_ADDR,
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_MAC_CELL_DOD0_EN_ADDR,
 			BQ28Z610_MAC_CELL_DOD0_CMD);
 	usleep_range(1000, 1000);
 	if (chip->batt_zy0603) {
@@ -2628,7 +2628,7 @@ static int zy602_get_qmax_parameters(struct chip_bq27541 *chip, int *batt_qmax_1
 	}
 
 	mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-	bq27541_i2c_txsubcmd(chip, ZY602_MAC_CELL_QMAX_EN_ADDR, ZY602_MAC_CELL_QMAX_CMD);
+	bq27541_i2c_txsubcmd_2(chip, ZY602_MAC_CELL_QMAX_EN_ADDR, ZY602_MAC_CELL_QMAX_CMD);
 	usleep_range(1000, 1000);
 	bq27541_read_i2c_block(chip, ZY602_MAC_CELL_QMAX_ADDR_A, ZY602_MAC_CELL_QMAX_SIZE_A, qmax_buffer_1);
 
@@ -2651,13 +2651,13 @@ static int bq28z610_get_qmax_parameters(
 	}
 
 	mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_MAC_CELL_QMAX_EN_ADDR,
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_MAC_CELL_QMAX_EN_ADDR,
 		BQ28Z610_MAC_CELL_QMAX_CMD);
 	usleep_range(1000, 1000);
 	bq27541_read_i2c_block(chip, BQ28Z610_MAC_CELL_QMAX_ADDR_A,
 		BQ28Z610_MAC_CELL_QMAX_SIZE_A, qmax_buffer_1);
 
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_MAC_CELL_QMAX_EN_ADDR,
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_MAC_CELL_QMAX_EN_ADDR,
 		BQ28Z610_MAC_CELL_QMAX_CMD);
 	usleep_range(1000, 1000);
 	bq27541_read_i2c_block(chip, BQ28Z610_MAC_CELL_QMAX_ADDR_B,
@@ -2988,14 +2988,14 @@ static int bq27441_battery_full_sleep_mode_cmd(struct chip_bq27541 *chip, bool e
 		chg_err("zy0602_unseal fail return\n");
 		return -1;
 	}
-	bq27541_i2c_txsubcmd_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL, 0x00);
+	bq27541_i2c_txsubcmd_2_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL, 0x00);
 	usleep_range(2000, 2000);
 
-	bq27541_i2c_txsubcmd_onebyte(chip, 0x3E, 0x40);
+	bq27541_i2c_txsubcmd_2_onebyte(chip, 0x3E, 0x40);
 	usleep_range(5000, 5000);
 	chg_info("write 0x40 --> 0x3E\n");
 
-	bq27541_i2c_txsubcmd_onebyte(chip, 0x3F, 0x00);
+	bq27541_i2c_txsubcmd_2_onebyte(chip, 0x3F, 0x00);
 	usleep_range(10000, 10000);
 	chg_info("write 0x00 --> 0x3F\n");
 
@@ -3009,7 +3009,7 @@ static int bq27441_battery_full_sleep_mode_cmd(struct chip_bq27541 *chip, bool e
 			usleep_range(5000, 5000);
 			chg_info("write {0xC1,0x11,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0} --> 0x40\n");
 
-			bq27541_i2c_txsubcmd_onebyte(chip, 0x60, 0x2D);
+			bq27541_i2c_txsubcmd_2_onebyte(chip, 0x60, 0x2D);
 			usleep_range(5000, 5000);
 			chg_info("write 0x2D --> 0x60\n");
 
@@ -3026,7 +3026,7 @@ static int bq27441_battery_full_sleep_mode_cmd(struct chip_bq27541 *chip, bool e
 			usleep_range(5000, 5000);
 			chg_info("write {0xC1,0x31,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0} --> 0x40\n");
 
-			bq27541_i2c_txsubcmd_onebyte(chip, 0x60, 0x0D);
+			bq27541_i2c_txsubcmd_2_onebyte(chip, 0x60, 0x0D);
 			usleep_range(5000, 5000);
 			chg_info("write 0x0D --> 0x60\n");
 
@@ -3076,7 +3076,7 @@ static int bq28z610_update_soc_smooth_parameter(struct chip_bq27541 *chip)
 	return 0;
 }
 
-int bq27541_get_passedchg(struct chip_bq27541 *chip, int *val)
+int bq27541_get_passedchg_2(struct chip_bq27541 *chip, int *val)
 {
 	int rc = -1;
 	u8 value;
@@ -3090,7 +3090,7 @@ int bq27541_get_passedchg(struct chip_bq27541 *chip, int *val)
 
 	/*enable block data control */
 	if (chip->batt_bq28z610) {
-		rc = bq27541_i2c_txsubcmd_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL,
+		rc = bq27541_i2c_txsubcmd_2_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL,
 						  0x00);
 		if (rc) {
 			pr_err("%s enable block data control fail\n", __func__);
@@ -3098,7 +3098,7 @@ int bq27541_get_passedchg(struct chip_bq27541 *chip, int *val)
 		}
 		usleep_range(5000, 5000);
 
-		bq27541_i2c_txsubcmd(chip, BQ27411_DATA_CLASS_ACCESS, 0x0074);
+		bq27541_i2c_txsubcmd_2(chip, BQ27411_DATA_CLASS_ACCESS, 0x0074);
 		usleep_range(10000, 10000);
 		rc = bq27541_read_i2c_onebyte(chip, 0x4E, &value);
 		if (rc) {
@@ -3820,7 +3820,7 @@ static int bq27411_write_block_data_cmd(struct chip_bq27541 *chip, int block_id,
 	if (oplus_is_rf_ftm_mode())
 		return 0;
 	usleep_range(1000, 1000);
-	bq27541_i2c_txsubcmd(chip, BQ27411_DATA_CLASS_ACCESS, block_id);
+	bq27541_i2c_txsubcmd_2(chip, BQ27411_DATA_CLASS_ACCESS, block_id);
 	usleep_range(10000, 10000);
 	rc = bq27541_read_i2c_onebyte(chip, reg_addr, &old_value);
 	if (rc) {
@@ -3837,7 +3837,7 @@ static int bq27411_write_block_data_cmd(struct chip_bq27541 *chip, int block_id,
 		return 1;
 	}
 	usleep_range(1000, 1000);
-	bq27541_i2c_txsubcmd_onebyte(chip, reg_addr, new_value);
+	bq27541_i2c_txsubcmd_2_onebyte(chip, reg_addr, new_value);
 	usleep_range(1000, 1000);
 	new_csum = (old_value + old_csum - new_value) & 0xff;
 	/*
@@ -3845,7 +3845,7 @@ static int bq27411_write_block_data_cmd(struct chip_bq27541 *chip, int block_id,
 	new_csum_test = 255 - ((csum_temp + new_value) % 256);
 */
 	usleep_range(1000, 1000);
-	bq27541_i2c_txsubcmd_onebyte(chip, BQ27411_CHECKSUM_ADDR, new_csum);
+	bq27541_i2c_txsubcmd_2_onebyte(chip, BQ27411_CHECKSUM_ADDR, new_csum);
 	pr_err("bq27411 write blk_id = 0x%x, addr = 0x%x, old_val = 0x%x, new_val = 0x%x, old_csum = 0x%x, new_csum = 0x%x\n",
 	       block_id, reg_addr, old_value, new_value, old_csum, new_csum);
 	return 0;
@@ -3859,7 +3859,7 @@ static int bq27411_read_block_data_cmd(struct chip_bq27541 *chip, int block_id,
 	if (oplus_is_rf_ftm_mode())
 		return 0;
 	usleep_range(1000, 1000);
-	bq27541_i2c_txsubcmd(chip, BQ27411_DATA_CLASS_ACCESS, block_id);
+	bq27541_i2c_txsubcmd_2(chip, BQ27411_DATA_CLASS_ACCESS, block_id);
 	usleep_range(10000, 10000);
 	bq27541_read_i2c_onebyte(chip, reg_addr, &value);
 	return value;
@@ -3949,7 +3949,7 @@ static bool bq27411_check_soc_smooth_parameter(struct chip_bq27541 *chip,
 		return false;
 	}
 	/*enable block data control */
-	rc = bq27541_i2c_txsubcmd_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL, 0x00);
+	rc = bq27541_i2c_txsubcmd_2_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL, 0x00);
 	if (rc) {
 		pr_err("%s enable block data control fail\n", __func__);
 		goto check_error;
@@ -4072,7 +4072,7 @@ static int bq27441_battery_full_param_write_cmd(struct chip_bq27541 *chip)
 		pr_err("%s 0x50 -->write [0x%02x][0x%02x]\n", __func__,
 		       CNTL1_VAL_9[0], CNTL1_VAL_9[1]);
 
-		bq27541_i2c_txsubcmd_onebyte(chip,
+		bq27541_i2c_txsubcmd_2_onebyte(chip,
 			0x60,
 			(0xFFFF -
 			 (CNTL1_VAL_1[0] + CNTL1_VAL_1[1] + CNTL1_VAL_2[0] +
@@ -4111,7 +4111,7 @@ static int bq27441_battery_full_param_write_cmd(struct chip_bq27541 *chip)
 		bq27541_write_i2c_block(chip, 0x5B, 2, CNTL1_VAL_1);
 		pr_err("%s 0x5B -->write [0x%02x][0x%02x]\n", __func__,
 		       CNTL1_VAL_1[0], CNTL1_VAL_1[1]);
-		bq27541_i2c_txsubcmd_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
+		bq27541_i2c_txsubcmd_2_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
 						    reg_data - CNTL1_VAL_1[0] -
 						    CNTL1_VAL_1[1]));
 		pr_err("%s 0x60 -->write [0x%02x]\n", __func__,
@@ -4140,7 +4140,7 @@ static int bq27441_battery_full_param_write_cmd(struct chip_bq27541 *chip)
 		bq27541_write_i2c_block(chip, 0x5D, 2, CNTL1_VAL_1);
 		pr_err("%s 0x5D -->write [0x%02x][0x%02x]\n", __func__,
 		       CNTL1_VAL_1[0], CNTL1_VAL_1[1]);
-		bq27541_i2c_txsubcmd_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
+		bq27541_i2c_txsubcmd_2_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
 						    reg_data - CNTL1_VAL_1[0] -
 						    CNTL1_VAL_1[1]));
 		pr_err("%s 0x60 -->write [0x%02x]\n", __func__,
@@ -4167,7 +4167,7 @@ static int bq27441_battery_full_param_write_cmd(struct chip_bq27541 *chip)
 		bq27541_write_i2c_block(chip, 0x56, 2, CNTL1_VAL_1);
 		pr_err("%s 0x56 -->write [0x%02x][0x%02x]\n", __func__,
 		       CNTL1_VAL_1[0], CNTL1_VAL_1[1]);
-		bq27541_i2c_txsubcmd_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
+		bq27541_i2c_txsubcmd_2_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
 						    reg_data - CNTL1_VAL_1[0] -
 						    CNTL1_VAL_1[1]));
 		pr_err("%s 0x60 -->write [0x%02x]\n", __func__,
@@ -4194,7 +4194,7 @@ static int bq27441_battery_full_param_write_cmd(struct chip_bq27541 *chip)
 		bq27541_write_i2c_block(chip, 0x40, 2, CNTL1_VAL_1);
 		pr_err("%s 0x40 -->write [0x%02x][0x%02x]\n", __func__,
 		       CNTL1_VAL_1[0], CNTL1_VAL_1[1]);
-		bq27541_i2c_txsubcmd_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
+		bq27541_i2c_txsubcmd_2_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
 						    reg_data - CNTL1_VAL_1[0] -
 						    CNTL1_VAL_1[1]));
 		pr_err("%s 0x60 -->write [0x%02x]\n", __func__,
@@ -4225,7 +4225,7 @@ static int bq27441_battery_full_param_write_cmd(struct chip_bq27541 *chip)
 		pr_err("%s 0x40 -->write [0x%02x][0x%02x]\n", __func__,
 		       CNTL1_VAL_2[0], CNTL1_VAL_2[1]);
 
-		bq27541_i2c_txsubcmd_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
+		bq27541_i2c_txsubcmd_2_onebyte(chip, 0x60, (read_buf[0] + read_buf[1] +
 						    reg_data - CNTL1_VAL_2[0] -
 						    CNTL1_VAL_2[1]));
 		pr_err("%s 0x60 -->write [0x%02x]\n", __func__,
@@ -4264,7 +4264,7 @@ static int bq27411_write_soc_smooth_parameter(struct chip_bq27541 *chip,
 		return 1;
 	}
 	/*enable block data control */
-	bq27541_i2c_txsubcmd_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL, 0x00);
+	bq27541_i2c_txsubcmd_2_onebyte(chip, BQ27411_BLOCK_DATA_CONTROL, 0x00);
 
 	/* only for wite battery full param in guage dirver probe on 7250 platform */
 	if (chip->battery_full_param) {
@@ -4310,7 +4310,7 @@ static int bq8z610_sealed(struct chip_bq27541 *chip)
 	int value = 0;
 	u8 CNTL1_VAL[BQ28Z610_REG_CNTL1_SIZE] = { 0 };
 
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, BQ28Z610_SEAL_STATUS);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, BQ28Z610_SEAL_STATUS);
 	usleep_range(10000, 10000);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE, CNTL1_VAL);
 	chg_info("bq8z610_sealed CNTL1_VAL[0] = %x,CNTL1_VAL[1] = %x, CNTL1_VAL[2] = %x,CNTL1_VAL[3] = %x\n",
@@ -4333,7 +4333,7 @@ static int bq8z610_seal(struct chip_bq27541 *chip)
 		chg_info("bq8z610 sealed, return\n");
 		return 1;
 	}
-	bq27541_i2c_txsubcmd(chip, 0, BQ28Z610_SEAL_SUBCMD);
+	bq27541_i2c_txsubcmd_2(chip, 0, BQ28Z610_SEAL_SUBCMD);
 	usleep_range(100000, 100000);
 	for (i = 0; i < BQ28Z610_SEAL_POLLING_RETRY_LIMIT; i++) {
 		if (bq8z610_sealed(chip)) {
@@ -4352,9 +4352,9 @@ static int bq8z610_unseal(struct chip_bq27541 *chip)
 	if (!bq8z610_sealed(chip))
 		goto out;
 
-	bq27541_i2c_txsubcmd(chip, 0, BQ28Z610_UNSEAL_SUBCMD1);
+	bq27541_i2c_txsubcmd_2(chip, 0, BQ28Z610_UNSEAL_SUBCMD1);
 	usleep_range(10000, 10000);
-	bq27541_i2c_txsubcmd(chip, 0, BQ28Z610_UNSEAL_SUBCMD2);
+	bq27541_i2c_txsubcmd_2(chip, 0, BQ28Z610_UNSEAL_SUBCMD2);
 	usleep_range(100000, 100000);
 	while (i < BQ28Z610_SEAL_POLLING_RETRY_LIMIT) {
 		i++;
@@ -4391,7 +4391,7 @@ static int bq28z610_set_sleep_mode_withoutunseal(struct chip_bq27541 *chip, bool
 	if (!chip->batt_bq28z610)
 		return rc;
 
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, BQ28Z610_CNTL1_DA_CONFIG);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, BQ28Z610_CNTL1_DA_CONFIG);
 	usleep_range(10000, 10000);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_I2C_SIZE, read_data);
 	read_sleep_mode = (read_data[2] & BIT(4)) >> 4 ? true : false;
@@ -4404,13 +4404,13 @@ static int bq28z610_set_sleep_mode_withoutunseal(struct chip_bq27541 *chip, bool
 		chg_info("enable sleep_mode, val=%d\n", val);
 		rc = bq27541_write_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_I2C_SIZE, &enable_data[0]);
 		msleep(10);
-		bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL2, 0x05ab);
+		bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL2, 0x05ab);
 		msleep(10);
 	} else {
 		chg_info("disable sleep_mode, val=%d\n", val);
 		rc = bq27541_write_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_I2C_SIZE, &disable_data[0]);
 		msleep(10);
-		bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL2, 0x05bb);
+		bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL2, 0x05bb);
 		msleep(10);
 	}
 	return rc;
@@ -4520,9 +4520,9 @@ static int bq28z610_write_flash_busy_wait_i2c_err(struct chip_bq27541 *chip)
 	bq27541_write_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_I2C_SIZE,
 				&I2C_write1[0]);
 	msleep(100);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL2, 0x0516);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL2, 0x0516);
 	msleep(100);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1,
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1,
 			     0x4603); /* physical address is 0x4603 */
 	msleep(100);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_I2C_SIZE,
@@ -4540,7 +4540,7 @@ static int bq28z610_write_flash_busy_wait_i2c_err(struct chip_bq27541 *chip)
 	return 0;
 }
 
-int bq28z610_write_soc_smooth_parameter(struct chip_bq27541 *chip)
+int bq28z610_write_soc_smooth_parameter_2(struct chip_bq27541 *chip)
 {
 	/* int rc = 0; */
 	u8 CNTL1_VAL[BQ28Z610_REG_CNTL1_SIZE] = { 0, 0, 0, 0 };
@@ -4553,11 +4553,11 @@ int bq28z610_write_soc_smooth_parameter(struct chip_bq27541 *chip)
 				&CNTL1_write1[0]);
 	msleep(100);
 	/* bq8z610_cntl2_cmd(0x06E9); */
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL2, 0x06E9);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL2, 0x06E9);
 	/* usleep_range(10000, 5000); */
 	msleep(100);
 	/* bq8z610_cntl1_cmd(0x46F4); */
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, 0x46F4);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, 0x46F4);
 	/* usleep_range(5000, 5000); */
 	msleep(100);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE,
@@ -4579,12 +4579,12 @@ int bq28z610_write_soc_smooth_parameter(struct chip_bq27541 *chip)
 				&CNTL1_write2[0]);
 	msleep(100);
 	/* bq8z610_cntl2_cmd(0x06E9); */
-	/* bq27541_i2c_txsubcmd(BQ28Z610_REG_CNTL2, 0x0638); 120ma */
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL2, 0x061A); /* 150ma */
+	/* bq27541_i2c_txsubcmd_2(BQ28Z610_REG_CNTL2, 0x0638); 120ma */
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL2, 0x061A); /* 150ma */
 	/* usleep_range(5000, 5000); */
 	msleep(100);
 	/* bq8z610_cntl1_cmd(0x46F4); */
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, 0x4708);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, 0x4708);
 	/* usleep_range(5000, 5000); */
 	msleep(100);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE,
@@ -4606,9 +4606,9 @@ int bq28z610_write_soc_smooth_parameter(struct chip_bq27541 *chip)
 	bq27541_write_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE,
 				&CNTL1_write3[0]);
 	msleep(100);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL2, 0x0684);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL2, 0x0684);
 	msleep(100);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, 0x470C);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, 0x470C);
 	msleep(100);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE,
 			       CNTL1_VAL);
@@ -4635,9 +4635,9 @@ static int bq28z610_write_iterm_Taper_parameter(struct chip_bq27541 *chip)
 	bq27541_write_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE,
 				&CNTL1_write1[0]);
 	msleep(100);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL2, 0x062F);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL2, 0x062F);
 	msleep(100);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, 0x46F4);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, 0x46F4);
 	msleep(100);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE,
 			       CNTL1_VAL);
@@ -4690,7 +4690,7 @@ write_parameter:
 }
 
 static int
-bq28z610_batt_full_zero_parameter_write_cmd(struct chip_bq27541 *chip)
+bq28z610_batt_full_zero_parameter_2_write_cmd(struct chip_bq27541 *chip)
 {
 	u8 rc = 0;
 	u8 CNTL1_VAL_1[2] = { 0x00, 0x00 };
@@ -4898,7 +4898,7 @@ param_cf_err:
 	return GAUGE_ERROR;
 }
 
-int bq28z610_batt_full_zero_parameter(struct chip_bq27541 *chip)
+int bq28z610_batt_full_zero_parameter_2(struct chip_bq27541 *chip)
 {
 	int rc = 0;
 	bool tried_again = false;
@@ -4920,18 +4920,18 @@ int bq28z610_batt_full_zero_parameter(struct chip_bq27541 *chip)
 	}
 
 write_parameter:
-	/*rc = bq28z610_write_soc_smooth_parameter(chip);
+	/*rc = bq28z610_write_soc_smooth_parameter_2(chip);
 	rc = bq28z610_write_iterm_Taper_parameter(chip);
 	rc = bq28z610_write_flash_busy_wait_i2c_err(chip);
 	usleep_range(5000, 5000);
 	*/
-	rc = bq28z610_batt_full_zero_parameter_write_cmd(chip);
+	rc = bq28z610_batt_full_zero_parameter_2_write_cmd(chip);
 	if (rc && tried_again == false) {
 		tried_again = true;
 		goto write_parameter;
 	}
 
-	bq27541_i2c_txsubcmd(chip, 0, BQ28Z610_SEAL_SUBCMD); /*seal*/
+	bq27541_i2c_txsubcmd_2(chip, 0, BQ28Z610_SEAL_SUBCMD); /*seal*/
 	msleep(1000);
 	if (bq8z610_sealed(chip) == 0) {
 		usleep_range(1000, 1000);
@@ -5055,7 +5055,7 @@ static int gauge_reg_dump(struct chip_bq27541 *chip)
 			read_done &= !(sum < len - 16);
 		}
 
-		bq27541_i2c_txsubcmd(chip, BQ27411_DATA_CLASS_ACCESS, 0x71);
+		bq27541_i2c_txsubcmd_2(chip, BQ27411_DATA_CLASS_ACCESS, 0x71);
 		usleep_range(10000, 10000);
 		bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, 6, iv);
 		for (i = 2; (i < 6) && (sum < len - 16); i++) {
@@ -5066,7 +5066,7 @@ static int gauge_reg_dump(struct chip_bq27541 *chip)
 				sum += l;
 			}
 		}
-		bq27541_i2c_txsubcmd(chip, BQ27411_DATA_CLASS_ACCESS, 0x73);
+		bq27541_i2c_txsubcmd_2(chip, BQ27411_DATA_CLASS_ACCESS, 0x73);
 		usleep_range(10000, 10000);
 		bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, 16, iv);
 		for (i = 2; (i < 16) && (sum < len - 16); i++) {
@@ -5080,7 +5080,7 @@ static int gauge_reg_dump(struct chip_bq27541 *chip)
 				}
 			}
 		}
-		bq27541_i2c_txsubcmd(chip, BQ27411_DATA_CLASS_ACCESS, 0x74);
+		bq27541_i2c_txsubcmd_2(chip, BQ27411_DATA_CLASS_ACCESS, 0x74);
 		usleep_range(10000, 10000);
 		bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, 26, iv);
 		for (i = 12; (i < 26) && (sum < len - 16); i++) {
@@ -5093,7 +5093,7 @@ static int gauge_reg_dump(struct chip_bq27541 *chip)
 				}
 			}
 		}
-		bq27541_i2c_txsubcmd(chip, BQ27411_DATA_CLASS_ACCESS, 0x75);
+		bq27541_i2c_txsubcmd_2(chip, BQ27411_DATA_CLASS_ACCESS, 0x75);
 		usleep_range(10000, 10000);
 		bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, 12, iv);
 		for (i = 2; (i < 12) && (sum < len - 16); i++) {
@@ -5116,7 +5116,7 @@ static int bq8z610_check_gauge_enable(struct chip_bq27541 *chip)
 	/*    return control_cmd_read(di, CONTROL_STATUS) & (1 << 13);*/
 	int value = 0;
 	u8 CNTL1_VAL[BQ28Z610_REG_CNTL1_SIZE] = { 0, 0, 0, 0 };
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_GAUGE_EN);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_GAUGE_EN);
 	/* usleep_range(10000, 10000); */
 	msleep(1000);
 	bq27541_read_i2c_block(chip, BQ28Z610_REG_CNTL1, BQ28Z610_REG_CNTL1_SIZE,
@@ -5138,16 +5138,16 @@ static int bq8z610_check_gauge_enable(struct chip_bq27541 *chip)
 static int bq28z610_write_dod0_parameter(struct chip_bq27541 *chip)
 {
 	/* bq8z610_cntl1_cmd(0x46F4); */
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, 0x0021);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, 0x0021);
 	/* usleep_range(5000, 5000); */
 	msleep(1000);
 	/* bq8z610_cntl1_cmd(0x00DC); */
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, 0x0021);
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, 0x0021);
 	/* usleep_range(5000, 5000); */
 	msleep(2000);
 	if (bq8z610_check_gauge_enable(chip) == false) {
 		/* bq8z610_cntl1_cmd(0x00DC); */
-		bq27541_i2c_txsubcmd(chip, BQ28Z610_REG_CNTL1, 0x0021);
+		bq27541_i2c_txsubcmd_2(chip, BQ28Z610_REG_CNTL1, 0x0021);
 		/* usleep_range(5000, 5000); */
 		msleep(300);
 	}
@@ -5184,7 +5184,7 @@ static int bq28z610_get_2cell_voltage(struct chip_bq27541 *chip)
 	}
 	if (!chip->batt_zy0603) {
 	mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-	bq27541_i2c_txsubcmd(chip, BQ28Z610_MAC_CELL_VOLTAGE_EN_ADDR,
+	bq27541_i2c_txsubcmd_2(chip, BQ28Z610_MAC_CELL_VOLTAGE_EN_ADDR,
 		BQ28Z610_MAC_CELL_VOLTAGE_CMD);
 	usleep_range(1000, 1000);
 	bq27541_read_i2c_block(chip, BQ28Z610_MAC_CELL_VOLTAGE_ADDR,
@@ -5194,7 +5194,7 @@ static int bq28z610_get_2cell_voltage(struct chip_bq27541 *chip)
 	chip->batt_cell_2_vol = (cell_vol[3] << 8) | cell_vol[2];
 	} else {
 		mutex_lock(&chip->bq28z610_alt_manufacturer_access);
-		bq27541_i2c_txsubcmd(chip, BQ28Z610_MAC_CELL_VOLTAGE_EN_ADDR,
+		bq27541_i2c_txsubcmd_2(chip, BQ28Z610_MAC_CELL_VOLTAGE_EN_ADDR,
 			BQ28Z610_MAC_CELL_VOLTAGE_CMD);
 		usleep_range(U_DELAY_1_MS, U_DELAY_1_MS);
 		bq27541_read_i2c_block(chip, BQ28Z610_MAC_CELL_VOLTAGE_EN_ADDR,
@@ -5227,7 +5227,7 @@ static int bq28z610_get_2cell_voltage(struct chip_bq27541 *chip)
 {
 	u8 balance_time[BQ28Z610_MAC_CELL_BALANCE_TIME_SIZE] = {0,0,0,0};
 
-	bq27541_i2c_txsubcmd(BQ28Z610_MAC_CELL_BALANCE_TIME_EN_ADDR, BQ28Z610_MAC_CELL_BALANCE_TIME_CMD);
+	bq27541_i2c_txsubcmd_2(BQ28Z610_MAC_CELL_BALANCE_TIME_EN_ADDR, BQ28Z610_MAC_CELL_BALANCE_TIME_CMD);
 	usleep_range(1000, 1000);
 	bq27541_read_i2c_block(BQ28Z610_MAC_CELL_BALANCE_TIME_ADDR, BQ28Z610_MAC_CELL_BALANCE_TIME_SIZE, balance_time);
 	pr_err("Cell_balance_time_remaining1 = %dS, Cell_balance_time_remaining2 = %dS\n",
@@ -5337,7 +5337,7 @@ static int bq27541_sha1_hmac_authenticate(
 	}
 #endif
 	/* step 1: seal mode->write 0x00 to dataflashblock */
-	ret = bq27541_i2c_txsubcmd_onebyte(chip, DATAFLASHBLOCK, authen_cmd_buf[0]);
+	ret = bq27541_i2c_txsubcmd_2_onebyte(chip, DATAFLASHBLOCK, authen_cmd_buf[0]);
 
 	if (ret < 0) {
 		chg_err("%s i2c write error\n", __func__);
@@ -5349,7 +5349,7 @@ static int bq27541_sha1_hmac_authenticate(
 				authenticate_data->message);
 	msleep(5);
 	/* step 3: write checksum to authenchecksum_reg for compute */
-	bq27541_i2c_txsubcmd_onebyte(chip, AUTHENCHECKSUM, checksum_buf[0]);
+	bq27541_i2c_txsubcmd_2_onebyte(chip, AUTHENCHECKSUM, checksum_buf[0]);
 	msleep(10);
 	/* step 4: read authendata */
 	bq27541_read_i2c_block(chip, AUTHENDATA, authenticate_data->message_len,
@@ -6249,7 +6249,7 @@ static int oplus_bq27541_get_cb_status(struct oplus_chg_ic_dev *ic_dev,
 	return 0;
 }
 
-static int oplus_bq27541_get_passedchg(struct oplus_chg_ic_dev *ic_dev,
+static int oplus_bq27541_get_passedchg_2(struct oplus_chg_ic_dev *ic_dev,
 				       int *val)
 {
 	struct chip_bq27541 *chip;
@@ -6261,7 +6261,7 @@ static int oplus_bq27541_get_passedchg(struct oplus_chg_ic_dev *ic_dev,
 	chip = oplus_chg_ic_get_drvdata(ic_dev);
 	if (atomic_read(&chip->locked) != 0)
 		return -EINVAL;
-	return bq27541_get_passedchg(chip, val);
+	return bq27541_get_passedchg_2(chip, val);
 }
 
 static int oplus_bq27541_set_lock(struct oplus_chg_ic_dev *ic_dev, bool lock)
@@ -6738,7 +6738,7 @@ static void *oplus_chg_get_func(struct oplus_chg_ic_dev *ic_dev,
 	case OPLUS_IC_FUNC_GAUGE_GET_PASSEDCHG:
 		func = OPLUS_CHG_IC_FUNC_CHECK(
 			OPLUS_IC_FUNC_GAUGE_GET_PASSEDCHG,
-			oplus_bq27541_get_passedchg);
+			oplus_bq27541_get_passedchg_2);
 		break;
 	case OPLUS_IC_FUNC_GAUGE_SET_LOCK:
 		func = OPLUS_CHG_IC_FUNC_CHECK(OPLUS_IC_FUNC_GAUGE_SET_LOCK,
@@ -6873,7 +6873,7 @@ rerun:
 		dev_err(&client->dev, "zy0603 support and can't config gauge param\n");
 	} else {
 		if (!fg_ic->modify_soc_calibration) {
-			bq28z610_batt_full_zero_parameter(fg_ic);
+			bq28z610_batt_full_zero_parameter_2(fg_ic);
 		}
 	}
 	/*
@@ -6988,7 +6988,7 @@ rerun:
 	chg_info("register %s\n", fg_ic->dev->of_node->name);
 
 #ifndef CONFIG_OPLUS_CHARGER_MTK
-	oplus_vooc_get_fastchg_started_pfunc(&oplus_vooc_get_fastchg_started);
+	oplus_vooc_get_fastchg_is_started_pfunc(&oplus_vooc_get_fastchg_is_started);
 	oplus_vooc_get_fastchg_ing_pfunc(&oplus_vooc_get_fastchg_ing);
 #endif
 

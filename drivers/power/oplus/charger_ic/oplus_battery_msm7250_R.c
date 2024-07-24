@@ -16223,8 +16223,8 @@ static int smb5_probe(struct platform_device *pdev)
 		oplus_chip->len_array = ARRAY_SIZE(con_temp_30k);
 #else
 		oplus_chip->con_volt = con_volt_855;
-		oplus_chip->con_temp = con_temp_855;
-		oplus_chip->len_array = ARRAY_SIZE(con_temp_855);
+		oplus_chip->con_temp = con_temp_855_2;
+		oplus_chip->len_array = ARRAY_SIZE(con_temp_855_2);
 #endif
 	}
 	if (oplus_usbtemp_check_is_support() == true)

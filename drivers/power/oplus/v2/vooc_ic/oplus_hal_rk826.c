@@ -70,7 +70,7 @@ struct rk826_chip {
 	char *fw_path;
 };
 
-extern int charger_abnormal_log;
+extern int charger_abnormal_log_2;
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0))
 int __attribute__((weak))
@@ -936,7 +936,7 @@ static int rk826_fw_write_00_code(struct rk826_chip *chip, const u8 *fw_buf,
 	return 0;
 
 update_fw_err:
-	charger_abnormal_log = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
+	charger_abnormal_log_2 = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
 	chg_err("fail\n");
 	return 1;
 }
@@ -1056,7 +1056,7 @@ static int rk826_fw_write_ff_code(struct rk826_chip *chip, const u8 *fw_buf,
 	return 0;
 
 update_fw_err:
-	charger_abnormal_log = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
+	charger_abnormal_log_2 = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
 	chg_err("fail\n");
 	return 1;
 }
@@ -1215,7 +1215,7 @@ static int rk826_fw_update(struct rk826_chip *chip, const u8 *fw_buf,
 	return 0;
 
 update_fw_err:
-	charger_abnormal_log = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
+	charger_abnormal_log_2 = CRITICAL_LOG_VOOC_FW_UPDATE_ERR;
 	chg_err("fail\n");
 	return 1;
 }

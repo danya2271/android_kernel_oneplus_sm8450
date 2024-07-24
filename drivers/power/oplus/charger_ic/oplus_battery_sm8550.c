@@ -6448,7 +6448,7 @@ static void get_usb_temp(struct oplus_chg_chip *chg)
 	if (usbtemp_dbg_templ != 0)
 		chg->usb_temp_l = usbtemp_dbg_templ;
 	else
-		chg->usb_temp_l = con_temp_855[i];
+		chg->usb_temp_l = con_temp_855_2[i];
 
 	for (i = ARRAY_SIZE(con_volt_855) - 1; i >= 0; i--) {
 		if (con_volt_855[i] >= chg->usbtemp_volt_r)
@@ -6460,7 +6460,7 @@ static void get_usb_temp(struct oplus_chg_chip *chg)
 	if (usbtemp_dbg_tempr != 0)
 		chg->usb_temp_r = usbtemp_dbg_tempr;
 	else
-		chg->usb_temp_r = con_temp_855[i];
+		chg->usb_temp_r = con_temp_855_2[i];
 	if (oplus_is_pps_charging() && (oplus_pps_get_support_type() == PPS_SUPPORT_3CP)) {
 		if(chg->usbtemp_curr_status == OPLUS_USBTEMP_HIGH_CURR)
 			chg->usb_temp_r = chg->usb_temp_r - chg->usbtemp_cool_down_recoup_high;

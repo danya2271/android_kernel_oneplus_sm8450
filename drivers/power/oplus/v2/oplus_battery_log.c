@@ -78,7 +78,7 @@ static int battery_log_operate_ops(struct battery_log_ops *ops,
 	}
 }
 
-int battery_log_common_operate(int type, char *buf, int size)
+int battery_log_common_operate_2(int type, char *buf, int size)
 {
 	int i, ret;
 	int buf_size;
@@ -131,7 +131,7 @@ int battery_log_common_operate(int type, char *buf, int size)
 	return used + buf_size;
 }
 
-int battery_log_ops_register(struct battery_log_ops *ops)
+int battery_log_ops_register_2(struct battery_log_ops *ops)
 {
 	struct battery_log_dev *l_dev = g_battery_log_dev;
 	int dev_id;
@@ -190,7 +190,7 @@ static int oplus_battery_log_probe(struct platform_device *pdev)
 	g_battery_log_dev = l_dev;
 	if (register_fail_num != 0) {
 		for (i = 0; i < register_fail_num; i++)
-			battery_log_ops_register(g_ops_register_fail[i]);
+			battery_log_ops_register_2(g_ops_register_fail[i]);
 	}
 
 	return 0;
@@ -239,7 +239,7 @@ static __exit void oplus_battery_log_exit(void)
 
 oplus_chg_module_core_register(oplus_battery_log);
 
-int oplus_battery_log_support(void)
+int oplus_battery_log_support_2(void)
 {
 	if (g_battery_log_dev == NULL)
 		return -ENODEV;

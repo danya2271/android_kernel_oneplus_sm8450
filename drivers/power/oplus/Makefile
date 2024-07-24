@@ -30,5 +30,7 @@ endif
 
 endif
 
+KBUILD_CFLAGS += -Wno-enum-compare -Wframe-larger-than=5000
+
 obj-$(CONFIG_OPLUS_CHG_TEST_KIT) += test-kit/
 obj-$(CONFIG_OPLUS_DYNAMIC_CONFIG) += config/

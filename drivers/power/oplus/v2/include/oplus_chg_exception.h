@@ -32,7 +32,7 @@ struct exception_data {
 	struct excet_dat excep[TRACK_EXCEP_NUM_MAX];
 };
 
-int chg_exception_report(void *chg_exception_data, int type_reason, int flag_reason,
+int chg_exception_report_2(void *chg_exception_data, int type_reason, int flag_reason,
 				void *summary, unsigned int summary_size);
 int oplus_chg_set_app_info(const char *buf);
 int oplus_chg_olc_config_set(const char *buf);

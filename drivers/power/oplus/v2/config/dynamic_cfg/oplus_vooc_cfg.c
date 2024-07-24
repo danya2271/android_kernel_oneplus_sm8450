@@ -257,10 +257,10 @@ static void oplus_vooc_update_mcu_bad_volt_config(
 }
 
 struct batt_bcc_curves *g_bcc_curves_metadata[] = {
-	bcc_curves_soc0_2_50,
-	bcc_curves_soc50_2_75,
-	bcc_curves_soc75_2_85,
-	bcc_curves_soc85_2_90
+	bcc_curves_soc0_2_50_2,
+	bcc_curves_soc50_2_75_2,
+	bcc_curves_soc75_2_85_2,
+	bcc_curves_soc85_2_90_2
 };
 
 #define NAME_BUF_MAX 256
