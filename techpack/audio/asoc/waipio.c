@@ -40,12 +40,20 @@
 #include "codecs/wcd938x/wcd938x.h"
 #include "codecs/wcd937x/wcd937x.h"
 #include "codecs/lpass-cdc/lpass-cdc.h"
-#include <bindings/audio-codec-port-types.h>
+#include <dt-bindings/sound/audio-codec-port-types.h>
 #include "codecs/lpass-cdc/lpass-cdc-wsa-macro.h"
 #include "waipio-port-config.h"
 #include "msm-audio-defs.h"
 #include "msm_common.h"
 #include "msm_dailink.h"
+
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_MM_FEEDBACK)
+#include "feedback/oplus_audio_kernel_fb.h"
+#ifdef dev_err
+#undef dev_err
+#define dev_err dev_err_fb_delay
+#endif
+#endif /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
 
 #define DRV_NAME "waipio-asoc-snd"
 #define __CHIPSET__ "WAIPIO "
@@ -77,6 +85,7 @@ struct msm_asoc_mach_data {
 	struct device_node *dmic01_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic23_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic45_gpio_p; /* used by pinctrl API */
+	struct device_node *dmic67_gpio_p; /* used by pinctrl API */
 	struct pinctrl *usbc_en2_gpio_p; /* used by pinctrl API */
 	bool is_afe_config_done;
 	struct device_node *fsa_handle;
@@ -95,9 +104,9 @@ static struct snd_soc_card snd_soc_card_waipio_msm;
 static int dmic_0_1_gpio_cnt;
 static int dmic_2_3_gpio_cnt;
 static int dmic_4_5_gpio_cnt;
+static int dmic_6_7_gpio_cnt;
 
 #if IS_ENABLED(CONFIG_AUDIO_EXTEND_DRV)
-extern void extend_codec_i2s_be_dailinks(struct device *dev, struct snd_soc_dai_link *dailink, size_t size);
 #endif /* CONFIG_AUDIO_EXTEND_DRV */
 
 static void *def_wcd_mbhc_cal(void);
@@ -339,6 +348,11 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 		dmic_gpio_cnt = &dmic_4_5_gpio_cnt;
 		dmic_gpio = pdata->dmic45_gpio_p;
 		break;
+	case 6:
+	case 7:
+		dmic_gpio_cnt = &dmic_6_7_gpio_cnt;
+		dmic_gpio = pdata->dmic67_gpio_p;
+		break;
 	default:
 		dev_err(component->dev, "%s: Invalid DMIC Selection\n",
 			__func__);
@@ -393,8 +407,8 @@ static const struct snd_soc_dapm_widget msm_int_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("Digital Mic3", msm_dmic_event),
 	SND_SOC_DAPM_MIC("Digital Mic4", msm_dmic_event),
 	SND_SOC_DAPM_MIC("Digital Mic5", msm_dmic_event),
-	SND_SOC_DAPM_MIC("Digital Mic6", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic7", NULL),
+	SND_SOC_DAPM_MIC("Digital Mic6", msm_dmic_event),
+	SND_SOC_DAPM_MIC("Digital Mic7", msm_dmic_event),
 };
 
 static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
@@ -895,21 +909,6 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
  * Senary	- lpi_i2s2
  * ------------------------------------
  */
-
-#ifdef OPLUS_ARCH_EXTENDS
-static struct snd_soc_dai_link_component sia91xx_dails[] = {
-	{
-		.name = "sipa.4-006d",
-		.dai_name = "sia91xx-aif-4-6d",
-	},
-
-	{
-		.name = "sipa.4-006c",
-		.dai_name = "sia91xx-aif-4-6c",
-	},
-};
-#endif /* OPLUS_ARCH_EXTENDS */
-
 static struct snd_soc_dai_link msm_mi2s_dai_links[] = {
 	{
 		.name = LPASS_BE_PRI_MI2S_RX,
@@ -1389,7 +1388,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev, int w
 	int rc = 0;
 	u32 val = 0;
 	const struct of_device_id *match;
-        const char *codec_vendor;
 
 	match = of_match_node(waipio_asoc_machine_of_match, dev->of_node);
 	if (!match) {
@@ -1449,20 +1447,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev, int w
 		if (!rc && val) {
 
 #if IS_ENABLED(CONFIG_AUDIO_EXTEND_DRV)
-			extend_codec_i2s_be_dailinks(dev, msm_mi2s_dai_links, ARRAY_SIZE(msm_mi2s_dai_links));
-			pr_info("exchanged mi2s\n");
 #endif /* CONFIG_AUDIO_EXTEND_DRV */
-
-                        rc = of_property_read_string(dev->of_node,
-                                "oplus,speaker-vendor", &codec_vendor);
-			if (rc) {
-				pr_warn("%s: Looking up oplus,speaker-vendor  property in node failed\n", __func__);
-			} else {
-				pr_info("%s: codec vendor: %s\n", __func__, codec_vendor);
-				if (!strcmp(codec_vendor, "sia91xx")) {
-				  msm_mi2s_dai_links[4].codecs = sia91xx_dails;
-				}
-			}
 
 			memcpy(msm_waipio_dai_links + total_links,
 					msm_mi2s_dai_links,
@@ -2095,12 +2080,17 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	pdata->dmic45_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,cdc-dmic45-gpios",
 					       0);
+	pdata->dmic67_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,cdc-dmic67-gpios",
+					       0);
 	if (pdata->dmic01_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic01_gpio_p, false);
 	if (pdata->dmic23_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic23_gpio_p, false);
 	if (pdata->dmic45_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic45_gpio_p, false);
+	if (pdata->dmic67_gpio_p)
+		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic67_gpio_p, false);
 
 	msm_common_snd_init(pdev, card);
 

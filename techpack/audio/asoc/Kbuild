@@ -58,16 +58,12 @@ else
 		include $(AUDIO_ROOT)/config/waipioauto.conf
 		INCS    +=  -include $(AUDIO_ROOT)/config/waipioautoconf.h
 #ifdef OPLUS_ARCH_EXTENDS
-		-include $(AUDIO_ROOT)/oplus/config/opluswaipioauto.conf
-		INCS    +=  -include $(AUDIO_ROOT)/oplus/config/opluswaipioautoconf.h
 #endif /* OPLUS_ARCH_EXTENDS */
 	endif
 	ifeq ($(CONFIG_ARCH_PARROT), y)
 		include $(AUDIO_ROOT)/config/waipioauto.conf
 		INCS    +=  -include $(AUDIO_ROOT)/config/waipioautoconf.h
 #ifdef OPLUS_ARCH_EXTENDS
-		-include $(AUDIO_ROOT)/oplus/config/opluswaipioauto.conf
-		INCS    +=  -include $(AUDIO_ROOT)/oplus/config/opluswaipioautoconf.h
 #endif /* OPLUS_ARCH_EXTENDS */
 	endif
 	ifeq ($(CONFIG_ARCH_LITO), y)
@@ -274,6 +270,3 @@ machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_SDX) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

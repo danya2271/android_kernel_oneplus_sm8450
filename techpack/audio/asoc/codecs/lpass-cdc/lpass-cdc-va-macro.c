@@ -152,9 +152,7 @@ struct lpass_cdc_va_macro_priv {
 	struct clk *lpass_audio_hw_vote;
 	struct mutex mclk_lock;
 	struct mutex swr_clk_lock;
-#ifdef OPLUS_ARCH_EXTENDS
 	struct mutex wlock;
-#endif /* OPLUS_ARCH_EXTENDS */
 	struct snd_soc_component *component;
 	struct hpf_work va_hpf_work[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
 	struct va_mute_work va_mute_dwork[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
@@ -195,12 +193,10 @@ struct lpass_cdc_va_macro_priv {
 	bool dev_up;
 	bool pre_dev_up;
 	bool swr_dmic_enable;
-#ifdef OPLUS_ARCH_EXTENDS
 	int wlock_holders;
-#endif /* OPLUS_ARCH_EXTENDS */
 };
 
-#ifdef OPLUS_ARCH_EXTENDS
+
 static int lpass_cdc_va_macro_wake_enable(struct lpass_cdc_va_macro_priv *va_priv,
 				bool wake_enable)
 {
@@ -223,7 +219,6 @@ static int lpass_cdc_va_macro_wake_enable(struct lpass_cdc_va_macro_priv *va_pri
 	mutex_unlock(&va_priv->wlock);
 	return ret;
 }
-#endif /* OPLUS_ARCH_EXTENDS */
 
 static bool lpass_cdc_va_macro_get_data(struct snd_soc_component *component,
 			      struct device **va_dev,
@@ -779,7 +774,7 @@ static int lpass_cdc_va_macro_core_vote(void *handle, bool enable)
 		return -EINVAL;
 	}
 	if (!va_priv->pre_dev_up && enable) {
-		pr_err("%s: adsp is not up\n", __func__);
+		pr_err_ratelimited("%s: adsp is not up\n", __func__);
 		return -EINVAL;
 	}
 
@@ -982,9 +977,7 @@ static void lpass_cdc_va_macro_tx_hpf_corner_freq_callback(
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 					      0x02, 0x00);
 	}
-#ifdef OPLUS_ARCH_EXTENDS
 	lpass_cdc_va_macro_wake_enable(va_priv, 0);
-#endif /* OPLUS_ARCH_EXTENDS */
 }
 
 static void lpass_cdc_va_macro_mute_update_callback(struct work_struct *work)
@@ -1007,9 +1000,7 @@ static void lpass_cdc_va_macro_mute_update_callback(struct work_struct *work)
 	snd_soc_component_update_bits(component, tx_vol_ctl_reg, 0x10, 0x00);
 	dev_dbg(va_priv->dev, "%s: decimator %u unmute\n",
 		__func__, decimator);
-#ifdef OPLUS_ARCH_EXTENDS
 	lpass_cdc_va_macro_wake_enable(va_priv, 0);
-#endif /* OPLUS_ARCH_EXTENDS */
 }
 
 static int lpass_cdc_va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
@@ -1358,9 +1349,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		 * 6ms delay is required as per HW spec
 		 */
 		usleep_range(6000, 6010);
-#ifdef OPLUS_ARCH_EXTENDS
 		lpass_cdc_va_macro_wake_enable(va_priv, 1);
-#endif /* OPLUS_ARCH_EXTENDS */
 		/* schedule work queue to Remove Mute */
 		queue_delayed_work(system_freezable_wq,
 				   &va_priv->va_mute_dwork[decimator].dwork,
@@ -1369,7 +1358,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				   #else /* OPLUS_ARCH_EXTENDS */
 				   msecs_to_jiffies(unmute_delay));
 				   #endif /* OPLUS_ARCH_EXTENDS */
-#ifdef OPLUS_ARCH_EXTENDS
+
 		if (va_priv->va_hpf_work[decimator].hpf_cut_off_freq !=
 							CF_MIN_3DB_150HZ) {
 			lpass_cdc_va_macro_wake_enable(va_priv, 1);
@@ -1377,13 +1366,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					&va_priv->va_hpf_work[decimator].dwork,
 					msecs_to_jiffies(hpf_delay));
 		}
-#else
-		if (va_priv->va_hpf_work[decimator].hpf_cut_off_freq !=
-							CF_MIN_3DB_150HZ)
-			queue_delayed_work(system_freezable_wq,
-					&va_priv->va_hpf_work[decimator].dwork,
-					msecs_to_jiffies(hpf_delay));
-#endif /* OPLUS_ARCH_EXTENDS */
+
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read(component, tx_gain_ctl_reg));
@@ -1418,14 +1401,10 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 						0x03, 0x01);
 			}
 		}
-#ifdef OPLUS_ARCH_EXTENDS
 		lpass_cdc_va_macro_wake_enable(va_priv, 0);
-#endif /* OPLUS_ARCH_EXTENDS */
 		cancel_delayed_work_sync(
 				&va_priv->va_mute_dwork[decimator].dwork);
-#ifdef OPLUS_ARCH_EXTENDS
 		lpass_cdc_va_macro_wake_enable(va_priv, 0);
-#endif /* OPLUS_ARCH_EXTENDS */
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Disable TX CLK */
@@ -2598,9 +2577,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	va_priv->clk_id = VA_CORE_CLK;
 	va_priv->default_clk_id = default_clk_id;
 	va_priv->current_clk_id = TX_CORE_CLK;
-#ifdef OPLUS_ARCH_EXTENDS
 	va_priv->wlock_holders = 0;
-#endif /* OPLUS_ARCH_EXTENDS */
 
 	if (is_used_va_swr_gpio) {
 		va_priv->reset_swr = true;
@@ -2619,9 +2596,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	va_priv->pre_dev_up = true;
 
 	mutex_init(&va_priv->mclk_lock);
-#ifdef OPLUS_ARCH_EXTENDS
 	mutex_init(&va_priv->wlock);
-#endif /* OPLUS_ARCH_EXTENDS */
 	dev_set_drvdata(&pdev->dev, va_priv);
 	lpass_cdc_va_macro_init_ops(&ops, va_io_base);
 	ops.clk_id_req = va_priv->default_clk_id;
@@ -2642,9 +2617,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 
 reg_macro_fail:
 	mutex_destroy(&va_priv->mclk_lock);
-#ifdef OPLUS_ARCH_EXTENDS
 	mutex_destroy(&va_priv->wlock);
-#endif /* OPLUS_ARCH_EXTENDS */
 	if (is_used_va_swr_gpio)
 		mutex_destroy(&va_priv->swr_clk_lock);
 	return ret;
@@ -2672,9 +2645,7 @@ static int lpass_cdc_va_macro_remove(struct platform_device *pdev)
 	pm_runtime_set_suspended(&pdev->dev);
 	lpass_cdc_unregister_macro(&pdev->dev, VA_MACRO);
 	mutex_destroy(&va_priv->mclk_lock);
-#ifdef OPLUS_ARCH_EXTENDS
 	mutex_destroy(&va_priv->wlock);
-#endif /* OPLUS_ARCH_EXTENDS */
 	if (va_priv->is_used_va_swr_gpio)
 		mutex_destroy(&va_priv->swr_clk_lock);
 	return 0;

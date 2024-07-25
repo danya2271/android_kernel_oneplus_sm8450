@@ -2203,10 +2203,6 @@ handle_irq:
 			swr_master_write(swrm,
 				SWRM_CPU1_INTERRUPT_EN,
 				swrm->intr_mask);
-#if IS_ENABLED(CONFIG_OPLUS_FEATURE_MM_FEEDBACK)
-			ratelimited_fb("payload@@%s %s:SWR bus clsh detected",
-				dev_driver_string(swrm->dev), dev_name(swrm->dev));
-#endif
 			break;
 		case SWRM_INTERRUPT_STATUS_RD_FIFO_OVERFLOW:
 			value = swr_master_read(swrm, SWRM_CMD_FIFO_STATUS);
@@ -3424,6 +3420,8 @@ static int swrm_runtime_suspend(struct device *dev)
 		if (!swrm->clk_stop_mode0_supp || swrm->state == SWR_MSTR_SSR) {
 			dev_err(dev, "%s: clk stop mode not supported or SSR entry\n",
 				__func__);
+			if (swrm->state == SWR_MSTR_SSR)
+				goto chk_lnk_status;
 			mutex_unlock(&swrm->reslock);
 			enable_bank_switch(swrm, 0, SWR_ROW_50, SWR_MIN_COL);
 			mutex_lock(&swrm->reslock);
@@ -3466,6 +3464,7 @@ static int swrm_runtime_suspend(struct device *dev)
 			mutex_lock(&swrm->reslock);
 			usleep_range(100, 105);
 		}
+chk_lnk_status:
 		if (!swrm_check_link_status(swrm, 0x0))
 			dev_dbg(dev, "%s:failed in disconnecting, ssr?\n",
 				__func__);
@@ -3721,13 +3720,15 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 	case SWR_DEVICE_SSR_DOWN:
 		trace_printk("%s: swr device down called\n", __func__);
 		mutex_lock(&swrm->mlock);
+		mutex_lock(&swrm->devlock);
+		swrm->dev_up = false;
+		mutex_unlock(&swrm->devlock);
 		if (swrm->state == SWR_MSTR_DOWN)
 			dev_dbg(swrm->dev, "%s:SWR master is already Down:%d\n",
 				__func__, swrm->state);
 		else
 			swrm_device_down(&pdev->dev);
 		mutex_lock(&swrm->devlock);
-		swrm->dev_up = false;
 		if (swrm->hw_core_clk_en)
 			digital_cdc_rsc_mgr_hw_vote_disable(
 				swrm->lpass_core_hw_vote, swrm->dev);

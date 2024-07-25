@@ -6,7 +6,7 @@
 #ifndef _WCD938X_H
 #define _WCD938X_H
 
-#include <bindings/audio-codec-port-types.h>
+#include <dt-bindings/sound/audio-codec-port-types.h>
 
 #define WCD938X_MAX_SLAVE_CH_TYPES 13
 #define ZERO 0

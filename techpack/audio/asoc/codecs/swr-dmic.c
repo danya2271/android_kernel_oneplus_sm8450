@@ -26,7 +26,7 @@
 #include <sound/tlv.h>
 #include <asoc/msm-cdc-pinctrl.h>
 #include <asoc/msm-cdc-supply.h>
-#include <bindings/audio-codec-port-types.h>
+#include <dt-bindings/sound/audio-codec-port-types.h>
 #include "wcd938x/wcd938x.h"
 #include "swr-dmic.h"
 
