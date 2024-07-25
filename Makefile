@@ -847,6 +847,8 @@ else ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS += -Os
 endif
 
+KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined
+
 #Enable MLGO
 ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 180000; echo $$?),0)
 KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
