@@ -1042,6 +1042,9 @@ KBUILD_LDFLAGS		+= --plugin-opt=O3
 KBUILD_LDFLAGS      += --lto-O3
 endif
 
+KBUILD_LDFLAGS      += --error-limit=0
+KBUILD_CFLAGS += -Wno-visibility -Wno-implicit-int -Wno-enum-conversion -Wno-unused-function
+
 ifdef CONFIG_LTO
 KBUILD_CFLAGS	+= $(CC_FLAGS_LTO)
 export CC_FLAGS_LTO
