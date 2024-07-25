@@ -683,7 +683,6 @@ config LTO_NONE
 
 config LTO_CLANG_FULL
 	bool "Clang Full LTO (EXPERIMENTAL)"
-	depends on HAS_LTO_CLANG
 	depends on !COMPILE_TEST
 	select LTO_CLANG
 	help
@@ -702,7 +701,7 @@ config LTO_CLANG_FULL
 
 config LTO_CLANG_THIN
 	bool "Clang ThinLTO (EXPERIMENTAL)"
-	depends on HAS_LTO_CLANG && ARCH_SUPPORTS_LTO_CLANG_THIN
+	depends on ARCH_SUPPORTS_LTO_CLANG_THIN
 	select LTO_CLANG
 	help
 	  This option enables Clang's ThinLTO, which allows for parallel
