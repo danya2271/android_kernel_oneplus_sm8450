@@ -34,6 +34,7 @@
 #include <soc/qcom/smci_object.h>
 #include <misc/qseecom_kernel.h>
 #include <soc/qcom/smci_clientenv.h>
+#include <linux/kthread.h>
 
 #define CREATE_TRACE_POINTS
 #include "trace_smcinvoke.h"

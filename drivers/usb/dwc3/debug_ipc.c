@@ -43,10 +43,6 @@ void dwc3_dbg_trace_log_ctrl(void *log_ctxt, struct usb_ctrlrequest *ctrl)
 	if (!ctrl_req_str)
 		return;
 
-	usb_decode_ctrl(ctrl_req_str, DWC3_MSG_MAX, ctrl->bRequestType,
-				ctrl->bRequest, le16_to_cpu(ctrl->wValue),
-				le16_to_cpu(ctrl->wIndex),
-				le16_to_cpu(ctrl->wLength));
 	ipc_log_string(log_ctxt, "dbg_trace_log_ctrl: %s", ctrl_req_str);
 	kfree(ctrl_req_str);
 }

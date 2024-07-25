@@ -1325,7 +1325,6 @@ int adreno_device_probe(struct platform_device *pdev,
 
 	status = PTR_ERR_OR_ZERO(device->memstore);
 	if (status) {
-		trace_array_put(device->fence_trace_array);
 		kgsl_device_platform_remove(device);
 		goto err_unbind;
 	}
