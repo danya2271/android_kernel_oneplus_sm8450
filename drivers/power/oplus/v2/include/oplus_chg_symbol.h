@@ -18,11 +18,11 @@
 #if IS_ENABLED(CONFIG_OPLUS_SM8350_CHARGER)
 #define oplus_turn_off_power_when_adsp_crash oplus_turn_off_power_when_adsp_crash_v2
 #endif
-#define oplus_is_pd_svooc oplus_is_pd_svooc_v2
+#define oplus_is_pd_svooc_2 oplus_is_pd_svooc_2_v2
 #if defined(CONFIG_OPLUS_SM8350_CHARGER)
 #define oplus_adsp_crash_recover_work oplus_adsp_crash_recover_work_v2
 #endif
-#define qti_battery_charger_get_prop qti_battery_charger_get_prop_v2
+#define qti_battery_charger_get_prop_2 qti_battery_charger_get_prop_2_v2
 #endif /* USE_ADSP */
 
 #if IS_ENABLED(CONFIG_OPLUS_CHARGER_MTK) && IS_ENABLED(CONFIG_OPLUS_CHG_V2)
