@@ -87,7 +87,7 @@ static void wlchg_reset_variables(struct oplus_p922x_ic *chip);
 /* only for GKI compile */
 unsigned int __attribute__((weak)) get_PCB_Version(void)
 {
-    return EVT2 + 1;
+    return 25 + 1;
 }
 #endif
 
@@ -4353,7 +4353,7 @@ static int p922x_ext1_wired_otg_gpio_init(struct oplus_p922x_ic *chip)
 		return -EINVAL;
 	}
 
-	if (get_PCB_Version() >= EVT2)
+	if (get_PCB_Version() >= 25)
 		gpio_direction_output(chip->ext1_wired_otg_en_gpio, 0);
 	else
 		gpio_direction_output(chip->ext1_wired_otg_en_gpio, 1);
@@ -4385,7 +4385,7 @@ void p922x_set_ext1_wired_otg_en_val(int value)
 		return;
 	}
 
-	if (get_PCB_Version() >= EVT2) {
+	if (get_PCB_Version() >= 25) {
 		if (value)
 			value = 0;
 		else
@@ -4467,7 +4467,7 @@ static int p922x_ext2_wireless_otg_gpio_init(struct oplus_p922x_ic *chip)
 		return -EINVAL;
 	}
 
-	if (get_PCB_Version() >= EVT2)
+	if (get_PCB_Version() >= 25)
 		gpio_direction_output(chip->ext2_wireless_otg_en_gpio, 0);
 	else
 		gpio_direction_output(chip->ext2_wireless_otg_en_gpio, 1);
@@ -4499,7 +4499,7 @@ void p922x_set_ext2_wireless_otg_en_val(int value)
 		return;
 	}
 
-	if (get_PCB_Version() >= EVT2) {
+	if (get_PCB_Version() >= 25) {
 		if (value)
 			value = 0;
 		else
@@ -5151,7 +5151,7 @@ static bool oplus_wls_pg_is_support(struct oplus_p922x_ic *chip)
 	if (chip->wls_pg_gpio <= 0)
 		return false;
 
-	if (get_PCB_Version() >= PVT1)
+	if (get_PCB_Version() >= 30)
 		return true;
 	return false;
 }

@@ -5494,7 +5494,6 @@ static int haptics_probe(struct platform_device *pdev)
 	}
 
 	chip->hboost_nb.notifier_call = haptics_boost_notifier;
-	register_hboost_event_notifier(&chip->hboost_nb);
 #ifdef CONFIG_DEBUG_FS
 	rc = haptics_create_debugfs(chip);
 	if (rc < 0)
@@ -5513,7 +5512,6 @@ static int haptics_remove(struct platform_device *pdev)
 	if (chip->pbs_node)
 		of_node_put(chip->pbs_node);
 
-	unregister_hboost_event_notifier(&chip->hboost_nb);
 	class_unregister(&chip->hap_class);
 #ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(chip->debugfs_dir);

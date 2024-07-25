@@ -5610,7 +5610,7 @@ static void audio_work_routine(struct work_struct *work)
 	}
 }
 
-int oplus_is_rf_ftm_mode(void)
+int oneplus_is_rf_ftm_mode(void)
 {
 	int boot_mode = get_boot_mode();
 #ifdef CONFIG_OPLUS_CHARGER_MTK
@@ -5690,7 +5690,7 @@ static void brightness_set(struct led_classdev *cdev, enum led_brightness level)
 						   vib_dev);
 
 	aw_dev_info("%s: enter\n", __func__);
-	if(oplus_is_rf_ftm_mode()) {
+	if(oneplus_is_rf_ftm_mode()) {
 		aw_dev_err("%s:not use brightness_set interface in factorymode\n",
 			   __func__);
 		return;

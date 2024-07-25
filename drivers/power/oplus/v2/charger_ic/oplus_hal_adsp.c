@@ -3653,7 +3653,7 @@ static bool oplus_vchg_trig_is_support(void)
 	if (bcdev->oplus_custom_gpio.vchg_trig_gpio <= 0)
 		return false;
 #ifndef CONFIG_DISABLE_OPLUS_FUNCTION
-	if (get_PCB_Version() >= EVT1)
+	if (get_PCB_Version() >= 24)
 		return true;
 #endif
 	return false;
