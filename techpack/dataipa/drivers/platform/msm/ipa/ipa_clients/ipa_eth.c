@@ -696,7 +696,6 @@ static int ipa_eth_client_conn_pipes_internal(struct ipa_eth_client *client)
 		}
 	}
 	if (!ipa_eth_ctx->client[client_type][inst_id].existed) {
-		ipa3_eth_debugfs_add_node(client);
 		ipa_eth_ctx->client[client_type][inst_id].existed = true;
 	}
 	mutex_unlock(&ipa_eth_ctx->lock);
