@@ -568,7 +568,7 @@ typedef enum _QCOM_PM_TYPEC_PORT_ROLE_TYPE
         QCOM_TYPEC_PORT_ROLE_INVALID
 } QCOM_PM_TYPEC_PORT_ROLE_TYPE;
 
-QCOM_PM_TYPEC_PORT_ROLE_TYPE qcom_typec_port_role[] = {
+QCOM_PM_TYPEC_PORT_ROLE_TYPE qcom_typec_port_role_2[] = {
 	QCOM_TYPEC_PORT_ROLE_DRP,
 	QCOM_TYPEC_PORT_ROLE_SNK,
 	QCOM_TYPEC_PORT_ROLE_SRC,
@@ -840,9 +840,9 @@ struct qcom_pmic {
 };
 
 #ifdef OPLUS_FEATURE_CHG_BASIC
-int oplus_adsp_voocphy_get_fast_chg_type_2(void);
-int oplus_adsp_voocphy_enable_2(bool enable);
-int oplus_adsp_voocphy_reset_again_2(void);
-int oplus_adsp_batt_curve_current_2(void);
+int oplus_adsp_voocphy_get_fast_chg_type_2_2(void);
+int oplus_adsp_voocphy_enable_3(bool enable);
+int oplus_adsp_voocphy_reset_again_3(void);
+int oplus_adsp_batt_curve_current_2_2(void);
 #endif
 #endif /*__SM8450_CHARGER_H*/
