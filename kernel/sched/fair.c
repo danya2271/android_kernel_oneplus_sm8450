@@ -148,7 +148,6 @@ unsigned int sysctl_sched_cfs_bandwidth_slice		= 4000UL;
 #endif
 
 
-#ifdef CONFIG_SYSCTL
 static struct ctl_table sched_fair_sysctls[] = {
 	{
 		.procname       = "sched_min_util_for_headroom",
@@ -185,26 +184,6 @@ static struct ctl_table sched_fair_sysctls[] = {
     		.mode           = 0644,
     		.proc_handler   = proc_dointvec,
     	},
-#ifdef CONFIG_CFS_BANDWIDTH
-	{
-		.procname       = "sched_cfs_bandwidth_slice_us",
-		.data           = &sysctl_sched_cfs_bandwidth_slice,
-		.maxlen         = sizeof(unsigned int),
-		.mode           = 0644,
-		.proc_handler   = proc_dointvec_minmax,
-		.extra1         = SYSCTL_ONE,
-	},
-#endif
-#ifdef CONFIG_NUMA_BALANCING
-	{
-		.procname	= "numa_balancing_promote_rate_limit_MBps",
-		.data		= &sysctl_numa_balancing_promote_rate_limit,
-		.maxlen		= sizeof(unsigned int),
-		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
-		.extra1		= SYSCTL_ZERO,
-	},
-#endif /* CONFIG_NUMA_BALANCING */
 	{}
 };
 
@@ -214,7 +193,6 @@ static int __init sched_fair_sysctl_init(void)
 	return 0;
 }
 late_initcall(sched_fair_sysctl_init);
-#endif
 
 static inline void update_load_add(struct load_weight *lw, unsigned long inc)
 {
