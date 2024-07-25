@@ -1,5 +1,5 @@
-obj-y := dsp/ ipc/ soc/ asoc/
+obj-y += asoc/
 
 #ifdef OPLUS_ARCH_EXTENDS
-obj-y += oplus/
+obj-y += asoc/codecs/sia9175/
 #endif /* OPLUS_ARCH_EXTENDS */
