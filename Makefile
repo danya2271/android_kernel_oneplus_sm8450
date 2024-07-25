@@ -851,7 +851,7 @@ KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overf
 
 # Inlining optimization
 ifeq ($(cc-name),clang)
-KBUILD_CFLAGS	+= -mllvm -inline-threshold=2500
+KBUILD_FLAGS	+= -mllvm -inline-threshold=2500
 KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=2000
 KBUILD_CFLAGS   += -mllvm -inlinehint-threshold=1200
 else ifeq ($(cc-name),gcc)
@@ -1062,6 +1062,8 @@ CC_FLAGS_LTO	+= -fvisibility=hidden
 else
 CC_FLAGS_LTO	+= -fvisibility=default
 endif
+
+KBUILD_LDFLAGS += -mllvm -import-instr-limit=35
 
 # Set O3 optimization level for LTO
 KBUILD_LDFLAGS		+= --plugin-opt=O3
