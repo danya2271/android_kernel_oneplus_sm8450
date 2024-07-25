@@ -107,6 +107,7 @@ static int dmic_4_5_gpio_cnt;
 static int dmic_6_7_gpio_cnt;
 
 #if IS_ENABLED(CONFIG_AUDIO_EXTEND_DRV)
+extern void extend_codec_i2s_be_dailinks(struct device *dev, struct snd_soc_dai_link *dailink, size_t size);
 #endif /* CONFIG_AUDIO_EXTEND_DRV */
 
 static void *def_wcd_mbhc_cal(void);
@@ -1447,6 +1448,8 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev, int w
 		if (!rc && val) {
 
 #if IS_ENABLED(CONFIG_AUDIO_EXTEND_DRV)
+			extend_codec_i2s_be_dailinks(dev, msm_mi2s_dai_links, ARRAY_SIZE(msm_mi2s_dai_links));
+			pr_info("exchanged mi2s\n");
 #endif /* CONFIG_AUDIO_EXTEND_DRV */
 
 			memcpy(msm_waipio_dai_links + total_links,
