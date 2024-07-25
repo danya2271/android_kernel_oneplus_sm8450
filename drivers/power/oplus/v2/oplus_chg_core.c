@@ -170,10 +170,6 @@ static int oplus_chg_get_module_num(void)
 
 	if (addr_size == 0)
 		return 0;
-	if (addr_size % sizeof(struct oplus_chg_module) != 0) {
-		chg_err("oplus chg module address is error, please check oplus_chg_module.lds\n");
-		return 0;
-	}
 
 	return (addr_size / sizeof(struct oplus_chg_module));
 }
@@ -204,12 +200,7 @@ static int __init oplus_chg_class_init(void)
 #endif /* CONFIG_OPLUS_CHG_V2 */
 
 	module_num = oplus_chg_get_module_num();
-	if (module_num == 0) {
-		chg_err("oplus chg module not found, please check oplus_chg_module.lds\n");
-		return 0;
-	} else {
-		chg_info("find %d oplus chg module\n", module_num);
-	}
+	chg_info("find %d oplus chg module\n", module_num);
 	first_module = oplus_chg_find_first_module();
 	for (i = 0; i < module_num; i++) {
 		oplus_module = &first_module[i];
