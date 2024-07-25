@@ -338,17 +338,17 @@ static const char * const qc_power_supply_usb_type_text[] = {
 
 static RAW_NOTIFIER_HEAD(hboost_notifier);
 
-int register_hboost_event_notifier(struct notifier_block *nb)
+int register_hboost_event_notifier_2(struct notifier_block *nb)
 {
 	return raw_notifier_chain_register(&hboost_notifier, nb);
 }
-EXPORT_SYMBOL(register_hboost_event_notifier);
+EXPORT_SYMBOL(register_hboost_event_notifier_2);
 
-int unregister_hboost_event_notifier(struct notifier_block *nb)
+int unregister_hboost_event_notifier_2(struct notifier_block *nb)
 {
 	return raw_notifier_chain_unregister(&hboost_notifier, nb);
 }
-EXPORT_SYMBOL(unregister_hboost_event_notifier);
+EXPORT_SYMBOL(unregister_hboost_event_notifier_2);
 
 static int battery_chg_fw_write(struct battery_chg_dev *bcdev, void *data,
 				int len)

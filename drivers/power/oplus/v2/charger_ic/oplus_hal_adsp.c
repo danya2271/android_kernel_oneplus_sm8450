@@ -1737,7 +1737,7 @@ void oplus_turn_off_power_when_adsp_crash(void)
 }
 EXPORT_SYMBOL(oplus_turn_off_power_when_adsp_crash);
 
-bool oplus_is_pd_svooc(void)
+bool oplus_is_pd_svooc_2(void)
 {
 	struct battery_chg_dev *bcdev = g_bcdev;
 
@@ -1750,7 +1750,7 @@ bool oplus_is_pd_svooc(void)
 
 	return bcdev->pd_svooc;
 }
-EXPORT_SYMBOL(oplus_is_pd_svooc);
+EXPORT_SYMBOL(oplus_is_pd_svooc_2);
 
 void oplus_adsp_crash_recover_work(void)
 {
@@ -2149,7 +2149,7 @@ static void battery_chg_state_cb(void *priv, enum pmic_glink_state state)
 }
 
 /**
- * qti_battery_charger_get_prop() - Gets the property being requested
+ * qti_battery_charger_get_prop_2() - Gets the property being requested
  *
  * @name: Power supply name
  * @prop_id: Property id to be read
@@ -2157,7 +2157,7 @@ static void battery_chg_state_cb(void *priv, enum pmic_glink_state state)
  *
  * Return: 0 if success, negative on error.
  */
-int qti_battery_charger_get_prop(const char *name,
+int qti_battery_charger_get_prop_2(const char *name,
 				enum battery_charger_prop prop_id, int *val)
 {
 	struct power_supply *psy;
@@ -2199,7 +2199,7 @@ int qti_battery_charger_get_prop(const char *name,
 
 	return rc;
 }
-EXPORT_SYMBOL(qti_battery_charger_get_prop);
+EXPORT_SYMBOL(qti_battery_charger_get_prop_2);
 
 static bool validate_message(struct battery_charger_resp_msg *resp_msg,
 				size_t len)
