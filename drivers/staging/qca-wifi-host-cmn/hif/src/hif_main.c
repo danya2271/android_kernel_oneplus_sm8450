@@ -34,7 +34,7 @@
 #if (defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
      defined(HIF_IPCI))
 #include "ce_tasklet.h"
-#include "ce_api.h"
+#include "ce/ce_api.h"
 #endif
 #include "qdf_trace.h"
 #include "qdf_status.h"
