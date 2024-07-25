@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
 # Makefile for staging directory
-
+KBUILD_CFLAGS += -Wno-unused-value
 obj-y				+= media/
 obj-$(CONFIG_PRISM2_USB)	+= wlan-ng/
 obj-$(CONFIG_COMEDI)		+= comedi/
@@ -49,3 +49,4 @@ obj-$(CONFIG_KPC2000)		+= kpc2000/
 obj-$(CONFIG_QLGE)		+= qlge/
 obj-$(CONFIG_WFX)		+= wfx/
 obj-y				+= hikey9xx/
+obj-$(CONFIG_QCA_CLD_WLAN)	+= qcacld-3.0/
