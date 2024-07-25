@@ -18,7 +18,7 @@
 #include <linux/spinlock.h>
 #include <linux/device.h>
 #include "soc/audio_mod_devicetable.h"
-#include <bindings/qcom,gpr.h>
+#include <dt-bindings/sound/qcom,gpr.h>
 
 extern struct bus_type gprbus;
 

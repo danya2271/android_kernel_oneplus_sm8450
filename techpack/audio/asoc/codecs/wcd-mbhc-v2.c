@@ -2128,6 +2128,16 @@ int wcd_mbhc_start(struct wcd_mbhc *mbhc, struct wcd_mbhc_config *mbhc_cfg)
 		mbhc->fsa_nb.notifier_call = wcd_mbhc_usbc_ana_event_handler;
 		mbhc->fsa_nb.priority = 0;
 		rc = fsa4480_reg_notifier(&mbhc->fsa_nb, mbhc->fsa_np);
+
+		#ifdef OPLUS_ARCH_EXTENDS
+		if (rc) {
+			pr_info("%s fsa4480_reg_notifier fail,rc = %d", __func__, rc);
+			rc = 0;
+		}
+		mbhc->need_cross_conn = fsa4480_check_cross_conn(mbhc->fsa_np);
+		pr_info("%s: after switch check, need_cross_conn(%d)\n", __func__, mbhc->need_cross_conn);
+		#endif /* OPLUS_ARCH_EXTENDS */
+
 		#if IS_ENABLED(CONFIG_OPLUS_FEATURE_MM_FEEDBACK)
 		mbhc->hp_wake_lock = wakeup_source_register(NULL, "hp_wake_lock");
 		if (!mbhc->hp_wake_lock) {
