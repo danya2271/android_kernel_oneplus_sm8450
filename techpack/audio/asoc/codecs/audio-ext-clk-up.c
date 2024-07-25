@@ -15,7 +15,7 @@
 #include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
 #include <dsp/apr_audio-v2.h>
-#include <bindings/qcom,audio-ext-clk.h>
+#include <dt-bindings/clock/qcom,audio-ext-clk.h>
 #include <linux/ratelimit.h>
 #ifdef CONFIG_AUDIO_PRM
 #include <dsp/audio_prm.h>
