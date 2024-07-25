@@ -28,7 +28,6 @@ unsigned int is_new_cdt(void);
 #ifdef CONFIG_OPLUS_SYSTEM_KERNEL_QCOM
 unsigned int get_serialID(void);
 #else
-void get_serialID(char *serialno);
 #endif
 
 //cdt interface for Q or R
