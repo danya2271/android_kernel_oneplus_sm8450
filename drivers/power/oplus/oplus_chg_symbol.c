@@ -41,16 +41,11 @@ DEF_SYMBOLE(void, oplus_turn_off_power_when_adsp_crash, void)
 ADD_FUNC_BODY(oplus_turn_off_power_when_adsp_crash)
 #endif
 
-DEF_SYMBOLE(bool, oplus_is_pd_svooc, void)
-ADD_FUNC_BODY(oplus_is_pd_svooc)
-
 #if defined(CONFIG_OPLUS_SM8350_CHARGER)
 DEF_SYMBOLE(void, oplus_adsp_crash_recover_work, void)
 ADD_FUNC_BODY(oplus_adsp_crash_recover_work)
 #endif
 
-DEF_SYMBOLE(int, qti_battery_charger_get_prop, const char *name, enum battery_charger_prop prop_id, int *val)
-ADD_FUNC_BODY(qti_battery_charger_get_prop, name, prop_id, val)
 #endif /* USE_ADSP */
 
 #if IS_ENABLED(CONFIG_OPLUS_CHARGER_MTK) && IS_ENABLED(CONFIG_OPLUS_CHG_V2)
