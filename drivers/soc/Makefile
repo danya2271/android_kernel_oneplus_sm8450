@@ -3,6 +3,8 @@
 # Makefile for the Linux Kernel SOC specific device drivers.
 #
 
+KBUILD_CFLAGS += -Wno-incompatible-pointer-types -Wno-void-pointer-to-int-cast
+
 obj-$(CONFIG_ARCH_ACTIONS)	+= actions/
 obj-$(CONFIG_SOC_ASPEED)	+= aspeed/
 obj-$(CONFIG_ARCH_AT91)		+= atmel/

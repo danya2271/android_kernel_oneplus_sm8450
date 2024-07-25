@@ -3,6 +3,7 @@
 #
 # Makefile for the MSM specific device drivers.
 #
+KBUILD_CFLAGS += -Wno-enum-compare
 
 obj-$(CONFIG_IPA3) += ipa_fmwk/
 CFLAGS_msm-geni-se.o := -D__DISABLE_TRACE_MMIO__

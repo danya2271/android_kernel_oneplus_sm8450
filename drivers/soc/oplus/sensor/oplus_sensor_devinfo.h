@@ -169,7 +169,6 @@ struct sns_display_info {
 };
 
 typedef enum {
-    NORMAL = 0x01,
     UNDER_LCD = 0x02,
 } alsps_position_type;
 
