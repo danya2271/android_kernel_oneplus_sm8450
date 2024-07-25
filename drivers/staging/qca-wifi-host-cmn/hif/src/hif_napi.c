@@ -41,7 +41,7 @@
 #include <hif_napi.h>
 #include <hif_debug.h>
 #include <hif_io32.h>
-#include <ce_api.h>
+#include "ce/ce_api.h"
 #include <ce_internal.h>
 #include <hif_irq_affinity.h>
 #include "qdf_cpuhp.h"

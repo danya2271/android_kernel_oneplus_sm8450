@@ -24,7 +24,7 @@
 #include "target_type.h"
 #include "hif_main.h"
 #include "ce_main.h"
-#include "ce_api.h"
+#include "ce/ce_api.h"
 #include "ce_internal.h"
 #include "ce_reg.h"
 #include "ce_bmi.h"
