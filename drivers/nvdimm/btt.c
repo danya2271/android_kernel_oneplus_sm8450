@@ -1478,8 +1478,6 @@ static blk_qc_t btt_submit_bio(struct bio *bio)
 			break;
 		}
 	}
-	if (do_acct)
-		bio_end_io_acct(bio, start);
 
 	bio_endio(bio);
 	return BLK_QC_T_NONE;
