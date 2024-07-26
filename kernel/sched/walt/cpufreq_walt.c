@@ -267,8 +267,8 @@ static unsigned long waltgov_get_util(struct waltgov_cpu *wg_cpu)
 
 #define NL_RATIO 75
 #define DEFAULT_HISPEED_LOAD 90
-#define DEFAULT_CPU0_RTG_BOOST_FREQ 1000000
-#define DEFAULT_CPU4_RTG_BOOST_FREQ 768000
+#define DEFAULT_CPU0_RTG_BOOST_FREQ 0
+#define DEFAULT_CPU4_RTG_BOOST_FREQ 0
 #define DEFAULT_CPU7_RTG_BOOST_FREQ 0
 #define DEFAULT_TARGET_LOAD_THRESH 1024
 #define DEFAULT_TARGET_LOAD_SHIFT 4
@@ -474,10 +474,10 @@ static ssize_t up_rate_limit_us_store(struct gov_attr_set *attr_set,
 	if (kstrtouint(buf, 10, &rate_limit_us))
 		return -EINVAL;
 
-	tunables->up_rate_limit_us = rate_limit_us;
+	tunables->up_rate_limit_us = 1000;
 
 	list_for_each_entry(wg_policy, &attr_set->policy_list, tunables_hook) {
-		wg_policy->up_rate_delay_ns = rate_limit_us * NSEC_PER_USEC;
+		wg_policy->up_rate_delay_ns = 1000 * NSEC_PER_USEC;
 		update_min_rate_limit_ns(wg_policy);
 	}
 
@@ -494,10 +494,10 @@ static ssize_t down_rate_limit_us_store(struct gov_attr_set *attr_set,
 	if (kstrtouint(buf, 10, &rate_limit_us))
 		return -EINVAL;
 
-	tunables->down_rate_limit_us = rate_limit_us;
+	tunables->down_rate_limit_us = 500;
 
 	list_for_each_entry(wg_policy, &attr_set->policy_list, tunables_hook) {
-		wg_policy->down_rate_delay_ns = rate_limit_us * NSEC_PER_USEC;
+		wg_policy->down_rate_delay_ns = 500 * NSEC_PER_USEC;
 		update_min_rate_limit_ns(wg_policy);
 	}
 
@@ -546,7 +546,7 @@ static ssize_t hispeed_freq_store(struct gov_attr_set *attr_set,
 	if (kstrtouint(buf, 10, &val))
 		return -EINVAL;
 
-	tunables->hispeed_freq = val;
+	tunables->hispeed_freq = 0;
 	list_for_each_entry(wg_policy, &attr_set->policy_list, tunables_hook) {
 		raw_spin_lock_irqsave(&wg_policy->update_lock, flags);
 		hs_util = target_util(wg_policy,
@@ -789,10 +789,10 @@ static void waltgov_tunables_save(struct cpufreq_policy *policy,
 
 	cached->pl = tunables->pl;
 	cached->hispeed_load = tunables->hispeed_load;
-	cached->rtg_boost_freq = tunables->rtg_boost_freq;
-	cached->hispeed_freq = tunables->hispeed_freq;
-	cached->up_rate_limit_us = tunables->up_rate_limit_us;
-	cached->down_rate_limit_us = tunables->down_rate_limit_us;
+	cached->rtg_boost_freq = 0;
+	cached->hispeed_freq = 0;
+	cached->up_rate_limit_us = 1000;
+	cached->down_rate_limit_us = 500;
 	cached->boost = tunables->boost;
 	cached->adaptive_low_freq = tunables->adaptive_low_freq;
 	cached->adaptive_high_freq = tunables->adaptive_high_freq;
