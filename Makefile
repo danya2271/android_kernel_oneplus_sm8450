@@ -861,7 +861,6 @@ endif
 
 ifdef CONFIG_LLVM_POLLY
 KBUILD_CFLAGS	+= -mllvm -polly \
-		   -mllvm -polly-parallel \
 		   -mllvm -polly-run-inliner \
 		   -mllvm -polly-ast-use-context \
 		   -mllvm -polly-invariant-load-hoisting \
