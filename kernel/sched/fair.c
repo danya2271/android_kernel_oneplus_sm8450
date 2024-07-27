@@ -4779,6 +4779,18 @@ static inline void update_misfit_status(struct task_struct *p, struct rq *rq) {}
 
 #endif /* CONFIG_SMP */
 
+static int cfs_rq_is_idle(struct cfs_rq *cfs_rq)
+{
+	return cfs_rq->idle > 0;
+}
+
+static int se_is_idle(struct sched_entity *se)
+{
+	if (entity_is_task(se))
+		return task_has_idle_policy(task_of(se));
+	return cfs_rq_is_idle(group_cfs_rq(se));
+}
+
 static void
 place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
 {

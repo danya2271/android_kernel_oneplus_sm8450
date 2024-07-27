@@ -575,6 +575,9 @@ struct cfs_rq {
 		unsigned long	runnable_avg;
 	} removed;
 
+	/* Locally cached copy of our task_group's idle value */
+	int			idle;
+
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	unsigned long		tg_load_avg_contrib;
 	long			propagate;
