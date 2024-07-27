@@ -76,11 +76,7 @@ static noinline int __cpuidle cpu_idle_poll(void)
 void __weak arch_cpu_idle_prepare(void) { }
 void __weak arch_cpu_idle_enter(void) { }
 void __weak arch_cpu_idle_exit(void) { }
-<<<<<<< HEAD
 void __weak __noreturn arch_cpu_idle_dead(void) { }
-=======
-void __weak __noreturn arch_cpu_idle_dead(void) { while (1); }
->>>>>>> 7665eb81cd887 (sched/idle: Mark arch_cpu_idle_dead() __noreturn)
 void __weak arch_cpu_idle(void)
 {
 	cpu_idle_force_poll = 1;
