@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
-KBUILD_CFLAGS += -Wno-declaration-after-statement
+KBUILD_CFLAGS += -Wno-declaration-after-statement -Wno-invalid-noreturn
 ifdef CONFIG_FUNCTION_TRACER
 CFLAGS_REMOVE_clock.o = $(CC_FLAGS_FTRACE)
 endif
