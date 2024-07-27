@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2018-2020 Oplus. All rights reserved.
 
+KBUILD_CFLAGS += -Wno-single-bit-bitfield-constant-conversion
+
 LINUXINCLUDE += -I$(srctree)/
 
 obj-$(CONFIG_OPLUS_FEATURE_SCHED_ASSIST) += oplus_bsp_sched_assist.o
