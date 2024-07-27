@@ -478,6 +478,7 @@ static void sugov_update_single(struct update_util_data *hook, u64 time,
 	util = sugov_get_util(sg_cpu);
 	max = sg_cpu->max;
 	util = sugov_iowait_apply(sg_cpu, time, util, max);
+	util = apply_dvfs_headroom(util, sg_cpu->cpu);
 	next_f = get_next_freq(sg_policy, util, max);
 	/*
 	 * Do not reduce the frequency if the CPU has not been idle
