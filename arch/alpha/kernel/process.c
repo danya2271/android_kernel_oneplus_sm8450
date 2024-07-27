@@ -60,7 +60,7 @@ void arch_cpu_idle(void)
 	raw_local_irq_enable();
 }
 
-void __noreturn arch_cpu_idle_dead(void)
+void arch_cpu_idle_dead(void)
 {
 	wtint(INT_MAX);
 }
