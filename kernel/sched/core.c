@@ -2759,7 +2759,7 @@ static int ttwu_runnable(struct task_struct *p, int wake_flags)
 			update_rq_clock(rq);
 			check_preempt_curr(rq, p, wake_flags);
 		}
-		WRITE_ONCE(p->__state, TASK_RUNNING);
+		WRITE_ONCE(p->state, TASK_RUNNING);
 		trace_sched_wakeup(p);
 		ret = 1;
 	}
