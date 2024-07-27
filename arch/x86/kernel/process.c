@@ -685,7 +685,7 @@ void arch_cpu_idle_enter(void)
 	local_touch_nmi();
 }
 
-void __noreturn arch_cpu_idle_dead(void)
+void arch_cpu_idle_dead(void)
 {
 	play_dead();
 }

@@ -129,7 +129,7 @@ void noinstr arch_cpu_idle(void)
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
-void __noreturn arch_cpu_idle_dead(void)
+void arch_cpu_idle_dead(void)
 {
        cpu_die();
 }
