@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 
+KBUILD_CFLAGS += -Wno-incompatible-function-pointer-types
+
 obj-y := irqdesc.o handle.o manage.o spurious.o resend.o chip.o dummychip.o devres.o
 obj-$(CONFIG_IRQ_TIMINGS) += timings.o
 ifeq ($(CONFIG_TEST_IRQ_TIMINGS),y)
