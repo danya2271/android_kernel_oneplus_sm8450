@@ -267,74 +267,6 @@ static void plist_check_head(struct plist_head *head)
 # define plist_check_head(h)	do { } while (0)
 #endif
 
-/**
- * plist_add - add @node to @head
- *
- * @node:	&struct plist_node pointer
- * @head:	&struct plist_head pointer
- */
-void plist_add(struct plist_node *node, struct plist_head *head)
-{
-	struct plist_node *first, *iter, *prev = NULL;
-	struct list_head *node_next = &head->node_list;
-
-	plist_check_head(head);
-	WARN_ON(!plist_node_empty(node));
-	WARN_ON(!list_empty(&node->prio_list));
-
-	if (plist_head_empty(head))
-		goto ins_node;
-
-	first = iter = plist_first(head);
-
-	do {
-		if (node->prio < iter->prio) {
-			node_next = &iter->node_list;
-			break;
-		}
-
-		prev = iter;
-		iter = list_entry(iter->prio_list.next,
-				struct plist_node, prio_list);
-	} while (iter != first);
-
-	if (!prev || prev->prio != node->prio)
-		list_add_tail(&node->prio_list, &iter->prio_list);
-ins_node:
-	list_add_tail(&node->node_list, node_next);
-
-	plist_check_head(head);
-}
-
-/**
- * plist_del - Remove a @node from plist.
- *
- * @node:	&struct plist_node pointer - entry to be removed
- * @head:	&struct plist_head pointer - list head
- */
-void plist_del(struct plist_node *node, struct plist_head *head)
-{
-	plist_check_head(head);
-
-	if (!list_empty(&node->prio_list)) {
-		if (node->node_list.next != &head->node_list) {
-			struct plist_node *next;
-
-			next = list_entry(node->node_list.next,
-					struct plist_node, node_list);
-
-			/* add the next plist_node into prio_list */
-			if (list_empty(&next->prio_list))
-				list_add(&next->prio_list, &node->prio_list);
-		}
-		list_del_init(&node->prio_list);
-	}
-
-	list_del_init(&node->node_list);
-
-	plist_check_head(head);
-}
-
 /******** The code above is copied from lib/plist.c. ********/
 
 /******** The following code is copied from fair.c ********/
@@ -443,8 +375,6 @@ static inline int migrate_degrades_locality(struct task_struct *p,
 #endif
 
 
-const_debug unsigned int sysctl_sched_migration_cost	= 500000UL;
-
 #ifdef CONFIG_FAIR_GROUP_SCHED
 static inline struct task_struct *task_of(struct sched_entity *se)
 {
@@ -504,8 +434,7 @@ static int task_hot(struct task_struct *p, struct lb_env *env)
 	 * Buddy candidates are cache hot:
 	 */
 	if (sched_feat(CACHE_HOT_BUDDY) && env->dst_rq->nr_running &&
-			(&p->se == cfs_rq_of(&p->se)->next ||
-			 &p->se == cfs_rq_of(&p->se)->last))
+			(&p->se == cfs_rq_of(&p->se)->next))
 		return 1;
 
 	if (sysctl_sched_migration_cost == -1)
@@ -554,15 +483,6 @@ static inline struct kthread *__to_kthread(struct task_struct *p)
 	if (kthread && !(p->flags & PF_KTHREAD))
 		kthread = NULL;
 	return kthread;
-}
-
-bool kthread_is_per_cpu(struct task_struct *p)
-{
-	struct kthread *kthread = __to_kthread(p);
-	if (!kthread)
-		return false;
-
-	return test_bit(KTHREAD_IS_PER_CPU, &kthread->flags);
 }
 
 /*
