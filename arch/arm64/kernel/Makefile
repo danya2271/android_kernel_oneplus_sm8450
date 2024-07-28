@@ -2,7 +2,7 @@
 #
 # Makefile for the linux kernel.
 #
-
+KBUILD_CFLAGS += -Wno-invalid-noreturn
 CFLAGS_armv8_deprecated.o := -I$(src)
 
 CFLAGS_REMOVE_ftrace.o = $(CC_FLAGS_FTRACE)
