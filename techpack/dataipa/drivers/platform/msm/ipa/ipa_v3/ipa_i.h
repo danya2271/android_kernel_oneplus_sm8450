@@ -3682,6 +3682,18 @@ bool ipa_eth_client_exist(enum ipa_eth_client_type eth_client_type, int inst_id)
 int ipa3_disable_apps_wan_cons_deaggr(uint32_t agg_size, uint32_t agg_count);
 
 #if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
+int ipa_mpm_init(void);
+void ipa_mpm_exit(void);
+int ipa_mpm_mhip_xdci_pipe_enable(enum ipa_usb_teth_prot prot);
+int ipa_mpm_mhip_xdci_pipe_disable(enum ipa_usb_teth_prot xdci_teth_prot);
+int __maybe_unused ipa_mpm_notify_wan_state(struct wan_ioctl_notify_wan_state *state);
+int ipa3_is_mhip_offload_enabled(void);
+int ipa_mpm_reset_dma_mode(enum ipa_client_type src_pipe,
+	enum ipa_client_type dst_pipe);
+int ipa_mpm_panic_handler(char *buf, int size);
+int ipa3_mpm_enable_adpl_over_odl(bool enable);
+int ipa3_get_mhip_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
+#else /* IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER) */
 static inline int ipa_mpm_init(void)
 {
 	return 0;
@@ -3757,7 +3769,7 @@ bool ipa_is_test_prod_flt_in_sram_internal(enum ipa_ip_type ip);
 bool ipa3_is_modem_up(void);
 /* set modem is up */
 void ipa3_set_modem_up(bool is_up);
-static int ipa3_qmi_reg_dereg_for_bw(bool bw_reg_dereg);
+int ipa3_qmi_reg_dereg_for_bw(bool bw_reg_dereg);
 
 /*
  * To check if the eogre is worthy of sending to recipients who would
