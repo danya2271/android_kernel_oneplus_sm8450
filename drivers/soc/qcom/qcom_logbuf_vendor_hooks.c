@@ -55,7 +55,7 @@ static size_t info_print_prefix(const struct printk_info *info, char *buf,
 	size_t len = 0;
 
 	len = print_time(info->ts_nsec, buf + len, buf_sz);
-	len += print_caller(info->caller_id, buf + len, buf_sz - len);
+//	len += print_caller(info->caller_id, buf + len, buf_sz - len);
 	buf[len++] = ' ';
 	buf[len] = '\0';
 	return len;
