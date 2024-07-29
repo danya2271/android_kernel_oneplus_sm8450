@@ -990,32 +990,48 @@ enum {
 
 static inline void set_tsk_trace_trace(struct task_struct *tsk)
 {
+#ifndef CONFIG_REDUCE_TRACE
 	set_bit(TSK_TRACE_FL_TRACE_BIT, &tsk->trace);
+#endif
 }
 
 static inline void clear_tsk_trace_trace(struct task_struct *tsk)
 {
+#ifndef CONFIG_REDUCE_TRACE
 	clear_bit(TSK_TRACE_FL_TRACE_BIT, &tsk->trace);
+#endif
 }
 
 static inline int test_tsk_trace_trace(struct task_struct *tsk)
 {
+#ifndef CONFIG_REDUCE_TRACE
 	return tsk->trace & TSK_TRACE_FL_TRACE;
+#else
+	return 0;
+#endif
 }
 
 static inline void set_tsk_trace_graph(struct task_struct *tsk)
 {
+#ifndef CONFIG_REDUCE_TRACE
 	set_bit(TSK_TRACE_FL_GRAPH_BIT, &tsk->trace);
+#endif
 }
 
 static inline void clear_tsk_trace_graph(struct task_struct *tsk)
 {
+#ifndef CONFIG_REDUCE_TRACE
 	clear_bit(TSK_TRACE_FL_GRAPH_BIT, &tsk->trace);
+#endif
 }
 
 static inline int test_tsk_trace_graph(struct task_struct *tsk)
 {
+#ifndef CONFIG_REDUCE_TRACE
 	return tsk->trace & TSK_TRACE_FL_GRAPH;
+#else
+	return 0;
+#endif
 }
 
 enum ftrace_dump_mode;
