@@ -371,9 +371,9 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 		return -ENOMEM;
 	g_core = core;
 
-	core->debugfs_parent = msm_vidc_debugfs_init_drv();
-	if (!core->debugfs_parent)
-		d_vpr_h("Failed to create debugfs for msm_vidc\n");
+//	core->debugfs_parent = msm_vidc_debugfs_init_drv();
+//	if (!core->debugfs_parent)
+//		d_vpr_h("Failed to create debugfs for msm_vidc\n");
 
 	core->pdev = pdev;
 	dev_set_drvdata(&pdev->dev, core);
