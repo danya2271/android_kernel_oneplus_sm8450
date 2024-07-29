@@ -1865,6 +1865,229 @@ gsi_chan_fail:
 	return MHIP_STATUS_FAIL;
 }
 
+int __maybe_unused ipa_mpm_notify_wan_state(struct wan_ioctl_notify_wan_state *state)
+{
+	int probe_id = IPA_MPM_MHIP_CH_ID_MAX;
+	int i;
+	static enum mhip_status_type status;
+	int ret = 0;
+	enum ipa_mpm_mhip_client_type mhip_client = IPA_MPM_MHIP_TETH;
+	bool is_acted = true;
+	const struct ipa_gsi_ep_config *ep_cfg;
+	uint32_t flow_ctrl_mask = 0;
+
+	if (!state)
+		return -EPERM;
+
+	if (!ipa3_is_mhip_offload_enabled())
+		return -EPERM;
+
+	for (i = 0; i < IPA_MPM_MHIP_CH_ID_MAX; i++) {
+		if (ipa_mpm_pipes[i].mhip_client == mhip_client) {
+			probe_id = i;
+			break;
+		}
+	}
+
+	if (probe_id == IPA_MPM_MHIP_CH_ID_MAX) {
+		IPA_MPM_ERR("Unknown probe_id\n");
+		return -EPERM;
+	}
+
+	IPA_MPM_DBG("WAN backhaul available for probe_id = %d\n", probe_id);
+
+	if (state->up) {
+		/* Start UL MHIP channel for offloading tethering connection */
+		ret = ipa_mpm_vote_unvote_pcie_clk(CLK_ON, probe_id,
+			false, &is_acted);
+		if (ret) {
+			IPA_MPM_ERR("Err %d cloking on PCIe clk %d\n", ret);
+			return ret;
+		}
+
+		/*
+		 * Make sure to start Device side channels before
+		 * starting Host side UL channels. This is to make
+		 * sure device side access host side only after
+		 * Host IPA gets voted.
+		 */
+		ret = ipa_mpm_start_stop_remote_mhip_chan(probe_id,
+							MPM_MHIP_START,
+							false);
+		if (ret) {
+			/*
+			 * This can fail only when modem is in SSR state.
+			 * Eventually there would be a remove callback,
+			 * so return a failure.
+			 */
+			IPA_MPM_ERR("MHIP remote chan start fail = %d\n", ret);
+
+			if (is_acted)
+				ipa_mpm_vote_unvote_pcie_clk(CLK_OFF,
+					probe_id,
+					false,
+					&is_acted);
+
+			return ret;
+		}
+		IPA_MPM_DBG("MHIP remote channels are started\n");
+
+		 /*
+		  * Update flow control monitoring end point info.
+		  * This info will be used to set delay on the end points upon
+		  * hitting RED water mark.
+		  */
+		ep_cfg = ipa3_get_gsi_ep_info(IPA_CLIENT_WLAN2_PROD);
+
+		if (!ep_cfg)
+			IPA_MPM_ERR("ep = %d not allocated yet\n",
+					IPA_CLIENT_WLAN2_PROD);
+		else
+			flow_ctrl_mask |= 1 << (ep_cfg->ipa_gsi_chan_num);
+
+		ep_cfg = ipa3_get_gsi_ep_info(IPA_CLIENT_USB_PROD);
+
+		if (!ep_cfg)
+			IPA_MPM_ERR("ep = %d not allocated yet\n",
+					IPA_CLIENT_USB_PROD);
+		else
+			flow_ctrl_mask |= 1 << (ep_cfg->ipa_gsi_chan_num);
+
+		atomic_set(&ipa_mpm_ctx->flow_ctrl_mask, flow_ctrl_mask);
+
+		ret = ipa3_uc_send_update_flow_control(flow_ctrl_mask,
+						IPA_MPM_FLOW_CTRL_ADD);
+
+		if (ret)
+			IPA_MPM_ERR("Err = %d setting uc flow control\n", ret);
+
+		status = ipa_mpm_start_stop_mhip_chan(
+				IPA_MPM_MHIP_CHAN_UL, probe_id, MPM_MHIP_START);
+		switch (status) {
+		case MHIP_STATUS_SUCCESS:
+			ipa_mpm_ctx->md[probe_id].teth_state =
+						IPA_MPM_TETH_CONNECTED;
+			/* Register for BW indication from Q6 */
+			if (!ipa3_qmi_reg_dereg_for_bw(true))
+				IPA_MPM_ERR(
+					"Failed rgstring for QMIBW Ind, might be SSR");
+			break;
+		case MHIP_STATUS_EP_NOT_READY:
+		case MHIP_STATUS_NO_OP:
+			IPA_MPM_DBG("UL chan already start, status = %d\n",
+					status);
+			if (is_acted) {
+				return ipa_mpm_vote_unvote_pcie_clk(CLK_OFF,
+						probe_id,
+						false,
+						&is_acted);
+			}
+			break;
+		case MHIP_STATUS_FAIL:
+		case MHIP_STATUS_BAD_STATE:
+		case MHIP_STATUS_EP_NOT_FOUND:
+			IPA_MPM_ERR("UL chan start err =%d\n", status);
+			if (is_acted)
+				ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+					false, &is_acted);
+			ipa_assert();
+			return -EFAULT;
+		default:
+			IPA_MPM_ERR("Err not found\n");
+			if (is_acted)
+				ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+					false, &is_acted);
+			ret = -EFAULT;
+			break;
+		}
+		ipa_mpm_ctx->md[probe_id].mhip_client = mhip_client;
+	} else {
+		/*
+		 * Update flow control monitoring end point info.
+		 * This info will be used to reset delay on the end points.
+		 */
+		flow_ctrl_mask =
+			atomic_read(&ipa_mpm_ctx->flow_ctrl_mask);
+
+		ret = ipa3_uc_send_update_flow_control(flow_ctrl_mask,
+						IPA_MPM_FLOW_CTRL_DELETE);
+		flow_ctrl_mask = 0;
+		atomic_set(&ipa_mpm_ctx->flow_ctrl_mask, 0);
+
+		if (ret) {
+			IPA_MPM_ERR("Err = %d resetting uc flow control\n",
+					ret);
+			ipa_assert();
+		}
+
+		/* De-register for BW indication from Q6*/
+		if (atomic_read(&ipa_mpm_ctx->active_teth_count) >= 1) {
+			if (!ipa3_qmi_reg_dereg_for_bw(false))
+				IPA_MPM_DBG(
+					"Failed De-rgstrng QMI BW Indctn,might be SSR");
+		} else {
+			IPA_MPM_ERR(
+				"Active teth count is %d",
+				atomic_read(&ipa_mpm_ctx->active_teth_count));
+		}
+
+		/*
+		 * Make sure to stop Device side channels before
+		 * stopping Host side UL channels. This is to make
+		 * sure device side doesn't access host IPA after
+		 * Host IPA gets devoted.
+		 */
+		ret = ipa_mpm_start_stop_remote_mhip_chan(probe_id,
+						MPM_MHIP_STOP,
+						false);
+		if (ret) {
+			/*
+			 * This can fail only when modem is in SSR state.
+			 * Eventually there would be a remove callback,
+			 * so return a failure.
+			 */
+			IPA_MPM_ERR("MHIP remote chan stop fail = %d\n", ret);
+			return ret;
+		}
+		IPA_MPM_DBG("MHIP remote channels are stopped\n");
+
+		status = ipa_mpm_start_stop_mhip_chan(
+					IPA_MPM_MHIP_CHAN_UL, probe_id,
+					MPM_MHIP_STOP);
+		switch (status) {
+		case MHIP_STATUS_SUCCESS:
+			ipa_mpm_change_teth_state(probe_id, IPA_MPM_TETH_INIT);
+			break;
+		case MHIP_STATUS_NO_OP:
+		case MHIP_STATUS_EP_NOT_READY:
+			IPA_MPM_DBG("UL chan already stop, status = %d\n",
+					status);
+			break;
+		case MHIP_STATUS_FAIL:
+		case MHIP_STATUS_BAD_STATE:
+		case MHIP_STATUS_EP_NOT_FOUND:
+			IPA_MPM_ERR("UL chan cant be stopped err =%d\n",
+				status);
+			ipa_assert();
+			return -EFAULT;
+		default:
+			IPA_MPM_ERR("Err not found\n");
+			return -EFAULT;
+		}
+		/* Stop UL MHIP channel for offloading tethering connection */
+		ret = ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+					false, &is_acted);
+
+		if (ret) {
+			IPA_MPM_ERR("Error cloking off PCIe clk, err = %d\n",
+				ret);
+			return ret;
+		}
+		ipa_mpm_ctx->md[probe_id].mhip_client = IPA_MPM_MHIP_NONE;
+	}
+	return ret;
+}
+
 static void ipa_mpm_change_gsi_state(int probe_id,
 	enum ipa_mpm_mhip_chan mhip_chan,
 	enum ipa_mpm_gsi_state next_state)
@@ -2625,6 +2848,288 @@ static void ipa_mpm_mhip_map_prot(enum ipa_usb_teth_prot prot,
 		*mhip_client);
 }
 
+int ipa_mpm_mhip_xdci_pipe_enable(enum ipa_usb_teth_prot xdci_teth_prot)
+{
+	int probe_id = IPA_MPM_MHIP_CH_ID_MAX;
+	int i;
+	enum ipa_mpm_mhip_client_type mhip_client;
+	enum mhip_status_type status = MHIP_STATUS_SUCCESS;
+	int pipe_idx;
+	bool is_acted = true;
+	int ret = 0;
+
+	if (ipa_mpm_ctx == NULL) {
+		IPA_MPM_ERR("MPM not platform probed yet, returning ..\n");
+		return 0;
+	}
+
+	ipa_mpm_mhip_map_prot(xdci_teth_prot, &mhip_client);
+
+	for (i = 0; i < IPA_MPM_MHIP_CH_ID_MAX; i++) {
+		if (ipa_mpm_pipes[i].mhip_client == mhip_client) {
+			probe_id = i;
+			break;
+		}
+	}
+
+	if ((probe_id < IPA_MPM_MHIP_CH_ID_0) ||
+		(probe_id >= IPA_MPM_MHIP_CH_ID_MAX)) {
+		IPA_MPM_ERR("Unknown probe_id\n");
+		return 0;
+	}
+
+	if (probe_id == IPA_MPM_MHIP_CH_ID_0) {
+		/* For rndis, the MPM processing happens in WAN State IOCTL */
+		IPA_MPM_DBG("MPM Xdci connect for rndis, no -op\n");
+		return 0;
+	}
+
+	IPA_MPM_DBG("Connect xdci prot %d -> mhip_client = %d probe_id = %d\n",
+			xdci_teth_prot, mhip_client, probe_id);
+
+	ipa_mpm_ctx->md[probe_id].mhip_client = mhip_client;
+
+	ret = ipa_mpm_vote_unvote_pcie_clk(CLK_ON, probe_id,
+		false, &is_acted);
+	if (ret) {
+		IPA_MPM_ERR("Error cloking on PCIe clk, err = %d\n", ret);
+			return ret;
+	}
+
+	/*
+	 * Make sure to start Device side channels before
+	 * starting Host side UL channels. This is to make
+	 * sure device side access host side IPA only when
+	 * Host IPA gets voted.
+	 */
+	ret = ipa_mpm_start_stop_remote_mhip_chan(probe_id,
+						MPM_MHIP_START, false);
+	if (ret) {
+		/*
+		 * This can fail only when modem is in SSR state.
+		 * Eventually there would be a remove callback,
+		 * so return a failure. Dont have to unvote PCIE here.
+		 */
+		IPA_MPM_ERR("MHIP remote chan start fail = %d\n",
+				ret);
+		return ret;
+	}
+
+	IPA_MPM_DBG("MHIP remote channel start success\n");
+
+	switch (mhip_client) {
+	case IPA_MPM_MHIP_USB_RMNET:
+		ipa_mpm_set_dma_mode(IPA_CLIENT_USB_PROD,
+			IPA_CLIENT_MHI_PRIME_RMNET_CONS, false);
+		break;
+	case IPA_MPM_MHIP_USB_DPL:
+		IPA_MPM_DBG("connecting DPL prot %d\n", mhip_client);
+		ipa_mpm_change_teth_state(probe_id, IPA_MPM_TETH_CONNECTED);
+		atomic_set(&ipa_mpm_ctx->adpl_over_usb_available, 1);
+		return 0;
+	default:
+		IPA_MPM_ERR("mhip_client = %d not processed\n", mhip_client);
+		if (is_acted) {
+			ret = ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+				false, &is_acted);
+			if (ret) {
+				IPA_MPM_ERR("Err unvoting PCIe clk, err = %d\n",
+					ret);
+				return ret;
+			}
+		}
+		ipa_assert();
+		return -EINVAL;
+	}
+
+	if (mhip_client != IPA_MPM_MHIP_USB_DPL)
+		/* Start UL MHIP channel for offloading teth connection */
+		status = ipa_mpm_start_stop_mhip_chan(IPA_MPM_MHIP_CHAN_UL,
+							probe_id,
+							MPM_MHIP_START);
+	switch (status) {
+	case MHIP_STATUS_SUCCESS:
+	case MHIP_STATUS_NO_OP:
+		ipa_mpm_change_teth_state(probe_id, IPA_MPM_TETH_CONNECTED);
+		/* Register for BW indication from Q6*/
+		if (!ipa3_qmi_reg_dereg_for_bw(true))
+			IPA_MPM_DBG("Fail regst QMI BW Indctn,might be SSR");
+
+		pipe_idx = ipa3_get_ep_mapping(IPA_CLIENT_USB_PROD);
+
+		/* Lift the delay for rmnet USB prod pipe */
+		ipa3_xdci_ep_delay_rm(pipe_idx);
+		if (status == MHIP_STATUS_NO_OP && is_acted) {
+			/* Channels already have been started,
+			 * we can devote for pcie clocks
+			 */
+			ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+				false, &is_acted);
+		}
+		break;
+	case MHIP_STATUS_EP_NOT_READY:
+		if (is_acted)
+			ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+				false, &is_acted);
+		ipa_mpm_change_teth_state(probe_id, IPA_MPM_TETH_INPROGRESS);
+		break;
+	case MHIP_STATUS_FAIL:
+	case MHIP_STATUS_BAD_STATE:
+	case MHIP_STATUS_EP_NOT_FOUND:
+		IPA_MPM_ERR("UL chan cant be started err =%d\n", status);
+		if (is_acted)
+			ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+				false, &is_acted);
+		ret = -EFAULT;
+		break;
+	default:
+		if (is_acted)
+			ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+				false, &is_acted);
+		IPA_MPM_ERR("Err not found\n");
+		break;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(ipa_mpm_mhip_xdci_pipe_enable);
+
+int ipa_mpm_mhip_xdci_pipe_disable(enum ipa_usb_teth_prot xdci_teth_prot)
+{
+	int probe_id = IPA_MPM_MHIP_CH_ID_MAX;
+	int i;
+	enum ipa_mpm_mhip_client_type mhip_client;
+	enum mhip_status_type status;
+	int ret = 0;
+	bool is_acted = true;
+
+	if (ipa_mpm_ctx == NULL) {
+		IPA_MPM_ERR("MPM not platform probed, returning ..\n");
+		return 0;
+	}
+
+	ipa_mpm_mhip_map_prot(xdci_teth_prot, &mhip_client);
+
+	for (i = 0; i < IPA_MPM_MHIP_CH_ID_MAX; i++) {
+		if (ipa_mpm_pipes[i].mhip_client == mhip_client) {
+			probe_id = i;
+			break;
+		}
+	}
+
+	if ((probe_id < IPA_MPM_MHIP_CH_ID_0) ||
+		(probe_id >= IPA_MPM_MHIP_CH_ID_MAX)) {
+		IPA_MPM_ERR("Unknown probe_id\n");
+		return 0;
+	}
+
+	if (probe_id == IPA_MPM_MHIP_CH_ID_0) {
+		/* For rndis, the MPM processing happens in WAN State IOCTL */
+		IPA_MPM_DBG("MPM Xdci disconnect for rndis, no -op\n");
+		return 0;
+	}
+
+	IPA_MPM_DBG("xdci disconnect prot %d mhip_client = %d probe_id = %d\n",
+			xdci_teth_prot, mhip_client, probe_id);
+	/*
+	 * Make sure to stop Device side channels before
+	 * stopping Host side UL channels. This is to make
+	 * sure device side doesn't access host side IPA if
+	 * Host IPA gets unvoted.
+	 */
+	if ((!atomic_read(&ipa_mpm_ctx->adpl_over_odl_available))
+		|| (probe_id != IPA_MPM_MHIP_CH_ID_2)) {
+		ret = ipa_mpm_start_stop_remote_mhip_chan(probe_id,
+					MPM_MHIP_STOP, false);
+		if (ret) {
+			/**
+			 * This can fail only when modem is in SSR state.
+			 * Eventually there would be a remove callback,
+			 * so return a failure.
+			 */
+			IPA_MPM_ERR("MHIP remote chan stop fail = %d\n", ret);
+			return ret;
+		}
+		IPA_MPM_DBG("MHIP remote channels are stopped(id=%d)\n",
+			probe_id);
+	}
+
+	switch (mhip_client) {
+	case IPA_MPM_MHIP_USB_RMNET:
+		ret = ipa_mpm_set_dma_mode(IPA_CLIENT_USB_PROD,
+			IPA_CLIENT_APPS_LAN_CONS, true);
+		if (ret) {
+			IPA_MPM_ERR("failed to reset dma mode\n");
+			return ret;
+		}
+		break;
+	case IPA_MPM_MHIP_TETH:
+		IPA_MPM_DBG("Rndis Disconnect, wait for wan_state ioctl\n");
+		return 0;
+	case IPA_MPM_MHIP_USB_DPL:
+		IPA_MPM_DBG("Teth Disconnecting for DPL\n");
+
+		/* change teth state only if ODL is disconnected */
+		if (!ipa3_is_odl_connected()) {
+			ipa_mpm_change_teth_state(probe_id, IPA_MPM_TETH_INIT);
+			ipa_mpm_ctx->md[probe_id].mhip_client =
+				IPA_MPM_MHIP_NONE;
+		}
+		ret = ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+			false, &is_acted);
+		if (ret)
+			IPA_MPM_ERR("Error clking off PCIe clk err%d\n", ret);
+		atomic_set(&ipa_mpm_ctx->adpl_over_usb_available, 0);
+		return ret;
+	default:
+		IPA_MPM_ERR("mhip_client = %d not supported\n", mhip_client);
+		return 0;
+	}
+
+	status = ipa_mpm_start_stop_mhip_chan(IPA_MPM_MHIP_CHAN_UL,
+		probe_id, MPM_MHIP_STOP);
+
+	switch (status) {
+	case MHIP_STATUS_SUCCESS:
+	case MHIP_STATUS_NO_OP:
+	case MHIP_STATUS_EP_NOT_READY:
+		ipa_mpm_change_teth_state(probe_id, IPA_MPM_TETH_INIT);
+		/* De-register for BW indication from Q6*/
+		if (atomic_read(&ipa_mpm_ctx->active_teth_count) >= 1) {
+			if (!ipa3_qmi_reg_dereg_for_bw(false))
+				IPA_MPM_DBG(
+					"Failed De-rgstrng QMI BW Indctn,might be SSR");
+		} else {
+			IPA_MPM_ERR(
+				"Active tethe count is %d",
+				atomic_read(&ipa_mpm_ctx->active_teth_count));
+		}
+		break;
+	case MHIP_STATUS_FAIL:
+	case MHIP_STATUS_BAD_STATE:
+	case MHIP_STATUS_EP_NOT_FOUND:
+		IPA_MPM_ERR("UL chan cant be started err =%d\n", status);
+		ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+			false, &is_acted);
+		return -EFAULT;
+	default:
+		IPA_MPM_ERR("Err not found\n");
+		break;
+	}
+
+	ret = ipa_mpm_vote_unvote_pcie_clk(CLK_OFF, probe_id,
+		false, &is_acted);
+
+	if (ret) {
+		IPA_MPM_ERR("Error cloking off PCIe clk, err = %d\n", ret);
+		return ret;
+	}
+
+	ipa_mpm_ctx->md[probe_id].mhip_client = IPA_MPM_MHIP_NONE;
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_mpm_mhip_xdci_pipe_disable);
+
 static int ipa_mpm_populate_smmu_info(struct platform_device *pdev)
 {
 	struct ipa_smmu_in_params smmu_in;
@@ -2794,7 +3299,240 @@ static const struct of_device_id ipa_mpm_dt_match[] = {
 };
 MODULE_DEVICE_TABLE(of, ipa_mpm_dt_match);
 
-static int ipa3_qmi_reg_dereg_for_bw(bool bw_reg)
+static struct platform_driver ipa_ipa_mpm_driver = {
+	.driver = {
+		.name = "ipa_mpm",
+		.of_match_table = ipa_mpm_dt_match,
+	},
+	.probe = ipa_mpm_probe,
+	.remove = ipa_mpm_remove,
+};
+
+/**
+ * ipa_mpm_init() - Registers ipa_mpm as a platform device for a APQ
+ *
+ * This function is called after bootup for APQ device.
+ * ipa_mpm will register itself as a platform device, and probe
+ * function will get called.
+ *
+ * Return: None
+ */
+int ipa_mpm_init(void)
+{
+	IPA_MPM_DBG("register ipa_mpm platform device\n");
+	return platform_driver_register(&ipa_ipa_mpm_driver);
+}
+
+void ipa_mpm_exit(void)
+{
+	IPA_MPM_DBG("unregister ipa_mpm platform device\n");
+	platform_driver_unregister(&ipa_ipa_mpm_driver);
+}
+
+/**
+ * ipa3_is_mhip_offload_enabled() - check if IPA MPM module was initialized
+ * successfully. If it is initialized, MHIP is enabled for teth
+ *
+ * Return value: 1 for yes; 0 for no
+ */
+int ipa3_is_mhip_offload_enabled(void)
+{
+	if (ipa_mpm_ctx == NULL)
+		return 0;
+	else
+		return 1;
+}
+EXPORT_SYMBOL(ipa3_is_mhip_offload_enabled);
+
+int ipa_mpm_panic_handler(char *buf, int size)
+{
+	int i;
+	int cnt = 0;
+
+	cnt = scnprintf(buf, size,
+			"\n---- MHIP Active Clients Table ----\n");
+	cnt += scnprintf(buf + cnt, size - cnt,
+			"Total PCIe active clients count: %d\n",
+			atomic_read(&ipa_mpm_ctx->pcie_clk_total_cnt));
+	cnt += scnprintf(buf + cnt, size - cnt,
+			"Total IPA active clients count: %d\n",
+			atomic_read(&ipa_mpm_ctx->ipa_clk_total_cnt));
+
+	for (i = 0; i < IPA_MPM_MHIP_CH_ID_MAX; i++) {
+		cnt += scnprintf(buf + cnt, size - cnt,
+			"client id: %d ipa vote cnt: %d pcie vote cnt\n", i,
+			atomic_read(&ipa_mpm_ctx->md[i].clk_cnt.ipa_clk_cnt),
+			atomic_read(&ipa_mpm_ctx->md[i].clk_cnt.pcie_clk_cnt));
+	}
+	return cnt;
+}
+
+/**
+ * ipa3_get_mhip_gsi_stats() - Query MHIP gsi stats from uc
+ * @stats:	[inout] stats blob from client populated by driver
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * @note Cannot be called from atomic context
+ *
+ */
+int ipa3_get_mhip_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
+{
+	int i;
+
+	if (!ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio) {
+		IPAERR("bad parms NULL mhip_gsi_stats_mmio\n");
+		return -EINVAL;
+	}
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	for (i = 0; i < MAX_MHIP_CHANNELS; i++) {
+		stats->u.ring[i].ringFull = ioread32(
+			ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_OFF +
+			IPA3_UC_DEBUG_STATS_RINGFULL_OFF);
+		stats->u.ring[i].ringEmpty = ioread32(
+			ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_OFF +
+			IPA3_UC_DEBUG_STATS_RINGEMPTY_OFF);
+		stats->u.ring[i].ringUsageHigh = ioread32(
+			ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_OFF +
+			IPA3_UC_DEBUG_STATS_RINGUSAGEHIGH_OFF);
+		stats->u.ring[i].ringUsageLow = ioread32(
+			ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_OFF +
+			IPA3_UC_DEBUG_STATS_RINGUSAGELOW_OFF);
+		stats->u.ring[i].RingUtilCount = ioread32(
+			ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_OFF +
+			IPA3_UC_DEBUG_STATS_RINGUTILCOUNT_OFF);
+	}
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+
+	return 0;
+}
+
+/**
+ * ipa3_mpm_enable_adpl_over_odl() - Enable or disable ADPL over ODL
+ * @enable:	true for enable, false for disable
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ */
+int ipa3_mpm_enable_adpl_over_odl(bool enable)
+{
+	int ret;
+	bool is_acted = true;
+
+	IPA_MPM_FUNC_ENTRY();
+
+	if (!ipa3_is_mhip_offload_enabled()) {
+		IPA_MPM_ERR("mpm ctx is NULL\n");
+		return -EPERM;
+	}
+
+	if (enable) {
+		/* inc clk count and set DMA to ODL */
+		IPA_MPM_DBG("mpm enabling ADPL over ODL\n");
+
+		ret = ipa_mpm_vote_unvote_pcie_clk(CLK_ON,
+			IPA_MPM_MHIP_CH_ID_2, false, &is_acted);
+		if (ret) {
+			IPA_MPM_ERR("Err %d cloking on PCIe clk\n", ret);
+				return ret;
+		}
+
+		ret = ipa_mpm_set_dma_mode(IPA_CLIENT_MHI_PRIME_DPL_PROD,
+			IPA_CLIENT_ODL_DPL_CONS, false);
+		if (ret) {
+			IPA_MPM_ERR("MPM failed to set dma mode to ODL\n");
+			if (is_acted)
+				ipa_mpm_vote_unvote_pcie_clk(CLK_OFF,
+					IPA_MPM_MHIP_CH_ID_2,
+					false,
+					&is_acted);
+			return ret;
+		}
+
+		/*start remote mhip-dpl ch */
+		ret = ipa_mpm_start_stop_remote_mhip_chan(IPA_MPM_MHIP_CH_ID_2,
+			MPM_MHIP_START, false);
+		if (ret) {
+			/**
+			 * This can fail only when modem is in SSR state.
+			 * Eventually there would be a remove callback,
+			 * so return a failure.
+			 */
+			IPA_MPM_ERR("MHIP remote chan start fail = %d\n",
+				ret);
+			return ret;
+		}
+		IPA_MPM_DBG("MHIP remote chan started(id=%d)\n",
+			IPA_MPM_MHIP_CH_ID_2);
+		atomic_set(&ipa_mpm_ctx->adpl_over_odl_available, 1);
+
+		ipa_mpm_change_teth_state(IPA_MPM_MHIP_CH_ID_2,
+			IPA_MPM_TETH_CONNECTED);
+	} else {
+		/* stop remote mhip-dpl ch if adpl not enable */
+		if (!atomic_read(&ipa_mpm_ctx->adpl_over_usb_available)) {
+			ret = ipa_mpm_start_stop_remote_mhip_chan(
+				IPA_MPM_MHIP_CH_ID_2, MPM_MHIP_STOP, false);
+			if (ret) {
+				/**
+				 * This can fail only when modem is in SSR state.
+				 * Eventually there would be a remove callback,
+				 * so return a failure.
+				 */
+				IPA_MPM_ERR("MHIP remote chan stop fail = %d\n",
+					ret);
+				return ret;
+			}
+			IPA_MPM_DBG("MHIP remote channels are stopped(id=%d)\n",
+				IPA_MPM_MHIP_CH_ID_2);
+		}
+		atomic_set(&ipa_mpm_ctx->adpl_over_odl_available, 0);
+
+		/* dec clk count and set DMA to USB */
+		IPA_MPM_DBG("mpm disabling ADPL over ODL\n");
+		ret = ipa_mpm_vote_unvote_pcie_clk(CLK_OFF,
+						IPA_MPM_MHIP_CH_ID_2,
+						false,
+						&is_acted);
+		if (ret) {
+			IPA_MPM_ERR("Err %d cloking off PCIe clk\n",
+				ret);
+			return ret;
+		}
+
+		ret = ipa_mpm_set_dma_mode(IPA_CLIENT_MHI_PRIME_DPL_PROD,
+			IPA_CLIENT_USB_DPL_CONS, false);
+		if (ret) {
+			IPA_MPM_ERR("MPM failed to set dma mode to USB\n");
+			if (ipa_mpm_vote_unvote_pcie_clk(CLK_ON,
+							IPA_MPM_MHIP_CH_ID_2,
+							false,
+							&is_acted))
+				IPA_MPM_ERR("Err clocking on pcie\n");
+			return ret;
+		}
+
+		/* If USB is not available then reset teth state */
+		if (atomic_read(&ipa_mpm_ctx->adpl_over_usb_available)) {
+			IPA_MPM_DBG("mpm enabling ADPL over USB\n");
+		} else {
+			ipa_mpm_change_teth_state(IPA_MPM_MHIP_CH_ID_2,
+				IPA_MPM_TETH_INIT);
+			IPA_MPM_DBG("USB disconnected. ADPL on standby\n");
+		}
+	}
+
+	IPA_MPM_FUNC_EXIT();
+	return ret;
+}
+
+int ipa3_qmi_reg_dereg_for_bw(bool bw_reg)
 {
 	int rt;
 
