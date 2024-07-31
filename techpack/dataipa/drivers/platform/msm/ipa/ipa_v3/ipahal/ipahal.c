@@ -163,8 +163,8 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_dma_shared_mem(
 		data->pipeline_clear_options = 2;
 		break;
 	default:
-		IPAHAL_ERR("unsupported pipline clear option %d\n",
-			mem_params->pipeline_clear_options);
+//		IPAHAL_ERR("unsupported pipline clear option %d\n",
+//			mem_params->pipeline_clear_options);
 		WARN_ON(1);
 	}
 
@@ -218,8 +218,8 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_dma_shared_mem_v_4_0(
 		pyld->opcode |= (2 << 9);
 		break;
 	default:
-		IPAHAL_ERR("unsupported pipline clear option %d\n",
-			mem_params->pipeline_clear_options);
+//		IPAHAL_ERR("unsupported pipline clear option %d\n",
+//			mem_params->pipeline_clear_options);
 		WARN_ON(1);
 	}
 
@@ -264,8 +264,8 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_register_write(
 		data->pipeline_clear_options = 2;
 		break;
 	default:
-		IPAHAL_ERR("unsupported pipline clear option %d\n",
-			regwrt_params->pipeline_clear_options);
+//		IPAHAL_ERR("unsupported pipline clear option %d\n",
+//			regwrt_params->pipeline_clear_options);
 		WARN_ON(1);
 	}
 
@@ -312,8 +312,8 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_register_write_v_4_0(
 		pyld->opcode |= (2 << 9);
 		break;
 	default:
-		IPAHAL_ERR("unsupported pipline clear option %d\n",
-			regwrt_params->pipeline_clear_options);
+//		IPAHAL_ERR("unsupported pipline clear option %d\n",
+//			regwrt_params->pipeline_clear_options);
 		WARN_ON(1);
 	}
 
@@ -359,8 +359,8 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_register_read(
 		pyld->opcode |= (2 << 9);
 		break;
 	default:
-		IPAHAL_ERR("unsupported pipline clear option %d\n",
-			regrd_params->pipeline_clear_options);
+//		IPAHAL_ERR("unsupported pipline clear option %d\n",
+//			regrd_params->pipeline_clear_options);
 		WARN_ON(1);
 	}
 
