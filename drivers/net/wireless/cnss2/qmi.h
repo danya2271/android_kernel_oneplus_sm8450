@@ -80,14 +80,14 @@ void cnss_dms_deinit(struct cnss_plat_data *plat_priv);
 int cnss_wlfw_qdss_dnld_send_sync(struct cnss_plat_data *plat_priv);
 int cnss_wlfw_qdss_data_send_sync(struct cnss_plat_data *plat_priv, char *file_name,
 				  u32 total_size);
-int wlfw_qdss_trace_send_start(struct cnss_plat_data *plat_priv);
-int wlfw_qdss_trace_send_stop(struct cnss_plat_data *plat_priv, unsigned long long option);
+int wir_wlfw_qdss_trace_start(struct cnss_plat_data *plat_priv);
+int wir_wlfw_qdss_trace_stop(struct cnss_plat_data *plat_priv, unsigned long long option);
 int cnss_wlfw_cal_report_req_send_sync(struct cnss_plat_data *plat_priv,
 				       u32 cal_file_download_size);
 int cnss_wlfw_ini_file_send_sync(struct cnss_plat_data *plat_priv,
 				 enum wlfw_ini_file_type_v01 file_type);
 int cnss_wlfw_send_host_wfc_call_status(struct cnss_plat_data *plat_priv,
-					struct cnss_wfc_cfg cfg);
+										struct cnss_wfc_cfg cfg);
 #else
 #define QMI_WLFW_TIMEOUT_MS		10000
 
@@ -287,12 +287,12 @@ int cnss_wlfw_qdss_data_send_sync(struct cnss_plat_data *plat_priv, char *file_n
 
 static inline void cnss_dms_deinit(struct cnss_plat_data *plat_priv) {}
 
-int wlfw_qdss_trace_start(struct cnss_plat_data *plat_priv)
+int wir_wlfw_qdss_trace_start(struct cnss_plat_data *plat_priv)
 {
 	return 0;
 }
 
-int wlfw_qdss_trace_stop(struct cnss_plat_data *plat_priv, unsigned long long option)
+int wir_wlfw_qdss_trace_stop(struct cnss_plat_data *plat_priv, unsigned long long option)
 {
 	return 0;
 }
@@ -306,12 +306,6 @@ int cnss_wlfw_cal_report_req_send_sync(struct cnss_plat_data *plat_priv,
 
 int cnss_wlfw_ini_file_send_sync(struct cnss_plat_data *plat_priv,
 				 enum wlfw_ini_file_type_v01 file_type)
-{
-	return 0;
-}
-
-int cnss_wlfw_send_host_wfc_call_status(struct cnss_plat_data *plat_priv,
-					struct cnss_wfc_cfg cfg)
 {
 	return 0;
 }
