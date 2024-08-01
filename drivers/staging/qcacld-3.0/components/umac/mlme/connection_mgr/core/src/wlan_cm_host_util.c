@@ -223,6 +223,9 @@ cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
 		cm_free_join_req(join_req);
 	}
 
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
+		wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
+
 	return status;
 }
 

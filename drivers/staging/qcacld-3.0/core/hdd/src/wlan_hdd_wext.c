@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3906,6 +3906,17 @@ static int hdd_we_set_nss(struct hdd_adapter *adapter, int nss)
 	status = hdd_update_nss(adapter, nss, nss);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("cfg set failed, value %d status %d", nss, status);
+
+//#ifdef OPLUS_FEATURE_WIFI_WSA
+//Add for STBC&MRC
+        if (!QDF_IS_STATUS_ERROR(status) && (nss == 1)) {
+            send_oplus_uevent("forcemrc=status:Success,enable=True");
+        } else if (!QDF_IS_STATUS_ERROR(status) && (nss == 2)) {
+            send_oplus_uevent("forcemrc=status:Success,enable=False");
+        } else {
+            send_oplus_uevent("forcemrc=status:Success,reason=SendActionFail");
+        }
+//#endif /* OPLUS_FEATURE_WIFI_WSA */
 
 	return qdf_status_to_os_return(status);
 }
@@ -8011,7 +8022,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 			break;
 		case WLAN_OFFLOAD_ARP_AND_BC_FILTER_ENABLE:
 			hdd_debug("   BC Filtering enable");
-			fallthrough;
+			/* fallthrough */
 		case WLAN_OFFLOAD_ENABLE:
 			hdd_debug("   ARP offload enable");
 			hdd_debug("   IP address: %pI4",

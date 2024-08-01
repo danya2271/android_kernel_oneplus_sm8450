@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,7 +34,7 @@
 #if (defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
      defined(HIF_IPCI))
 #include "ce_tasklet.h"
-#include "ce/ce_api.h"
+#include "ce_api.h"
 #endif
 #include "qdf_trace.h"
 #include "qdf_status.h"
@@ -386,9 +386,9 @@ static const struct qwlan_hw qwlan_hw_list[] = {
 		.name = "QCA6490",
 	},
 	{
-		.id = QCA6490_V2_2,
+		.id = WCN3990_v2_2,
 		.subid = 0,
-		.name = "QCA6490",
+		.name = "WCN3990_v2_2",
 	},
 	{
 		.id = WCN3990_TALOS,
@@ -647,8 +647,7 @@ QDF_STATUS hif_unregister_recovery_notifier(struct hif_softc *hif_handle)
 }
 #endif
 
-#if defined(HIF_CPU_PERF_AFFINE_MASK) || \
-    defined(FEATURE_ENABLE_CE_DP_IRQ_AFFINE)
+#ifdef HIF_CPU_PERF_AFFINE_MASK
 /**
  * __hif_cpu_hotplug_notify() - CPU hotplug event handler
  * @cpu: CPU Id of the CPU generating the event
@@ -1191,11 +1190,10 @@ QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
+void hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint8_t vote_access;
-	QDF_STATUS status;
 
 	vote_access = qdf_atomic_read(&scn->ep_vote_access);
 
@@ -1203,12 +1201,11 @@ QDF_STATUS hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
 		hif_info("EP vote changed from:%u to intermediate state",
 			 vote_access);
 
-	status = hif_try_prevent_ep_vote_access(hif_ctx);
-	if (QDF_IS_STATUS_SUCCESS(status))
-		qdf_atomic_set(&scn->ep_vote_access,
-		       HIF_EP_VOTE_INTERMEDIATE_ACCESS);
+	if (QDF_IS_STATUS_ERROR(hif_try_prevent_ep_vote_access(hif_ctx)))
+		QDF_BUG(0);
 
-	return status;
+	qdf_atomic_set(&scn->ep_vote_access,
+		       HIF_EP_VOTE_INTERMEDIATE_ACCESS);
 }
 
 void hif_allow_ep_vote_access(struct hif_opaque_softc *hif_ctx)
@@ -2282,17 +2279,4 @@ int hif_system_pm_state_check(struct hif_opaque_softc *hif)
 
 	return 0;
 }
-#endif
-
-#if defined(HIF_CPU_PERF_AFFINE_MASK) || \
-    defined(FEATURE_ENABLE_CE_DP_IRQ_AFFINE)
-void hif_config_irq_set_perf_affinity_hint(
-	struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	hif_config_irq_affinity(scn);
-}
-
-qdf_export_symbol(hif_config_irq_set_perf_affinity_hint);
 #endif

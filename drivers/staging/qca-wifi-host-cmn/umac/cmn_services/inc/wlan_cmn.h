@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -293,8 +293,6 @@
  * @WLAN_UMAC_COMP_MBSS:          MBSS Framework
  * @WLAN_UMAC_COMP_WIFI_RADAR:    WIFI RADAR component
  * @WLAN_UMAC_COMP_TWT:           Target Wake Time (TWT) Component
- * @WLAN_COMP_DP:                 DP component
- * @WLAN_UMAC_COMP_COAP:          Constrained Application Protocol component
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -346,8 +344,6 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_MBSS               = 42,
 	WLAN_UMAC_COMP_WIFI_RADAR         = 43,
 	WLAN_UMAC_COMP_TWT                = 44,
-	WLAN_COMP_DP                      = 46,
-	WLAN_UMAC_COMP_COAP               = 48,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

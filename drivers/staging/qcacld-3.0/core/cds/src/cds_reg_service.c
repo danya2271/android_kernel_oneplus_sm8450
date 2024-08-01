@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,7 +70,7 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 				flags |= IEEE80211_CHAN_VHT80_80;
 		}
 		bandwidth = CH_WIDTH_160MHZ;
-		fallthrough;
+	/* FALLTHROUGH */
 	case CH_WIDTH_160MHZ:
 		if (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
 								  bandwidth) !=
@@ -80,7 +79,7 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 				flags |= IEEE80211_CHAN_VHT160;
 		}
 		bandwidth = CH_WIDTH_80MHZ;
-		fallthrough;
+	/* FALLTHROUGH */
 	case CH_WIDTH_80MHZ:
 		if (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
 								  bandwidth) !=
@@ -89,7 +88,7 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 				flags |= IEEE80211_CHAN_VHT80;
 		}
 		bandwidth = CH_WIDTH_40MHZ;
-		fallthrough;
+	/* FALLTHROUGH */
 	case CH_WIDTH_40MHZ:
 		qdf_mem_zero(&ch_params, sizeof(ch_params));
 		ch_params.ch_width = bandwidth;
@@ -118,14 +117,14 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 			}
 		}
 		bandwidth = CH_WIDTH_20MHZ;
-		fallthrough;
+	/* FALLTHROUGH */
 	case CH_WIDTH_20MHZ:
 		if (is_vht_enabled)
 			flags |= IEEE80211_CHAN_VHT20;
 		if (is_ht_enabled)
 			flags |= IEEE80211_CHAN_HT20;
 		bandwidth = CH_WIDTH_10MHZ;
-		fallthrough;
+	/* FALLTHROUGH */
 	case CH_WIDTH_10MHZ:
 		if (wlan_reg_get_bonded_channel_state_for_freq(pdev, freq,
 							       bandwidth,
@@ -134,7 +133,7 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 		     sub_20_channel_width == WLAN_SUB_20_CH_WIDTH_10)
 			flags |= IEEE80211_CHAN_HALF;
 		bandwidth = CH_WIDTH_5MHZ;
-		fallthrough;
+	/* FALLTHROUGH */
 	case CH_WIDTH_5MHZ:
 		if (wlan_reg_get_bonded_channel_state_for_freq(pdev, freq,
 							       bandwidth,

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1261,35 +1261,6 @@ reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
  *	BAND_5G if 5G is enabled but 2G isn't
  */
 enum band_info reg_band_bitmap_to_band_info(uint32_t band_bitmap);
-
-/**
- * reg_add_indoor_concurrency() - Add the frequency to the indoor concurrency
- * list
- *
- * @pdev: pointer to pdev
- * @vdev_id: vdev id
- * @freq: frequency
- * @width: channel width
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-reg_add_indoor_concurrency(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			   uint32_t freq, enum phy_ch_width width);
-
-/**
- * reg_remove_indoor_concurrency() - Remove the vdev entry from the indoor
- * concurrency list
- *
- * @pdev: pointer to pdev
- * @vdev_id: vdev id
- * @freq: frequency
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-reg_remove_indoor_concurrency(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			      uint32_t freq);
 #endif
 
 #if defined(CONFIG_BAND_6GHZ)
@@ -1789,16 +1760,6 @@ bool reg_is_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc);
  * Return: true if edge channels are supported, else false
  */
 bool reg_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc);
-
-/**
- * reg_convert_enum_to_6g_idx() - Convert a channel enum between
- * MIN_6GHZ_CHANNEL and MAX_6GHZ_CHANNEL, to an index between 0 and
- * NUM_6GHZ_CHANNELS
- * @ch_idx: Channel index
- *
- * Return: enum channel_enum
- */
-uint16_t reg_convert_enum_to_6g_idx(enum channel_enum ch_idx);
 #endif
 
 #ifdef FEATURE_WLAN_CH_AVOID_EXT

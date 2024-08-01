@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1268,74 +1268,6 @@ static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
-/**
- * map_to_wmi_flush_policy() - Map flush policy to firmware defined values
- * @policy: The target i/f flush policy value
- *
- * Return: WMI layer flush policy
- */
-static wmi_peer_flush_policy
-map_to_wmi_flush_policy(enum peer_txq_flush_policy policy)
-{
-	switch (policy) {
-	case PEER_TXQ_FLUSH_POLICY_NONE:
-		return WMI_NO_FLUSH;
-	case PEER_TXQ_FLUSH_POLICY_TWT_SP_END:
-		return WMI_TWT_FLUSH;
-	default:
-		return WMI_MAX_FLUSH_POLICY;
-	}
-}
-
-/**
- * send_peer_txq_flush_config_cmd_tlv() - Send peer TID queue flush config
- * @wmi: wmi handle
- * @para: Peer txq flush configuration
- *
- * Return: QDF status
- */
-static QDF_STATUS
-send_peer_txq_flush_config_cmd_tlv(wmi_unified_t wmi,
-				   struct peer_txq_flush_config_params *param)
-{
-	wmi_peer_flush_policy_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi, len);
-	if (!buf)
-		return QDF_STATUS_E_NOMEM;
-
-	cmd = (wmi_peer_flush_policy_cmd_fixed_param *)wmi_buf_data(buf);
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_peer_flush_policy_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_peer_flush_policy_cmd_fixed_param));
-
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer, &cmd->peer_macaddr);
-	cmd->peer_tid_bitmap = param->tid_mask;
-	cmd->vdev_id = param->vdev_id;
-	cmd->flush_policy = map_to_wmi_flush_policy(param->policy);
-	if (cmd->flush_policy == WMI_MAX_FLUSH_POLICY) {
-		wmi_buf_free(buf);
-		wmi_err("Invalid policy");
-		return QDF_STATUS_E_INVAL;
-	}
-	wmi_debug("peer_addr " QDF_MAC_ADDR_FMT "vdev %d tid %x policy %d",
-		  QDF_MAC_ADDR_REF(param->peer), param->vdev_id,
-		  param->tid_mask, param->policy);
-	wmi_mtrace(WMI_PEER_FLUSH_POLICY_CMDID, cmd->vdev_id, 0);
-	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_FLUSH_POLICY_CMDID)) {
-		wmi_err("Failed to send flush policy command");
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 /**
  * send_peer_delete_cmd_tlv() - send PEER delete command to fw
  * @wmi: wmi handle
@@ -5803,7 +5735,6 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 					wmi_handle, buf, len,
 					WMI_REQUEST_LINK_STATS_CMDID, true);
 	}
-
 	if (ret) {
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -10592,21 +10523,12 @@ QDF_STATUS save_ext_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (!soc->wmi_ext2_service_bitmap ||
-	    (param_buf->num_wmi_service_ext_bitmap >
-	     soc->wmi_ext2_service_bitmap_len)) {
-		if (soc->wmi_ext2_service_bitmap) {
-			qdf_mem_free(soc->wmi_ext2_service_bitmap);
-			soc->wmi_ext2_service_bitmap = NULL;
-		}
+	if (!soc->wmi_ext2_service_bitmap) {
 		soc->wmi_ext2_service_bitmap =
 			qdf_mem_malloc(param_buf->num_wmi_service_ext_bitmap *
 				       sizeof(uint32_t));
 		if (!soc->wmi_ext2_service_bitmap)
 			return QDF_STATUS_E_NOMEM;
-
-		soc->wmi_ext2_service_bitmap_len =
-			param_buf->num_wmi_service_ext_bitmap;
 	}
 
 	qdf_mem_copy(soc->wmi_ext2_service_bitmap,
@@ -12338,67 +12260,6 @@ static QDF_STATUS extract_sar_cap_service_ready_ext_tlv(
 		ext_param->sar_version = sar_caps->active_version;
 	else
 		ext_param->sar_version = 0;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-#ifdef FEATURE_SAR_LIMITS
-/**
- * wlan_convert_sar_flag() - Convert FW enum to Host enum
- * @wmi_sar_flag: sar flag enum
- *
- * Return: host equivalent sar flag
- */
-static enum sar_flag wlan_convert_sar_flag(uint32_t wmi_sar_flag)
-{
-	switch (wmi_sar_flag) {
-	case WMI_SAR_SET_CTL_GROUPING_DISABLE:
-		return SAR_SET_CTL_GROUPING_DISABLE;
-	case WMI_SAR_DBS_WITH_BT_DISABLE:
-		return SAR_DBS_WITH_BT_DISABLE;
-	default:
-		return SAR_FLAG_NONE;
-	}
-}
-#else
-static inline
-uint32_t wlan_convert_sar_flag(uint32_t wmi_sar_flag)
-{
-	return 0;
-}
-#endif
-
-/**
- * extract_sar_cap_service_ready_ext2_tlv() -
- *       extract SAR cap - flag from service ready event
- * @wmi_handle: wmi handle
- * @event: pointer to event buffer
- * @ext2_param: extended target info
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-static QDF_STATUS extract_sar_cap_service_ready_ext2_tlv(
-			wmi_unified_t wmi_handle,
-			uint8_t *event,
-			struct wlan_psoc_host_service_ext2_param *ext2_param)
-{
-	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
-	wmi_sar_flag_tlv_param *sar_flag_tlv;
-
-	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
-
-	if (!param_buf)
-		return QDF_STATUS_E_INVAL;
-
-	if (!param_buf->num_sar_flags)
-		return QDF_STATUS_E_INVAL;
-
-	sar_flag_tlv = param_buf->sar_flags;
-	if (sar_flag_tlv)
-		ext2_param->sar_flag =
-			wlan_convert_sar_flag(sar_flag_tlv->sar_flags);
-	else
-		ext2_param->sar_flag = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16153,15 +16014,6 @@ extract_roam_scan_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 			dst->num_chan = MAX_ROAM_SCAN_CHAN;
 
 		src_chan = &param_buf->roam_scan_chan_info[chan_idx];
-
-		if ((dst->num_chan + chan_idx) >
-		    param_buf->num_roam_scan_chan_info) {
-			wmi_err("Invalid TLV. num_chan %d chan_idx %d num_roam_scan_chan_info %d",
-				dst->num_chan, chan_idx,
-				param_buf->num_roam_scan_chan_info);
-			return QDF_STATUS_SUCCESS;
-		}
-
 		for (i = 0; i < dst->num_chan; i++) {
 			dst->chan_freq[i] = src_chan->channel;
 			src_chan++;
@@ -16264,8 +16116,6 @@ wlan_roam_fail_reason_code(uint16_t wmi_roam_fail_reason)
 	}
 }
 
-#define ROAM_SUCCESS 0
-
 /**
  * extract_roam_scan_stats_tlv() - Extract the Roam trigger stats
  * from the WMI_ROAM_STATS_EVENTID
@@ -16291,9 +16141,8 @@ extract_roam_result_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	dst->present = true;
 	dst->status = src_data->roam_status;
 	dst->timestamp = src_data->timestamp;
-	if (src_data->roam_fail_reason != ROAM_SUCCESS)
-		dst->fail_reason =
-			wlan_roam_fail_reason_code(src_data->roam_fail_reason);
+	dst->fail_reason =
+	wlan_roam_fail_reason_code(src_data->roam_fail_reason);
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_data->bssid, dst->fail_bssid.bytes);
 
 	return QDF_STATUS_SUCCESS;
@@ -16354,14 +16203,6 @@ extract_roam_11kv_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	if (dst->num_freq > MAX_ROAM_SCAN_CHAN)
 		dst->num_freq = MAX_ROAM_SCAN_CHAN;
-
-	if ((dst->num_freq + rpt_idx) >
-	    param_buf->num_roam_neighbor_report_chan_info) {
-		wmi_err("Invalid TLV. num_freq %d rpt_idx %d num_roam_neighbor_report_chan_info %d",
-			dst->num_freq, rpt_idx,
-			param_buf->num_roam_scan_chan_info);
-		return QDF_STATUS_SUCCESS;
-	}
 
 	for (i = 0; i < dst->num_freq; i++) {
 		dst->freq[i] = src_freq->channel;
@@ -16499,7 +16340,7 @@ extract_smart_monitor_event_tlv(void *handle, void *evt_buf,
 	if (params->vdev_id >= WLAN_UMAC_PDEV_MAX_VDEVS)
 		return QDF_STATUS_E_INVAL;
 
-	params->rx_vht_sgi = smu_event->rx_vht_sgi;
+	params->rx_avg_rssi = smu_event->avg_rssi_data_dbm;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17427,8 +17268,6 @@ struct wmi_ops tlv_ops =  {
 				extract_scan_radio_cap_service_ready_ext2_tlv,
 	.extract_sar_cap_service_ready_ext =
 				extract_sar_cap_service_ready_ext_tlv,
-	.extract_sar_cap_service_ready_ext2 =
-				extract_sar_cap_service_ready_ext2_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
 	.extract_fips_event_data = extract_fips_event_data_tlv,
@@ -17633,10 +17472,6 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_FEATURE_11BE_MLO
 	.extract_quiet_offload_event =
 				extract_quiet_offload_event_tlv,
-#endif
-
-#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
-	.send_peer_txq_flush_config_cmd = send_peer_txq_flush_config_cmd_tlv,
 #endif
 };
 
@@ -18086,10 +17921,6 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #endif
 #ifdef MULTI_CLIENT_LL_SUPPORT
 	event_ids[wmi_vdev_latency_event_id] = WMI_VDEV_LATENCY_LEVEL_EVENTID;
-#endif
-#ifdef WLAN_FEATURE_COAP
-	event_ids[wmi_wow_coap_buf_info_eventid] =
-		WMI_WOW_COAP_BUF_INFO_EVENTID;
 #endif
 }
 
@@ -18558,10 +18389,6 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_configure_multi_client_ll_support] =
 				WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT;
 #endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	wmi_service[wmi_service_5ghz_hi_rssi_roam_support] =
-					WMI_SERVICE_5GHZ_HI_RSSI_ROAM_SUPPORT;
-#endif
 }
 
 /**
@@ -18621,7 +18448,6 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_cp_stats_attach_tlv(wmi_handle);
 	wmi_gpio_attach_tlv(wmi_handle);
 	wmi_11be_attach_tlv(wmi_handle);
-	wmi_coap_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

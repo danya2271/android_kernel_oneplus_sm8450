@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1427,7 +1427,6 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	bool extracted_flag = false;
 	uint8_t retry_int;
 	uint16_t max_retries;
-	struct element_info ie;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -1767,11 +1766,6 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-
-	ie.ptr = frame + sizeof(tSirMacMgmtHdr) + WLAN_ASSOC_RSP_IES_OFFSET;
-	ie.len = payload - WLAN_ASSOC_RSP_IES_OFFSET;
-
-	mlme_set_peer_assoc_rsp_ie(mac_ctx->psoc, peer_addr, &ie);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
@@ -2203,7 +2197,6 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	bool bss_mfp_capable, frag_ie_present = false;
 	int8_t peer_rssi = 0;
 	uint16_t fils_hlp_ie_len = 0;
-	struct cm_roam_values_copy mdie_cfg = {0};
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -2464,17 +2457,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			(unsigned int) bssdescr->mdie[2]);
 		populate_mdie(mac_ctx, &frm->MobilityDomain,
 			pe_session->lim_join_req->bssDescription.mdie);
-		if (bssdescr->mdiePresent) {
-			mdie_cfg.bool_value = true;
-			mdie_cfg.uint_value =
-				(bssdescr->mdie[1] << 8) | (bssdescr->mdie[0]);
-		} else {
-			mdie_cfg.bool_value = false;
-			mdie_cfg.uint_value = 0;
-		}
 
-		wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id,
-					   MOBILITY_DOMAIN, &mdie_cfg);
 		/*
 		 * IEEE80211-ai [13.2.4 FT initial mobility domain association
 		 * over FILS in an RSN]
@@ -2555,13 +2538,13 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (lim_is_fils_connection(pe_session)) {
 		populate_dot11f_fils_params(mac_ctx, frm, pe_session);
 		aes_block_size_len = AES_BLOCK_SIZE;
-		if (add_ie_len && wlan_get_ie_ptr_from_eid(WLAN_ELEMID_FRAGMENT,
-							   add_ie, add_ie_len))
+		if (add_ie && wlan_get_ie_ptr_from_eid(WLAN_ELEMID_FRAGMENT,
+						       add_ie, add_ie_len))
 			frag_ie_present = true;
 	}
 
 	/* Strip and append HLP container IE only if it is fragmented */
-	if (frag_ie_present && add_ie_len &&
+	if (frag_ie_present &&
 	    wlan_get_ext_ie_ptr_from_ext_id(SIR_FILS_HLP_OUI_TYPE,
 					    SIR_FILS_HLP_OUI_LEN, add_ie,
 					    add_ie_len)) {
@@ -2595,7 +2578,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 	/* RSNX IE for SAE PWE derivation based on H2E */
-	if (add_ie_len &&
+	if (add_ie &&
 	    wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE, add_ie, add_ie_len)) {
 		rsnx_ie = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
 		if (!rsnx_ie)
@@ -2611,8 +2594,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		rsnx_ie_len = rsnx_ie[1] + 2;
 	}
 	/* MSCS ext ie */
-	if (add_ie_len &&
-	    wlan_get_ext_ie_ptr_from_ext_id(MSCS_OUI_TYPE, MSCS_OUI_SIZE,
+	if (wlan_get_ext_ie_ptr_from_ext_id(MSCS_OUI_TYPE, MSCS_OUI_SIZE,
 					    add_ie, add_ie_len)) {
 		mscs_ext_ie = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
 		if (!mscs_ext_ie)
@@ -2637,10 +2619,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * TLVs with same attribute in a single IE.
 	 * Strip off the MBO IE from add_ie and append it at the end.
 	 */
-	if (add_ie_len &&
-	    wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_MBO_OUI,
-					    SIR_MAC_MBO_OUI_SIZE, add_ie,
-					    add_ie_len)) {
+	if (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_MBO_OUI,
+	    SIR_MAC_MBO_OUI_SIZE, add_ie, add_ie_len)) {
 		mbo_ie = qdf_mem_malloc(DOT11F_IE_MBO_IE_MAX_LEN + 2);
 		if (!mbo_ie)
 			goto end;
@@ -2681,8 +2661,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * Append the IEs just before MBO IEs as MBO IEs have to be at the
 	 * end of the frame.
 	 */
-	if (add_ie_len &&
-	    wlan_get_ie_ptr_from_eid(WLAN_ELEMID_VENDOR, add_ie, add_ie_len)) {
+	if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_VENDOR, add_ie, add_ie_len)) {
 		vendor_ies = qdf_mem_malloc(MAX_VENDOR_IES_LEN + 2);
 		if (vendor_ies) {
 			current_len = add_ie_len;
@@ -2902,40 +2881,6 @@ end:
 }
 
 /**
- * lim_get_addba_rsp_ptr() - Search the pointer to addba response
- * @ie: the pointer to entire frame
- * @ie_len: length of ie
- *
- * Host reserved 8 bytes for CCMP header trailer and initialize them
- * as 0 when rmf enabled & key installed and tx addba rsp frame. So,
- * search the pointer to addba response and then unpack the frame.
- *
- * Return: the pointer to addba response
- */
-static uint8_t *
-lim_get_addba_rsp_ptr(uint8_t *ie, uint32_t ie_len)
-{
-	uint32_t left = ie_len;
-	uint8_t *ptr = ie;
-	uint8_t category, action;
-	uint32_t addba_rsp_len = sizeof(tDot11faddba_rsp);
-
-	while (left >= addba_rsp_len) {
-		category  = ptr[0];
-		action = ptr[1];
-
-		if (category == ACTION_CATEGORY_BACK &&
-		    action == ADDBA_RESPONSE)
-			return ptr;
-
-		left--;
-		ptr++;
-	}
-
-	return NULL;
-}
-
-/**
  * lim_addba_rsp_tx_complete_cnf() - Confirmation for add BA response OTA
  * @context: pointer to global mac
  * @buf: buffer which is nothing but entire ADD BA frame
@@ -2951,13 +2896,11 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 {
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 	tSirMacMgmtHdr *mac_hdr;
-	tDot11faddba_rsp rsp = {0};
+	tDot11faddba_rsp rsp;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	uint32_t rsp_len;
+	uint32_t frame_len;
 	QDF_STATUS status;
 	uint8_t *data;
-	uint8_t *addba_rsp_ptr;
-	uint32_t data_len;
 	struct wmi_mgmt_params *mgmt_params = (struct wmi_mgmt_params *)params;
 
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
@@ -2977,29 +2920,16 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	data_len = (uint32_t)qdf_nbuf_get_data_len(buf);
-	if (data_len < (sizeof(*mac_hdr) + sizeof(rsp))) {
-		pe_err("Invalid data len %d", data_len);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	addba_rsp_ptr = lim_get_addba_rsp_ptr(
-				data + sizeof(*mac_hdr),
-				data_len - sizeof(*mac_hdr));
-	if (!addba_rsp_ptr) {
-		pe_debug("null addba_rsp_ptr");
-		qdf_trace_hex_dump(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-				   (void *)data, data_len);
-		addba_rsp_ptr = (uint8_t *)data + sizeof(*mac_hdr);
-	}
 	mac_hdr = (tSirMacMgmtHdr *)data;
-	rsp_len = sizeof(rsp);
-	status = dot11f_unpack_addba_rsp(mac_ctx, addba_rsp_ptr,
-					 rsp_len, &rsp, false);
+	qdf_mem_zero((void *)&rsp, sizeof(tDot11faddba_rsp));
+	frame_len = sizeof(rsp);
+	status = dot11f_unpack_addba_rsp(mac_ctx, (uint8_t *)data +
+					 sizeof(*mac_hdr), frame_len,
+					 &rsp, false);
 
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to unpack and parse (0x%08x, %d bytes)",
-			status, rsp_len);
+			status, frame_len);
 		goto error;
 	}
 
@@ -4678,7 +4608,6 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	uint8_t                  vdev_id = 0;
 	uint8_t                  ch_spacing;
 	tLimWiderBWChannelSwitchInfo *wide_bw_ie;
-	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	if (!session_entry) {
 		pe_err("Session entry is NULL!!!");
@@ -4697,9 +4626,9 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	frm.ext_chan_switch_ann_action.new_channel = new_channel;
 	frm.ext_chan_switch_ann_action.switch_count = count;
 
-	wlan_reg_read_current_country(mac_ctx->psoc, reg_cc);
 	ch_spacing = wlan_reg_dmn_get_chanwidth_from_opclass(
-			reg_cc, new_channel, new_op_class);
+			mac_ctx->scan.countryCodeCurrent, new_channel,
+			new_op_class);
 
 	if ((ch_spacing == 80) || (ch_spacing == 160)) {
 		wide_bw_ie = &session_entry->gLimWiderBWChannelSwitch;
@@ -5710,12 +5639,9 @@ returnAfterError:
 #endif
 
 QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
-					 tSirMacAddr peer_mac, uint16_t tid,
-					 struct pe_session *session,
-					 uint8_t addba_extn_present,
-					 uint8_t amsdu_support, uint8_t is_wep,
-					 uint16_t calc_buff_size,
-					 tSirMacAddr bssid)
+		tSirMacAddr peer_mac, uint16_t tid,
+		struct pe_session *session, uint8_t addba_extn_present,
+		uint8_t amsdu_support, uint8_t is_wep, uint16_t calc_buff_size)
 {
 
 	tDot11faddba_rsp frm;
@@ -5889,8 +5815,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	/* Update A3 with the BSSID */
 	mgmt_hdr = (tpSirMacMgmtHdr) frame_ptr;
-
-	sir_copy_mac_addr(mgmt_hdr->bssId, bssid);
+	sir_copy_mac_addr(mgmt_hdr->bssId, session->bssId);
 
 	/* ADDBA Response is a robust mgmt action frame,
 	 * set the "protect" (aka WEP) bit in the FC

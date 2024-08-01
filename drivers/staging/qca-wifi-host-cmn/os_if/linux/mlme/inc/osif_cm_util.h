@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,9 +27,6 @@
 #include <qca_vendor.h>
 #include "wlan_cm_ucfg_api.h"
 #include "wlan_cm_public_struct.h"
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#include "wlan_cm_roam_public_struct.h"
-#endif
 #ifdef CONN_MGR_ADV_FEATURE
 #include <cdp_txrx_mob_def.h>
 #endif
@@ -253,23 +249,6 @@ void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
 			struct qdf_mac_addr *bssid) {}
 #endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * typedef osif_cm_roam_rt_stats_cb: Callback to send roam
- * stats event
- * @roam_stats: roam_stats_event pointer
- * @idx: TLV idx for roam stats event
- *
- * This callback sends roam_stats_event to userspace
- *
- * Context: Any context.
- * Return: void
- */
-typedef void
-	(*osif_cm_roam_rt_stats_cb)(struct roam_stats_event *roam_stats,
-				    uint8_t idx);
-#endif
-
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
 /**
  * typedef osif_cm_ft_preauth_complete_cb: Callback to send fast
@@ -304,22 +283,6 @@ typedef QDF_STATUS
 #endif
 #endif
 
-#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
-/**
- * typedef os_if_cm_perfd_set_cpufreq_ctrl_cb: Callback to update
- * CPU min freq
- * @action: bool action to set or reset the CPU freq
- *
- * This callback indicates legacy modules to take the actions
- * related to set/reset CPU freq
- *
- * Context: Any context.
- * Return: QDF_STATUS
- */
-typedef QDF_STATUS
-	(*os_if_cm_perfd_set_cpufreq_ctrl_cb)(bool action);
-#endif
-
 /**
  * osif_cm_ops: connection manager legacy callbacks
  * @osif_cm_connect_comp_cb: callback for connect complete to legacy
@@ -332,12 +295,10 @@ typedef QDF_STATUS
  * actions on napi serialization
  * @save_gtk_cb : callback to legacy module to save gtk
  * @set_hlp_data_cb: callback to legacy module to save hlp data
- * @roam_rt_stats_event_cb: callback to send roam stats to userspace
  * @ft_preauth_complete_cb: callback to legacy module to send fast
  * transition event
  * @cckm_preauth_complete_cb: callback to legacy module to send cckm
  * preauth indication to the supplicant via wireless custom event.
- * @perfd_set_cpufreq_cb: callback to update CPU min freq
  */
 struct osif_cm_ops {
 	osif_cm_connect_comp_cb connect_complete_cb;
@@ -350,17 +311,11 @@ struct osif_cm_ops {
 #ifdef WLAN_FEATURE_FILS_SK
 	osif_cm_set_hlp_data_cb set_hlp_data_cb;
 #endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	osif_cm_roam_rt_stats_cb roam_rt_stats_event_cb;
-#endif
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
 	osif_cm_ft_preauth_complete_cb ft_preauth_complete_cb;
 #ifdef FEATURE_WLAN_ESE
 	osif_cm_cckm_preauth_complete_cb cckm_preauth_complete_cb;
 #endif
-#endif
-#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
-	os_if_cm_perfd_set_cpufreq_ctrl_cb perfd_set_cpufreq_cb;
 #endif
 };
 
@@ -489,25 +444,5 @@ void osif_cm_set_legacy_cb(struct osif_cm_ops *osif_legacy_ops);
  * Return: void
  */
 void osif_cm_reset_legacy_cb(void);
-
-#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
-/**
- * osif_cm_perfd_set_cpufreq() - Function to CPU min freq
- * action to legacy module
- * @action: Action to set or reset the CPU freq
- *
- * This function indicates to take the actions related to set/reset the CPU freq
- *
- * Context: Any context.
- * Return: QDF_STATUS
- */
-QDF_STATUS osif_cm_perfd_set_cpufreq(bool action);
-#else
-static inline
-QDF_STATUS osif_cm_perfd_set_cpufreq(bool action)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #endif /* __OSIF_CM_UTIL_H */

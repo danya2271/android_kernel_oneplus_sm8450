@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -195,7 +195,6 @@ void populate_dot_11_f_ext_chann_switch_ann(struct mac_context *mac_ptr,
 	uint32_t sw_target_freq;
 	uint8_t primary_channel;
 	enum phy_ch_width ch_width;
-	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	ch_width = session_entry->gLimChannelSwitch.ch_width;
 	ch_offset = session_entry->gLimChannelSwitch.sec_ch_offset;
@@ -212,9 +211,8 @@ void populate_dot_11_f_ext_chann_switch_ann(struct mac_context *mac_ptr,
 		session_entry->gLimChannelSwitch.switchCount;
 	dot_11_ptr->present = 1;
 
-	wlan_reg_read_current_country(mac_ptr->psoc, reg_cc);
 	pe_debug("country:%s chan:%d freq %d width:%d reg:%d off:%d",
-		 reg_cc,
+		 mac_ptr->scan.countryCodeCurrent,
 		 session_entry->gLimChannelSwitch.primaryChannel,
 		 sw_target_freq,
 		 session_entry->gLimChannelSwitch.ch_width,
@@ -1994,42 +1992,22 @@ populate_dot11f_supp_channels(struct mac_context *mac,
 			      tDot11fIESuppChannels *pDot11f,
 			      uint8_t nAssocType, struct pe_session *pe_session)
 {
-	uint8_t i, j = 0;
+	uint8_t i;
 	uint8_t *p;
 	struct supported_channels supportedChannels;
-	uint8_t channel, opclass, base_opclass;
-	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	wlan_add_supported_5Ghz_channels(mac->psoc, mac->pdev,
 					 supportedChannels.channelList,
 					 &supportedChannels.numChnl,
 					 false);
-
 	p = supportedChannels.channelList;
 	pDot11f->num_bands = supportedChannels.numChnl;
-	wlan_reg_read_current_country(mac->psoc, reg_cc);
 
-	for (i = 0U; i < pDot11f->num_bands; i++) {
-		base_opclass = wlan_reg_dmn_get_opclass_from_channel(
-						reg_cc,
-						p[i], BW20);
-		pDot11f->bands[j][0] = p[i];
-		pDot11f->bands[j][1] = 1;
-		channel = p[i];
-		while (i + 1 < pDot11f->num_bands && (p[i + 1] == channel + 4)) {
-			opclass = wlan_reg_dmn_get_opclass_from_channel(
-						reg_cc,
-						p[i + 1], BW20);
-			if (base_opclass != opclass)
-				goto skip;
-			pDot11f->bands[j][1]++;
-			channel = p[++i];
-		}
-skip:
-		j++;
+	for (i = 0U; i < pDot11f->num_bands; ++i, ++p) {
+		pDot11f->bands[i][0] = *p;
+		pDot11f->bands[i][1] = 1;
 	}
 
-	pDot11f->num_bands = j;
 	pDot11f->present = 1;
 
 } /* End populate_dot11f_supp_channels. */
@@ -6493,7 +6471,7 @@ QDF_STATUS populate_dot11f_rrm_ie(struct mac_context *mac,
 
 void populate_mdie(struct mac_context *mac,
 		   tDot11fIEMobilityDomain *pDot11f,
-		   uint8_t mdie[])
+		   uint8_t mdie[SIR_MDIE_SIZE])
 {
 	pDot11f->present = 1;
 	pDot11f->MDID = (uint16_t) ((mdie[1] << 8) | (mdie[0]));
@@ -7785,7 +7763,6 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 
 	dot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
 	p_ext_cap = (struct s_ext_cap *)dot11f->bytes;
-	dot11f->present = 1;
 
 	if (pe_session->opmode == QDF_STA_MODE)
 		p_ext_cap->twt_requestor_support =
@@ -7798,10 +7775,6 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 			twt_get_responder_flag(mac_ctx);
 
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
-	if (!dot11f->num_bytes) {
-		dot11f->present = 0;
-		pe_debug("ext ie length become 0, disable the ext caps");
-	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8560,7 +8533,6 @@ QDF_STATUS populate_dot11f_btm_extended_caps(struct mac_context *mac_ctx,
 	pe_debug("enter");
 	dot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
 	p_ext_cap = (struct s_ext_cap *)dot11f->bytes;
-	dot11f->present = 1;
 
 	status = cm_akm_roam_allowed(mac_ctx->psoc, pe_session->vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -8569,10 +8541,6 @@ QDF_STATUS populate_dot11f_btm_extended_caps(struct mac_context *mac_ctx,
 	}
 
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
-	if (!dot11f->num_bytes) {
-		dot11f->present = 0;
-		pe_debug("ext ie length become 0, disable the ext caps");
-	}
 
 	return QDF_STATUS_SUCCESS;
 }

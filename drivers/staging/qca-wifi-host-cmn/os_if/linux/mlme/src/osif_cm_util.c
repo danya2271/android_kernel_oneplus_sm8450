@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -352,7 +351,6 @@ osif_cm_disconnect_start_cb(struct wlan_objmgr_vdev *vdev)
 static QDF_STATUS
 osif_cm_roam_start_cb(struct wlan_objmgr_vdev *vdev)
 {
-	osif_cm_perfd_set_cpufreq(true);
 	return osif_cm_netif_queue_ind(vdev,
 				       WLAN_STOP_ALL_NETIF_QUEUE,
 				       WLAN_CONTROL_PATH);
@@ -370,7 +368,6 @@ osif_cm_roam_start_cb(struct wlan_objmgr_vdev *vdev)
 static QDF_STATUS
 osif_cm_roam_abort_cb(struct wlan_objmgr_vdev *vdev)
 {
-	osif_cm_perfd_set_cpufreq(false);
 	osif_cm_napi_serialize(false);
 	return osif_cm_netif_queue_ind(vdev,
 				       WLAN_WAKE_ALL_NETIF_QUEUE,
@@ -391,28 +388,7 @@ osif_cm_roam_abort_cb(struct wlan_objmgr_vdev *vdev)
 static QDF_STATUS
 osif_cm_roam_cmpl_cb(struct wlan_objmgr_vdev *vdev)
 {
-	osif_cm_perfd_set_cpufreq(false);
 	return osif_cm_napi_serialize(false);
-}
-
-/**
- * osif_cm_roam_rt_stats_evt_cb() - Roam stats callback
- * @roam_stats: roam_stats_event pointer
- * @idx: TLV idx for roam_stats_event
- *
- * This callback indicates os_if that roam stats event is received
- * so that os_if can send the event
- *
- * Return: void
- */
-
-static void
-osif_cm_roam_rt_stats_evt_cb(struct roam_stats_event *roam_stats,
-			     uint8_t idx)
-{
-	if (osif_cm_legacy_ops &&
-	    osif_cm_legacy_ops->roam_rt_stats_event_cb)
-		osif_cm_legacy_ops->roam_rt_stats_event_cb(roam_stats, idx);
 }
 #endif
 
@@ -473,20 +449,6 @@ osif_cm_cckm_preauth_cmpl_cb(struct wlan_objmgr_vdev *vdev,
 #endif
 #endif
 
-#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
-/**
- * osif_cm_perfd_reset_cpufreq_ctrl_cb() - Callback to reset CPU freq
- *
- * This callback indicates os_if to reset the request to boost CPU freq
- *
- * Return: None
- */
-static void osif_cm_perfd_reset_cpufreq_ctrl_cb(void)
-{
-	osif_cm_perfd_set_cpufreq(false);
-}
-#endif
-
 static struct mlme_cm_ops cm_ops = {
 	.mlme_cm_connect_complete_cb = osif_cm_connect_complete_cb,
 	.mlme_cm_failed_candidate_cb = osif_cm_failed_candidate_cb,
@@ -501,17 +463,12 @@ static struct mlme_cm_ops cm_ops = {
 	.mlme_cm_roam_start_cb = osif_cm_roam_start_cb,
 	.mlme_cm_roam_abort_cb = osif_cm_roam_abort_cb,
 	.mlme_cm_roam_cmpl_cb = osif_cm_roam_cmpl_cb,
-	.mlme_cm_roam_rt_stats_cb = osif_cm_roam_rt_stats_evt_cb,
 #endif
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
 	.mlme_cm_ft_preauth_cmpl_cb = osif_cm_ft_preauth_cmpl_cb,
 #ifdef FEATURE_WLAN_ESE
 	.mlme_cm_cckm_preauth_cmpl_cb = osif_cm_cckm_preauth_cmpl_cb,
 #endif
-#endif
-#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
-	.mlme_cm_perfd_reset_cpufreq_ctrl_cb =
-				osif_cm_perfd_reset_cpufreq_ctrl_cb,
 #endif
 };
 
@@ -667,18 +624,3 @@ void osif_cm_reset_legacy_cb(void)
 {
 	osif_cm_legacy_ops = NULL;
 }
-
-#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
-QDF_STATUS osif_cm_perfd_set_cpufreq(bool action)
-{
-	os_if_cm_perfd_set_cpufreq_ctrl_cb cb = NULL;
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if (osif_cm_legacy_ops)
-		cb = osif_cm_legacy_ops->perfd_set_cpufreq_cb;
-	if (cb)
-		ret = cb(action);
-
-	return ret;
-}
-#endif

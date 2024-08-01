@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1850,18 +1850,11 @@ static void pe_update_crypto_params(struct mac_context *mac_ctx,
 		pe_err("crypto params is null");
 		return;
 	}
-
-	ft_session->connected_akm =
-		lim_get_connected_akm(ft_session, crypto_params->ucastcipherset,
-				      crypto_params->authmodeset,
-				      crypto_params->key_mgmt);
-	pe_nofl_debug("vdev %d roam auth 0x%x akm 0x%0x rsn_caps 0x%x ucastcipher 0x%x akm %d",
+	pe_nofl_debug("vdev %d roam auth 0x%x akm 0x%0x rsn_caps 0x%x",
 		      ft_session->vdev_id,
 		      crypto_params->authmodeset,
 		      crypto_params->key_mgmt,
-		      crypto_params->rsn_caps,
-		      crypto_params->ucastcipherset,
-		      ft_session->connected_akm);
+		      crypto_params->rsn_caps);
 }
 
 /**
@@ -2117,7 +2110,6 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	QDF_STATUS status;
 	uint8_t *ie = NULL;
 	struct qdf_mac_addr bssid;
-	struct cm_roam_values_copy mdie_cfg = {0};
 
 	bcn_proberesp_ptr = (uint8_t *)roam_synch_ind_ptr +
 		roam_synch_ind_ptr->beaconProbeRespOffset;
@@ -2202,9 +2194,11 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		bss_desc_ptr->chan_freq = roam_synch_ind_ptr->chan_freq;
 	}
 
-	bss_desc_ptr->nwType = lim_get_nw_type(mac, bss_desc_ptr->chan_freq,
-					       SIR_MAC_MGMT_FRAME,
-					       parsed_frm_ptr);
+	bss_desc_ptr->nwType = lim_get_nw_type(
+			mac,
+			bss_desc_ptr->chan_freq,
+			SIR_MAC_MGMT_FRAME,
+			parsed_frm_ptr);
 
 	bss_desc_ptr->sinr = 0;
 	bss_desc_ptr->beaconInterval = parsed_frm_ptr->beaconInterval;
@@ -2228,17 +2222,10 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		qdf_mem_copy((uint8_t *)bss_desc_ptr->mdie,
 				(uint8_t *)parsed_frm_ptr->mdie,
 				SIR_MDIE_SIZE);
-		mdie_cfg.bool_value = true;
-		mdie_cfg.uint_value =
-			(bss_desc_ptr->mdie[1] << 8) | (bss_desc_ptr->mdie[0]);
-
-		wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
-					   MOBILITY_DOMAIN, &mdie_cfg);
 	}
-	pe_debug("chan: %d rssi: %d ie_len %d mdie_present:%d mdie = %02x %02x %02x",
+	pe_debug("chan: %d rssi: %d ie_len %d",
 		 bss_desc_ptr->chan_freq,
-		 bss_desc_ptr->rssi, ie_len, bss_desc_ptr->mdiePresent,
-		 bss_desc_ptr->mdie[0], bss_desc_ptr->mdie[1], bss_desc_ptr->mdie[2]);
+		 bss_desc_ptr->rssi, ie_len);
 
 	qdf_mem_free(parsed_frm_ptr);
 	if (ie_len) {
@@ -2713,10 +2700,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	qdf_mem_copy(roam_sync_ind_ptr->ssid.ssid, ft_session_ptr->ssId.ssId,
 		     roam_sync_ind_ptr->ssid.length);
 	pe_update_crypto_params(mac_ctx, ft_session_ptr, roam_sync_ind_ptr);
-
-	/* Reset the SPMK global cache */
-	wlan_mlme_set_sae_single_pmk_bss_cap(mac_ctx->psoc, vdev_id, false);
-
 	/* Next routine may update nss based on dot11Mode */
 
 	lim_ft_prepare_add_bss_req(mac_ctx, ft_session_ptr, bss_desc);

@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -683,10 +682,10 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 				(*(msg_word + 1));
 
 			peer = ol_txrx_peer_find_by_id(pdev->txrx_pdev,
-						       peer_id);
+				 peer_id);
 			if (!peer) {
 				qdf_print("invalid peer id %d", peer_id);
-					  qdf_assert(0);
+				qdf_assert(0);
 				break;
 			}
 			vdev = peer->vdev;
@@ -703,11 +702,10 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		default:
 		{
 			qdf_print("unhandled error type %d",
-				  HTT_RX_OFLD_PKT_ERR_MSG_SUB_TYPE_GET(*msg_word));
-			break;
-		}
-		}
+			    HTT_RX_OFLD_PKT_ERR_MSG_SUB_TYPE_GET(*msg_word));
 		break;
+		}
+		}
 	}
 #ifdef WLAN_CFR_ENABLE
 	case HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND:
@@ -1092,7 +1090,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 					(QDF_NBUF_CB_PADDR(_buf)),	\
 					(skb_end_pointer(_buf) -	\
 					(_buf)->data),			\
-					DMA_FROM_DEVICE);		\
+					PCI_DMA_FROMDEVICE);		\
 	} while (0)
 
 /**

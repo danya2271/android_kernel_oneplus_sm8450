@@ -150,6 +150,8 @@ void wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 			uint16_t peer_id, void *mac_addr,
 			void *peer_obj, uint32_t arg1, uint32_t arg2)
 {
+	wlan_rec_debug_log(REC_ROAM, vdev_id, op, peer_id, mac_addr,
+			   peer_obj, arg1, arg2);
 }
 
 qdf_export_symbol(wlan_roam_debug_log);

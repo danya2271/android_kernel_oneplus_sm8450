@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,11 +60,6 @@
 #define SA_QUERY_RESP_MIN_LEN \
 (DOT11F_FF_CATEGORY_LEN + DOT11F_FF_ACTION_LEN + DOT11F_FF_TRANSACTIONID_LEN)
 #define SA_QUERY_IE_OFFSET (4)
-
-#define MIN_OCI_IE_LEN 6
-#define OCI_IE_OUI_SIZE 1
-#define OCI_IE_OP_CLS_OFFSET 3
-#define ELE_ID_EXT_LEN 1
 
 static last_processed_msg rrm_link_action_frm;
 
@@ -1222,19 +1217,13 @@ static bool
 lim_check_oci_match(struct mac_context *mac, struct pe_session *pe_session,
 		    uint8_t *ie, uint8_t *peer, uint32_t ie_len)
 {
-	const uint8_t *oci_ie, ext_id_param = WLAN_EXTN_ELEMID_OCI;
-	tDot11fIEoci self_oci, peer_oci = {0};
-	uint32_t status = DOT11F_PARSE_SUCCESS;
+	const uint8_t *oci_ie;
+	tDot11fIEoci self_oci, *peer_oci;
 
 	if (!lim_is_self_and_peer_ocv_capable(mac, peer, pe_session))
 		return true;
 
-	if (ie_len < MIN_OCI_IE_LEN)
-		return false;
-
-	oci_ie = wlan_get_ext_ie_ptr_from_ext_id(&ext_id_param,
-						 OCI_IE_OUI_SIZE,
-						 ie, ie_len);
+	oci_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_OCI, ie, ie_len);
 	if (!oci_ie) {
 		pe_err("OCV not found OCI in SA Query frame!");
 		return false;
@@ -1248,25 +1237,19 @@ lim_check_oci_match(struct mac_context *mac, struct pe_session *pe_session,
 	 * Primary channel      : 1 byte
 	 * Freq_seg_1_ch_num    : 1 byte
 	 */
-	status = dot11f_unpack_ie_oci(mac,
-				      (uint8_t *)&oci_ie[OCI_IE_OP_CLS_OFFSET],
-				      oci_ie[SIR_MAC_IE_LEN_OFFSET] -
-				      ELE_ID_EXT_LEN,
-				      &peer_oci, false);
-	if (!DOT11F_SUCCEEDED(status) || !peer_oci.present)
-		return false;
+	peer_oci = (tDot11fIEoci *)&oci_ie[2];
 	lim_fill_oci_params(mac, pe_session, &self_oci);
 
-	if ((self_oci.op_class != peer_oci.op_class) ||
-	    (self_oci.prim_ch_num != peer_oci.prim_ch_num) ||
-	    (self_oci.freq_seg_1_ch_num != peer_oci.freq_seg_1_ch_num)) {
+	if ((self_oci.op_class != peer_oci->op_class) ||
+	    (self_oci.prim_ch_num != peer_oci->prim_ch_num) ||
+	    (self_oci.freq_seg_1_ch_num != peer_oci->freq_seg_1_ch_num)) {
 		pe_err("OCI mismatch,self %d %d %d, peer %d %d %d",
 		       self_oci.op_class,
 		       self_oci.prim_ch_num,
 		       self_oci.freq_seg_1_ch_num,
-		       peer_oci.op_class,
-		       peer_oci.prim_ch_num,
-		       peer_oci.freq_seg_1_ch_num);
+		       peer_oci->op_class,
+		       peer_oci->prim_ch_num,
+		       peer_oci->freq_seg_1_ch_num);
 		return false;
 	}
 
@@ -1612,7 +1595,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			session,
 			addba_req->addba_extn_element.present,
 			addba_req->addba_param_set.amsdu_supp,
-			mac_hdr->fc.wep, buff_size, mac_hdr->bssId);
+			mac_hdr->fc.wep, buff_size);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
 			pe_err("Failed to send addba response frame");
 			cdp_addba_resp_tx_completion(
@@ -1846,7 +1829,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 				pe_debug("p2p session active drop BTM frame");
 				break;
 			}
-			fallthrough;
+			/* fallthrough */
 		case WNM_NOTIF_REQUEST:
 		case WNM_NOTIF_RESPONSE:
 			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
@@ -1989,7 +1972,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 				break;
 			}
 			/* send the frame to supplicant */
-			fallthrough;
+			/* fallthrough */
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		case SIR_MAC_PROT_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		case SIR_MAC_ACTION_2040_BSS_COEXISTENCE:
@@ -2184,7 +2167,7 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 					vendor_specific->Oui[3]);
 				break;
 			}
-			fallthrough;
+			/* fallthrough */
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
 		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
 		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:
@@ -2202,8 +2185,8 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 					RXMGMT_FLAG_NONE);
 			break;
 		default:
-			pe_info_rl("Unhandled public action frame: %x",
-				   action_hdr->actionID);
+			pe_warn("Unhandled public action frame: %x",
+				       action_hdr->actionID);
 			break;
 		}
 		break;

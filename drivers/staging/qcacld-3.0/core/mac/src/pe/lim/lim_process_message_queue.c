@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,11 @@
 #include "../../core/src/vdev_mgr_ops.h"
 #include "wlan_p2p_cfg_api.h"
 
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+//Add for softap connect SAE status
+#include <wlan_hdd_hostapd.h>
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
+
 void lim_log_session_states(struct mac_context *mac);
 static void lim_process_normal_hdd_msg(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg, uint8_t rsp_reqd);
@@ -92,6 +97,8 @@ static void lim_process_sae_msg_sta(struct mac_context *mac,
 							eLIM_AUTH_SAE_TIMER);
 		lim_sae_auth_cleanup_retry(mac, session->vdev_id);
 		/* success */
+		#ifndef OPLUS_BUG_STABILITY
+		//deliver status code 33 from wlan driver to supplicant when SAE connection is refused
 		if (sae_msg->sae_status == IEEE80211_STATUS_SUCCESS)
 			lim_restore_from_auth_state(mac,
 						    eSIR_SME_SUCCESS,
@@ -101,6 +108,22 @@ static void lim_process_sae_msg_sta(struct mac_context *mac,
 			lim_restore_from_auth_state(mac, sae_msg->result_code,
 						    sae_msg->sae_status,
 						    session);
+		#else /* OPLUS_BUG_STABILITY */
+		if (sae_msg->sae_status == IEEE80211_STATUS_SUCCESS) {
+			lim_restore_from_auth_state(mac,
+						    eSIR_SME_SUCCESS,
+						    STATUS_SUCCESS,
+						    session);
+		} else if (sae_msg->sae_status == STATUS_DENIED_INSUFFICIENT_BANDWIDTH) {
+			lim_restore_from_auth_state(mac, sae_msg->result_code,
+						    STATUS_DENIED_INSUFFICIENT_BANDWIDTH,
+						    session);
+		} else {
+			lim_restore_from_auth_state(mac, sae_msg->result_code,
+						    STATUS_UNSPECIFIED_FAILURE,
+						    session);
+		}
+		#endif /* OPLUS_BUG_STABILITY */
 		break;
 	default:
 		/* SAE msg is received in unexpected state */
@@ -146,6 +169,11 @@ static void lim_process_sae_msg_ap(struct mac_context *mac,
 			 QDF_MAC_ADDR_FMT " status: %u",
 			 QDF_MAC_ADDR_REF(sae_msg->peer_mac_addr),
 			 sae_msg->sae_status);
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+		//Add for softap connect fail monitor
+		hostapd_send_sae_uevent(sae_msg);
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
+
 		if (assoc_req->present) {
 			pe_debug("Assoc req cached; clean it up");
 			lim_process_assoc_cleanup(mac, session,
@@ -230,6 +258,36 @@ void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *body)
 		pe_debug("SAE message on unsupported interface");
 }
 #endif
+
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+//Add for softap connect SAE status
+void hostapd_send_sae_uevent(struct sir_sae_msg *sae_msg)
+{
+	char event[] = "HOSTAPD_EVENT=sta_connect";
+	char sta_connect_event[30] = {'\0'};
+	char sae_status[30] = {'\0'};
+	char peer_addr[30] = {'\0'};
+	char result_code[30] = {'\0'};
+	char *envp[6];
+
+	snprintf(sta_connect_event, sizeof(sta_connect_event), "STA_CONNECT_EVENT=preauth");
+
+	if (sae_msg) {
+		snprintf(sae_status, sizeof(sae_status), "SAESTATUS=%d", sae_msg->sae_status);
+		snprintf(peer_addr, sizeof(peer_addr), "PEERADDR=" QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(sae_msg->peer_mac_addr));
+		snprintf(result_code, sizeof(result_code), "PREAUTHFAILCODE=%d", sae_msg->result_code);
+	}
+
+	envp[0] = (char *)&event;
+	envp[1] = (char *)&sta_connect_event;
+	envp[2] = (char *)&sae_status;
+	envp[3] = (char *)&peer_addr;
+	envp[4] = (char *)&result_code;
+	envp[5] = NULL;
+
+	hostapdConnSendUevent(envp);
+}
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
 
 /**
  * lim_process_dual_mac_cfg_resp() - Process set dual mac config response
@@ -1756,6 +1814,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 #endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
+		/* fall through */
 	case eWNI_SME_SET_ADDBA_ACCEPT:
 	case eWNI_SME_UPDATE_EDCA_PROFILE:
 	case WNI_SME_UPDATE_MU_EDCA_PARAMS:

@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -251,7 +250,8 @@ void csr_apply_power2_current(struct mac_context *mac)
 }
 
 void csr_apply_channel_power_info_to_fw(struct mac_context *mac_ctx,
-					struct csr_channel *ch_lst)
+					struct csr_channel *ch_lst,
+					uint8_t *countryCode)
 {
 	int i;
 	uint8_t num_ch = 0;
@@ -282,7 +282,6 @@ static void csr_diag_reset_country_information(struct mac_context *mac)
 
 	host_log_802_11d_pkt_type *p11dLog;
 	int Index;
-	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	WLAN_HOST_DIAG_LOG_ALLOC(p11dLog, host_log_802_11d_pkt_type,
 				 LOG_WLAN_80211D_C);
@@ -290,8 +289,7 @@ static void csr_diag_reset_country_information(struct mac_context *mac)
 		return;
 
 	p11dLog->eventId = WLAN_80211D_EVENT_RESET;
-	wlan_reg_read_current_country(mac->psoc, reg_cc);
-	qdf_mem_copy(p11dLog->countryCode, reg_cc, 3);
+	qdf_mem_copy(p11dLog->countryCode, mac->scan.countryCodeCurrent, 3);
 	p11dLog->numChannel = mac->scan.base_channels.numChannels;
 	if (p11dLog->numChannel <= HOST_LOG_MAX_NUM_CHANNEL) {
 		for (Index = 0;
@@ -326,7 +324,8 @@ void csr_apply_channel_power_info_wrapper(struct mac_context *mac)
 	csr_save_channel_power_for_band(mac, false);
 	csr_save_channel_power_for_band(mac, true);
 	/* apply the channel list, power settings, and the country code. */
-	csr_apply_channel_power_info_to_fw(mac, &mac->scan.base_channels);
+	csr_apply_channel_power_info_to_fw(mac,
+		&mac->scan.base_channels, mac->scan.countryCodeCurrent);
 	/* clear the 11d channel list */
 	qdf_mem_zero(&mac->scan.channels11d, sizeof(mac->scan.channels11d));
 }
