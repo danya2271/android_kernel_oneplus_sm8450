@@ -390,9 +390,6 @@ void hdd_medium_assess_stop_timer(uint8_t pdev_id, struct hdd_context *hdd_ctx)
 		interval += medium_assess_info[i].config.interval;
 
 	if (!interval) {
-		ucfg_mc_cp_stats_reset_pending_req(hdd_ctx->psoc,
-						   TYPE_CONGESTION_STATS,
-						   &info, &pending);
 		qdf_mc_timer_stop(&hdd_medium_assess_timer);
 		hdd_debug("medium assess atimer stop");
 	}

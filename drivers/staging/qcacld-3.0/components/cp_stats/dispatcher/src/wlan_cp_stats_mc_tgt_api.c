@@ -177,10 +177,6 @@ static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
 		goto end;
 
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_CONNECTION_TX_POWER)) {
-		ucfg_mc_cp_stats_reset_pending_req(psoc,
-						   TYPE_CONNECTION_TX_POWER,
-						   &last_req,
-						   &pending);
 		if (last_req.u.get_tx_power_cb && pending)
 			last_req.u.get_tx_power_cb(max_pwr, last_req.cookie);
 	}
@@ -599,8 +595,6 @@ complete:
 
 	tgt_mc_cp_stats_extract_peer_extd_stats(psoc, ev);
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_PEER_STATS)) {
-		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS,
-						   &last_req, &pending);
 		if (pending && last_req.u.get_peer_rssi_cb)
 			tgt_mc_cp_stats_prepare_raw_peer_rssi(psoc, &last_req);
 	}
@@ -628,8 +622,6 @@ static void tgt_mc_cp_stats_extract_mib_stats(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_MIB_STATS)) {
-		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_MIB_STATS,
-						   &last_req, &pending);
 		if (last_req.u.get_mib_stats_cb && pending)
 			last_req.u.get_mib_stats_cb(ev, last_req.cookie);
 	}
@@ -662,8 +654,6 @@ tgt_mc_cp_stats_extract_peer_stats_info_ext(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS_INFO_EXT,
-					   &last_req, &pending);
 	if (last_req.u.get_peer_stats_cb && pending) {
 		last_req.u.get_peer_stats_cb(ev, last_req.cookie);
 		last_req.u.get_peer_stats_cb = NULL;
@@ -1092,9 +1082,6 @@ static void tgt_mc_cp_stats_extract_station_stats(
 	 * reset type_map bit for station stats .
 	 */
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_STATION_STATS)) {
-		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_STATION_STATS,
-						   &last_req,
-						   &pending);
 		if (pending && last_req.u.get_station_stats_cb)
 			tgt_mc_cp_stats_prepare_n_send_raw_station_stats(
 							psoc, &last_req);
@@ -1173,9 +1160,6 @@ tgt_mc_cp_stats_process_big_data_stats_event(struct wlan_objmgr_psoc *psoc,
 		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_BIG_DATA_STATS,
-					   &last_req, &pending);
 
 	if (last_req.u.get_big_data_stats_cb && pending) {
 		last_req.u.get_big_data_stats_cb(ev, last_req.cookie);
