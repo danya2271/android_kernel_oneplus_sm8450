@@ -124,10 +124,7 @@ static int cnss_pci_set_link_down(struct cnss_pci_data *pci_priv)
 	u32 pm_options = PM_OPTIONS_DEFAULT;
 	int ret;
 
-	if (pci_priv->drv_connected_last) {
-		cnss_pr_vdbg("Use PCIe DRV suspend\n");
-		pm_ops = MSM_PCIE_DRV_SUSPEND;
-	} else {
+	if (!pci_priv->drv_connected_last) {
 		pm_ops = MSM_PCIE_SUSPEND;
 	}
 

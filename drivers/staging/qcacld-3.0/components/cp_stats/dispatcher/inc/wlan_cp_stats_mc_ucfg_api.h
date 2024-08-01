@@ -124,19 +124,6 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 						uint32_t reason);
 
 /**
- * ucfg_mc_cp_stats_write_wow_stats() - Writes WOW stats to buffer
- * @psoc: pointer to psoc object
- * @buffer: The char buffer to write to
- * @max_len: The maximum number of chars to write
- * @ret: number of bytes written
- *
- * Return: status of operation
- */
-QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
-				struct wlan_objmgr_psoc *psoc,
-				char *buffer, uint16_t max_len, int *ret);
-
-/**
  * ucfg_mc_cp_stats_send_tx_power_request() - API to send tx_power request to
  * lmac
  * @vdev: pointer to vdev object
@@ -207,21 +194,6 @@ bool ucfg_mc_cp_stats_is_req_pending(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
 					    enum stats_req_type type,
 					    struct request_info *req);
-/**
- * ucfg_mc_cp_stats_reset_pending_req() - API to reset pending request
- * @psoc: pointer to psoc object
- * @type: request to update
- * @last_req: last request
- * @pending: pending request present
- *
- * The function is an atomic operation of "reset" and "get" last request.
- *
- * Return: status of operation
- */
-QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
-					      enum stats_req_type type,
-					      struct request_info *last_req,
-					      bool *pending);
 
 /**
  * ucfg_mc_cp_stats_get_pending_req() - API to get pending request
