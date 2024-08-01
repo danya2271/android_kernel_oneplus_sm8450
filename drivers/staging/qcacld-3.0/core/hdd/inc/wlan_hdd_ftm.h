@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +35,7 @@ struct hdd_context;
 
 #if  defined(QCA_WIFI_FTM)
 int wlan_hdd_qcmbr_unified_ioctl(struct hdd_adapter *adapter,
-				 void __user *data);
+				 struct ifreq *ifr);
 int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx);
 #else
 static inline int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx)

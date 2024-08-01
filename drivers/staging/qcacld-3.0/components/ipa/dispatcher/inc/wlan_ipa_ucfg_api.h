@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -588,7 +587,7 @@ QDF_STATUS ucfg_ipa_wlan_evt(struct wlan_objmgr_pdev *pdev,
 			     qdf_netdev_t net_dev, uint8_t device_mode,
 			     uint8_t session_id,
 			     enum wlan_ipa_wlan_event ipa_event_type,
-			     const uint8_t *mac_addr, bool is_2g_iface)
+			     uint8_t *mac_addr, bool is_2g_iface)
 {
 	return QDF_STATUS_SUCCESS;
 }

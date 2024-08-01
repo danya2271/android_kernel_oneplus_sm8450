@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1076,14 +1076,11 @@ int ucfg_pmo_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_pmo_psoc_target_suspend_acknowledge() - Clear initial wake up status
- * @context: caller-provided context
- * @wow_nack: Was WoW NACK'ed
- * @reason_code: WoW status reason code
+ * @psoc: objmgr psoc handle
  *
  * Return: None
  */
-void ucfg_pmo_psoc_target_suspend_acknowledge(void *context, bool wow_nack,
-					      uint16_t reason_code);
+void ucfg_pmo_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
 
 /**
  * ucfg_pmo_psoc_wakeup_host_event_received() - got host wake up evennt from fwr
@@ -1360,14 +1357,6 @@ bool ucfg_pmo_get_moddtim_user_active(struct wlan_objmgr_vdev *vdev);
  * Return: moddtim user value
  */
 uint32_t ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev);
-
-/*
- * ucfg_pmo_get_ssr_frequency_on_pagefault: get ssr frequency on pagefault
- * @psoc: objmgr psoc
- *
- * Return: SSR frequency on pagefault
- */
-uint32_t ucfg_pmo_get_ssr_frequency_on_pagefault(struct wlan_objmgr_psoc *psoc);
 
 /*
  * ucfg_pmo_get_disconnect_sap_tdls_in_wow: get if disconnect sap/p2p_go
@@ -1884,8 +1873,7 @@ ucfg_pmo_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc)
 }
 
 static inline void
-ucfg_pmo_psoc_target_suspend_acknowledge(void *context, bool wow_nack,
-					 uint16_t reason_code)
+ucfg_pmo_psoc_target_suspend_acknowledge(void *context, bool wow_nack)
 {
 }
 
@@ -2115,12 +2103,6 @@ ucfg_pmo_get_moddtim_user_active(struct wlan_objmgr_vdev *vdev)
 
 static inline uint32_t
 ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev)
-{
-	return 0;
-}
-
-static inline uint32_t
-ucfg_pmo_get_ssr_frequency_on_pagefault(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }

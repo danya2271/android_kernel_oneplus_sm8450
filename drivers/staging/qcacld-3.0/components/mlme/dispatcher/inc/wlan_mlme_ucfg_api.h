@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2492,26 +2492,6 @@ ucfg_mlme_get_vht_tx_mcs_2x2(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 }
 
 /**
- * ucfg_mlme_peer_get_assoc_rsp_ies() - Get assoc response sent to peer
- * @peer: WLAN peer objmgr
- * @ie_buf: Pointer to IE buffer
- * @ie_len: Length of the IE buffer
- *
- * This API is used to get the assoc response sent to peer
- * as part of association.
- * Caller to hold reference for peer.
- *
- * Return: QDF_STATUS
- */
-static inline QDF_STATUS
-ucfg_mlme_peer_get_assoc_rsp_ies(struct wlan_objmgr_peer *peer,
-				 const uint8_t **ie_buf,
-				 size_t *ie_len)
-{
-	return wlan_mlme_peer_get_assoc_rsp_ies(peer, ie_buf, ie_len);
-}
-
-/**
  * ucfg_mlme_get_ini_vdev_config() - get the ini capability of vdev
  * @vdev: pointer to the vdev obj
  *
@@ -2817,25 +2797,8 @@ ucfg_mlme_set_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool value)
 }
 
 /**
- * ucfg_mlme_is_standard_6ghz_conn_policy_enabled() - Get 6ghz standard
- *                                                    connection policy flag
- * @psoc: pointer to psoc object
- * @value: pointer to hold the value of flag
- *
- * Inline UCFG API to be used by HDD/OSIF callers
- *
- * Return: QDF Status
- */
-static inline QDF_STATUS
-ucfg_mlme_is_standard_6ghz_conn_policy_enabled(struct wlan_objmgr_psoc *psoc,
-					       bool *value)
-{
-	return wlan_mlme_is_standard_6ghz_conn_policy_enabled(psoc, value);
-}
-
-/**
  * ucfg_mlme_get_opr_rate() - Get operational rate set
- * @vdev: pointer to vdev object
+ * @psoc: pointer to vdev object
  * @buf: buffer to get rates set
  * @len: length of the buffer
  *

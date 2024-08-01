@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -575,26 +575,21 @@ sch_bcn_process_sta_opmode(struct mac_context *mac_ctx,
  * from beacon
  * @bcn: beacon structure
  * @local_constraint: local constraint pointer
- * @is_power_constraint_abs: is power constraint absolute
  *
  * Return: None
  */
 #ifdef FEATURE_WLAN_ESE
 static void get_local_power_constraint_beacon(
 		tpSchBeaconStruct bcn,
-		int8_t *local_constraint,
-		bool *is_power_constraint_abs)
+		int8_t *local_constraint)
 {
-	if (bcn->eseTxPwr.present) {
+	if (bcn->eseTxPwr.present)
 		*local_constraint = bcn->eseTxPwr.power_limit;
-		*is_power_constraint_abs = true;
-	}
 }
 #else
 static void get_local_power_constraint_beacon(
 		tpSchBeaconStruct bcn,
-		int8_t *local_constraint,
-		bool *is_power_constraint_abs)
+		int8_t *local_constraint)
 {
 
 }
@@ -616,8 +611,9 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	int8_t regMax = 0, maxTxPower = 0;
 	QDF_STATUS status;
 	bool skip_tpe = false;
-	enum reg_6g_ap_type pwr_type_6g;
-	bool is_power_constraint_abs = false;
+	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
+	enum reg_6g_ap_type pwr_type_6g = REG_INDOOR_AP;
+	bool ctry_code_match = false;
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
@@ -656,29 +652,15 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 			pe_err("Channel is 6G but country IE not present");
 			return;
 		}
-		if (bcn->he_op.oper_info_6g_present) {
-			session->ap_defined_power_type_6g =
-				bcn->he_op.oper_info_6g.info.reg_info;
-			if (session->ap_defined_power_type_6g < REG_INDOOR_AP ||
-			    session->ap_defined_power_type_6g >
-			    REG_MAX_SUPP_AP_TYPE) {
-				session->ap_defined_power_type_6g =
-							REG_VERY_LOW_POWER_AP;
-				pe_debug("AP power type is invalid, defaulting to VLP");
-			}
-		} else {
-			pe_debug("AP power type is null, defaulting to VLP");
-			session->ap_defined_power_type_6g =
-						REG_VERY_LOW_POWER_AP;
-		}
-
-		status = wlan_reg_get_best_6g_power_type(
-				mac_ctx->psoc, mac_ctx->pdev, &pwr_type_6g,
-				session->ap_defined_power_type_6g,
-				bcn->chan_freq);
+		wlan_reg_read_current_country(mac_ctx->psoc,
+					      programmed_country);
+		status = wlan_reg_get_6g_power_type_for_ctry(
+				mac_ctx->psoc,
+				bcn->countryInfoParam.countryString,
+				programmed_country, &pwr_type_6g,
+				&ctry_code_match, REG_MAX_AP_TYPE);
 		if (QDF_IS_STATUS_ERROR(status))
 			return;
-		session->best_6g_power_type = pwr_type_6g;
 	}
 
 	/*
@@ -695,16 +677,13 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 				 &tpe_change);
 
 		if (mac_ctx->mlme_cfg->sta.allow_tpc_from_ap) {
-			get_local_power_constraint_beacon(
-						bcn, &local_constraint,
-						&is_power_constraint_abs);
+			get_local_power_constraint_beacon(bcn,
+							  &local_constraint);
 
 			if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
-			    bcn->powerConstraintPresent) {
+			    bcn->powerConstraintPresent)
 				local_constraint =
 				bcn->localPowerConstraint.localPowerConstraints;
-				is_power_constraint_abs = false;
-			}
 		}
 
 		if (local_constraint !=
@@ -712,13 +691,12 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 			mlme_obj->reg_tpc_obj.ap_constraint_power =
 							local_constraint;
 			ap_constraint_change = true;
-			mlme_obj->reg_tpc_obj.is_power_constraint_abs =
-							is_power_constraint_abs;
 		}
 
 		if ((ap_constraint_change && local_constraint) ||
 		    (tpe_change && !skip_tpe)) {
-			lim_calculate_tpc(mac_ctx, session);
+			lim_calculate_tpc(mac_ctx, session, false, pwr_type_6g,
+					  ctry_code_match);
 
 			if (tx_ops->set_tpc_power)
 				tx_ops->set_tpc_power(mac_ctx->psoc,
@@ -732,21 +710,16 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 		local_constraint = regMax;
 
 		if (mac_ctx->mlme_cfg->sta.allow_tpc_from_ap) {
-			get_local_power_constraint_beacon(
-						bcn, &local_constraint,
-						&is_power_constraint_abs);
+			get_local_power_constraint_beacon(bcn,
+							  &local_constraint);
 
 			if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 			    bcn->powerConstraintPresent) {
 				local_constraint = regMax;
 				local_constraint -=
 				bcn->localPowerConstraint.localPowerConstraints;
-				is_power_constraint_abs = false;
-
 			}
 		}
-		mlme_obj->reg_tpc_obj.is_power_constraint_abs =
-						is_power_constraint_abs;
 		mlme_obj->reg_tpc_obj.reg_max[0] = regMax;
 		mlme_obj->reg_tpc_obj.ap_constraint_power = local_constraint;
 		mlme_obj->reg_tpc_obj.frequency[0] = session->curr_op_freq;

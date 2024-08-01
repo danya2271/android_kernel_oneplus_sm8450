@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -224,7 +223,6 @@ enum pmo_wow_state {
  * @target_suspend: target suspend event
  * @target_resume: target resume event
  * @wow_nack: wow negative ack flag
- * @reason_code : wow status reason code
  * @wow_initial_wake_up: target initial wake up is received
  * @wow_wake_lock: wow wake lock
  * @lphb_cache: lphb cache
@@ -246,8 +244,7 @@ struct pmo_wow {
 	enum pmo_wow_state wow_state;
 	qdf_event_t target_suspend;
 	qdf_event_t target_resume;
-	bool wow_nack;
-	uint16_t reason_code;
+	int wow_nack;
 	atomic_t wow_initial_wake_up;
 	qdf_wake_lock_t wow_wake_lock;
 	/*

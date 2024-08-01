@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -322,30 +322,10 @@ static u32 hdd_to_nl_sar_version(enum sar_version hdd_sar_version)
 		return QCA_WLAN_VENDOR_SAR_VERSION_1;
 	case (SAR_VERSION_2):
 		return QCA_WLAN_VENDOR_SAR_VERSION_2;
+	case (SAR_VERSION_3):
+		return QCA_WLAN_VENDOR_SAR_VERSION_3;
 	default:
 		return QCA_WLAN_VENDOR_SAR_VERSION_INVALID;
-	}
-}
-
-/**
- * hdd_convert_sar_flag - Convert SAR flags enum from hdd to nl
- * @hdd_sar_flag: Current SAR flag stored in hdd_ctx
- *
- * This function is used to convert SAR flag enum stored in hdd_ctx to
- * nl
- *
- * Return: NL SAR flag
- */
-static enum qca_wlan_vendor_sar_ctl_group_state
-hdd_convert_sar_flag(enum sar_flag hdd_sar_flag)
-{
-	switch (hdd_sar_flag) {
-	case  SAR_SET_CTL_GROUPING_DISABLE:
-		return QCA_WLAN_VENDOR_SAR_CTL_GROUP_STATE_DISABLED;
-	case SAR_DBS_WITH_BT_DISABLE:
-		return QCA_WLAN_VENDOR_SAR_CTL_GROUP_STATE_ENABLED;
-	default:
-		return QCA_WLAN_VENDOR_SAR_CTL_GROUP_STATE_INVALID;
 	}
 }
 
@@ -367,14 +347,10 @@ static int hdd_sar_fill_capability_response(struct sk_buff *skb,
 
 	attr = QCA_WLAN_VENDOR_ATTR_SAR_CAPABILITY_VERSION;
 	value = hdd_to_nl_sar_version(hdd_ctx->sar_version);
-	errno = nla_put_u32(skb, attr, value);
-	if (errno)
-		return errno;
 
-	attr = QCA_WLAN_VENDOR_ATTR_SAR_CAPABILITY_CTL_GROUP_STATE;
-	value = hdd_convert_sar_flag(hdd_ctx->sar_flag);
+	hdd_debug("SAR Version = %u", value);
+
 	errno = nla_put_u32(skb, attr, value);
-	hdd_debug("Sending SAR Flag = %u to userspace", hdd_ctx->sar_flag);
 
 	return errno;
 }
@@ -396,9 +372,7 @@ static int hdd_sar_send_capability_response(struct wiphy *wiphy,
 	len = NLMSG_HDRLEN;
 
 	/* QCA_WLAN_VENDOR_ATTR_SAR_CAPABILITY_VERSION */
-	len += nla_total_size(sizeof(u32));
-	/* QCA_WLAN_VENDOR_ATTR_SAR_CAPABILITY_CTL_GROUP_STATE */
-	len += nla_total_size(sizeof(u32));
+	len += NLA_HDRLEN + sizeof(u32);
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len);
 	if (!skb) {
@@ -1260,11 +1234,10 @@ void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_SUCCESS(status))
 		hdd_nofl_debug("sar safety timer started");
 
-	qdf_event_set(&hdd_ctx->sar_safety_req_resp_event);
-
 	qdf_delayed_work_stop_sync(&hdd_ctx->sar_safety_unsolicited_work);
 	hdd_nofl_debug("sar safety unsolicited work stopped");
 
+	qdf_event_set(&hdd_ctx->sar_safety_req_resp_event);
 }
 
 void wlan_hdd_sar_timers_init(struct hdd_context *hdd_ctx)

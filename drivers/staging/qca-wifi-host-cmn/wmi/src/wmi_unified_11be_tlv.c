@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -387,15 +387,12 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	case WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM:
 	case WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM:
 		num_link_num_param = param->num_link_entry;
-		fallthrough;
+		/* fallthrough */
 	case WMI_MLO_LINK_FORCE_ACTIVE:
 	case WMI_MLO_LINK_FORCE_INACTIVE:
 	case WMI_MLO_LINK_NO_FORCE:
 		num_vdev_bitmap = param->num_vdev_bitmap;
 		break;
-	default:
-		wmi_err("Invalid force reason: %d", force_mode);
-		return QDF_STATUS_E_INVAL;
 	}
 
 	len = sizeof(*cmd) +
@@ -631,10 +628,10 @@ QDF_STATUS mlo_teardown_cmd_send_tlv(struct wmi_unified *wmi_handle,
 								wmi_handle,
 								param->pdev_id);
 	switch (param->reason) {
-	case WMI_HOST_MLO_TEARDOWN_REASON_SSR:
+	case WMI_MLO_TEARDOWN_REASON_SSR:
 		cmd->reason_code = WMI_MLO_TEARDOWN_SSR_REASON;
 		break;
-	case WMI_HOST_MLO_TEARDOWN_REASON_DOWN:
+	case WMI_MLO_TEARDOWN_REASON_DOWN:
 	default:
 		cmd->reason_code = WMI_MLO_TEARDOWN_SSR_REASON + 1;
 		break;
@@ -670,9 +667,9 @@ extract_mlo_setup_cmpl_event_tlv(struct wmi_unified *wmi_handle,
 								wmi_handle,
 								ev->pdev_id);
 	if (!ev->status)
-		params->status = WMI_HOST_MLO_SETUP_STATUS_SUCCESS;
+		params->status = WMI_MLO_SETUP_STATUS_SUCCESS;
 	else
-		params->status = WMI_HOST_MLO_SETUP_STATUS_FAILURE;
+		params->status = WMI_MLO_SETUP_STATUS_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -696,9 +693,9 @@ extract_mlo_teardown_cmpl_event_tlv(struct wmi_unified *wmi_handle,
 								wmi_handle,
 								ev->pdev_id);
 	if (!ev->status)
-		params->status = WMI_HOST_MLO_TEARDOWN_STATUS_SUCCESS;
+		params->status = WMI_MLO_TEARDOWN_STATUS_SUCCESS;
 	else
-		params->status = WMI_HOST_MLO_TEARDOWN_STATUS_FAILURE;
+		params->status = WMI_MLO_TEARDOWN_STATUS_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
 }

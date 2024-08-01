@@ -473,6 +473,10 @@ QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 	if (!rso_cfg)
 		return QDF_STATUS_E_NULL_VALUE;
 
+	wlan_roam_debug_log(sync_ind->roamed_vdev_id, DEBUG_ROAM_SYNCH_IND,
+			    DEBUG_INVALID_PEER_ID, sync_ind->bssid.bytes, NULL,
+			    0,
+			    0);
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
 					  sync_ind->roamed_vdev_id,
 					  QDF_TRACE_DEFAULT_PDEV_ID,

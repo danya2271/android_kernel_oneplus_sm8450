@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2014, 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,14 +34,6 @@
 #include "hif_debug.h"
 #include "pld_common.h"
 #include "target_type.h"
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0))
-/*
- * Commit 359745d78351 ("proc: remove PDE_DATA() completely")
- * Replaced PDE_DATA() with pde_data()
- */
-#define pde_data(inode) PDE_DATA(inode)
-#endif
 
 #define PROCFS_NAME             "athdiagpfs"
 #ifdef MULTI_IF_NAME
@@ -80,7 +72,7 @@ static void *get_hif_hdl_from_file(struct file *file)
 {
 	struct hif_opaque_softc *scn;
 
-	scn = (struct hif_opaque_softc *)pde_data(file_inode(file));
+	scn = (struct hif_opaque_softc *)PDE_DATA(file_inode(file));
 	return (void *)scn;
 }
 
@@ -485,8 +477,8 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	if (offset & 0x3)
 		return -EINVAL;
 
-	hif_debug("rd cnt %zu offset 0x%x op_type %d type %d pos %llx",
-		  count, offset, op_type, memtype, *pos);
+	hif_info("rd cnt %zu offset 0x%x op_type %d type %d pos %llx",
+		 count, offset, op_type, memtype, *pos);
 
 	switch (op_type) {
 	case OP_TYPE_LEGACY:
@@ -527,8 +519,8 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	if (offset & 0x3)
 		return -EINVAL;
 
-	hif_debug("wr cnt %zu offset 0x%x op_type %d mem_type %d",
-		  count, offset, op_type, memtype);
+	hif_info("wr cnt %zu offset 0x%x op_type %d mem_type %d",
+		 count, offset, op_type, memtype);
 
 	switch (op_type) {
 	case OP_TYPE_LEGACY:
@@ -551,7 +543,6 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 static const struct proc_ops athdiag_fops = {
 	.proc_read = ath_procfs_diag_read,
 	.proc_write = ath_procfs_diag_write,
-	.proc_lseek = default_llseek,
 };
 #else
 static const struct file_operations athdiag_fops = {
@@ -600,9 +591,9 @@ void athdiag_procfs_remove(void)
 	}
 }
 #else
-static int athdiag_procfs_init(void *scn)
+int athdiag_procfs_init(void *scn)
 {
 	return 0;
 }
-static void athdiag_procfs_remove(void) {}
+void athdiag_procfs_remove(void) {}
 #endif

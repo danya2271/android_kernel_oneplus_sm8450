@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -156,6 +156,11 @@ QDF_STATUS lim_send_set_max_tx_power_req(struct mac_context *mac,
 		int8_t txPower,
 		struct pe_session *pe_session);
 
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+//Add for softap connect fail monitor
+void hostapd_send_sae_uevent(struct sir_sae_msg *sae_msg);
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
+
 /**
  * lim_get_num_pwr_levels() - Utility to get number of tx power levels
  * @is_psd: PSD power check
@@ -185,6 +190,10 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
  * lim_calculate_tpc() - Utility to get maximum tx power
  * @mac: mac handle
  * @session: PE Session Entry
+ * @is_pwr_constraint_absolute: If local power constraint is an absolute
+ * value or an offset value.
+ * @ap_pwr_type: Ap power type for 6G
+ * @ctry_code_match: check for country IE and sta programmed ctry match
  *
  * This function is used to get the maximum possible tx power from the list
  * of tx powers mentioned in @attr.
@@ -192,7 +201,10 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
  * Return: None
  */
 void lim_calculate_tpc(struct mac_context *mac,
-		       struct pe_session *session);
+		       struct pe_session *session,
+		       bool is_pwr_constraint_absolute,
+		       uint8_t ap_pwr_type,
+		       bool ctry_code_match);
 
 /* AID pool management functions */
 
@@ -1020,7 +1032,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx, uint32_t session_id,
  * @mac_ctx: global mac context
  * @session: pe session. This can be NULL. In that case self cap will be sent
  * @vdev_id: vdev for which IE is targeted
- * @dot11_mode: mlme dot11 mode
+ * @dot11_mode: vdev dot11 mode
  * @device_mode: device mode
  *
  * This funciton gets ht and vht capability and send to firmware via wma
@@ -1029,7 +1041,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx, uint32_t session_id,
  */
 QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 				 struct pe_session *session, uint8_t vdev_id,
-				 enum mlme_dot11_mode dot11_mode,
+				 enum csr_cfgdot11mode dot11_mode,
 				 enum QDF_OPMODE device_mode);
 
 /**

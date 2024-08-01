@@ -214,21 +214,6 @@ bool wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
-bool wlan_mlme_get_coex_unsafe_chan_nb_user_prefer(
-		struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		mlme_legacy_err("Failed to get MLME Obj");
-		return cfg_default(CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER);
-	}
-	return mlme_obj->cfg.reg.coex_unsafe_chan_nb_user_prefer;
-}
-#endif
-
 QDF_STATUS wlan_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *band_capability)
 {
@@ -2625,30 +2610,6 @@ QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_peer_get_assoc_rsp_ies(struct wlan_objmgr_peer *peer,
-					    const uint8_t **ie_buf,
-					    size_t *ie_len)
-{
-	struct peer_mlme_priv_obj *peer_priv;
-
-	if (!peer || !ie_buf || !ie_len)
-		return QDF_STATUS_E_INVAL;
-
-	*ie_buf = NULL;
-	*ie_len = 0;
-
-	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
-							  WLAN_UMAC_COMP_MLME);
-
-	if (!peer_priv || peer_priv->assoc_rsp.len == 0)
-		return QDF_STATUS_SUCCESS;
-
-	*ie_buf = peer_priv->assoc_rsp.ptr;
-	*ie_len = peer_priv->assoc_rsp.len;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 int wlan_mlme_get_mcc_duty_cycle_percentage(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
@@ -3108,23 +3069,6 @@ wlan_mlme_set_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool value)
 
 	return QDF_STATUS_SUCCESS;
 }
-
-#ifdef CONFIG_BAND_6GHZ
-QDF_STATUS
-wlan_mlme_is_standard_6ghz_conn_policy_enabled(struct wlan_objmgr_psoc *psoc,
-					       bool *value)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return QDF_STATUS_E_FAILURE;
-
-	*value = mlme_obj->cfg.gen.std_6ghz_conn_policy;
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 QDF_STATUS
 wlan_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc, uint8_t value)

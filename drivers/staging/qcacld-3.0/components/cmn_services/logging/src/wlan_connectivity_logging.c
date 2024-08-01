@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -446,6 +446,7 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 		logging_debug("vdev:%d dropping msg sub-type:%d total dropped:%d",
 			      new_record->vdev_id, new_record->log_subtype,
 			      qdf_atomic_read(&global_cl.dropped_msgs));
+		wlan_logging_set_connectivity_log();
 
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -460,6 +461,8 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 		&global_cl.head[global_cl.write_idx];
 
 	qdf_spin_unlock_bh(&global_cl.write_ptr_lock);
+
+	wlan_logging_set_connectivity_log();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -523,6 +526,7 @@ wlan_connectivity_log_dequeue(void)
 		idx++;
 
 		if (idx >= MAX_RECORD_IN_SINGLE_EVT) {
+			wlan_logging_set_connectivity_log();
 			break;
 		}
 	}
@@ -537,9 +541,4 @@ wlan_connectivity_log_dequeue(void)
 	qdf_mem_free(data);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-void wlan_connectivity_logging_init(void)
-{
-	qdf_atomic_set(&global_cl.is_active, 0);
 }

@@ -278,26 +278,6 @@ wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
-/**
- * wlan_mlme_get_coex_unsafe_chan_nb_user_prefer() - get coex unsafe nb
- * support
- * @psoc:   pointer to psoc object
- * @value:  pointer to the value which will be filled for the caller
- *
- * Return: coex_unsafe_chan_nb_user_prefer
- */
-bool wlan_mlme_get_coex_unsafe_chan_nb_user_prefer(
-		struct wlan_objmgr_psoc *psoc);
-#else
-static inline
-bool wlan_mlme_get_coex_unsafe_chan_nb_user_prefer(
-		struct wlan_objmgr_psoc *psoc)
-{
-	return false;
-}
-#endif
-
 /**
  * wlan_mlme_set_band_capability() - Set the Band capability config
  * @psoc: pointer to psoc object
@@ -1123,21 +1103,6 @@ QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS wlan_mlme_set_default_primary_iface(struct wlan_objmgr_psoc *psoc);
-
-/**
- * wlan_mlme_peer_get_assoc_rsp_ies() - Get the assoc response IEs of peer
- * @peer: WLAN peer objmgr
- * @ie_buf: Pointer to IE buffer
- * @ie_len: Length of the IE buffer
- *
- * Get the pointer to assoc response IEs of the peer from MLME
- * and length of the IE buffer.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_mlme_peer_get_assoc_rsp_ies(struct wlan_objmgr_peer *peer,
-					    const uint8_t **ie_buf,
-					    size_t *ie_len);
 
 /**
  * wlan_mlme_get_mcc_duty_cycle_percentage() - Get primary STA iface duty
@@ -2289,28 +2254,6 @@ wlan_mlme_is_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
  */
 QDF_STATUS
 wlan_mlme_set_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool value);
-
-#ifdef CONFIG_BAND_6GHZ
-/**
- * wlan_mlme_is_standard_6ghz_conn_policy_enabled() - Get the 6 GHz standard
- *                                                    connection policy flag
- * @psoc: psoc context
- * @value: Enable/Disable value ptr.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_mlme_is_standard_6ghz_conn_policy_enabled(struct wlan_objmgr_psoc *psoc,
-					       bool *value);
-#else
-static inline QDF_STATUS
-wlan_mlme_is_standard_6ghz_conn_policy_enabled(struct wlan_objmgr_psoc *psoc,
-					       bool *value)
-{
-	*value = false;
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * wlan_mlme_get_sta_miracast_mcc_rest_time() - Get STA/MIRACAST MCC rest time

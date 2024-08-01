@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4512,11 +4512,16 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 	case MIRACAST_CONN_OPT_ENABLED:
 	case MIRACAST_CONN_OPT_DISABLED:
 		{
-			wma_cli_set_command(
-				adapter->vdev_id,
-				WMI_PDEV_PARAM_POWER_COLLAPSE_ENABLE,
-				(filter_type == MIRACAST_CONN_OPT_ENABLED ?
-				 0 : 1), PDEV_CMD);
+			bool is_imps_enabled = true;
+
+			ucfg_mlme_is_imps_enabled(hdd_ctx->psoc,
+						  &is_imps_enabled);
+			if (!is_imps_enabled)
+				return 0;
+			hdd_set_idle_ps_config(
+				hdd_ctx,
+				filter_type ==
+				MIRACAST_CONN_OPT_ENABLED ? false : true);
 			return 0;
 		}
 	default:
@@ -6134,15 +6139,12 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 		return status;
 	}
 
-	if ((chan_bw != 20) && (chan_bw != 40) && (chan_bw != 80) &&
-	    (chan_bw != 160)) {
+	if ((chan_bw != 20) && (chan_bw != 40) && (chan_bw != 80)) {
 		hdd_err("BW %d is not allowed for CHANNEL_SWITCH", chan_bw);
 		return -EINVAL;
 	}
 
-	if (chan_bw == 160)
-		width = CH_WIDTH_160MHZ;
-	else if (chan_bw == 80)
+	if (chan_bw == 80)
 		width = CH_WIDTH_80MHZ;
 	else if (chan_bw == 40)
 		width = CH_WIDTH_40MHZ;
@@ -6158,7 +6160,7 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 		chan_number = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
 							   chan_number);
 
-	status = hdd_softap_set_channel_change(dev, chan_number, width, false);
+	status = hdd_softap_set_channel_change(dev, chan_number, width, true);
 	if (status) {
 		hdd_err("Set channel change fail");
 		return status;
@@ -6283,36 +6285,6 @@ static void disconnect_sta_and_restart_sap(struct hdd_context *hdd_ctx,
 }
 
 /**
- * hdd_check_chan_and_fill_freq() - to validate chan and convert into freq
- * @pdev: The physical dev to cache the channels for
- * @in_chan: input as channel number or freq
- * @freq: frequency for input in_chan (output parameter)
- *
- * This function checks input "in_chan" is channel number, if yes then fills
- * appropriate frequency into "freq" out param. If the "in_param" is greater
- * than MAX_5GHZ_CHANNEL then gets the valid frequencies for legacy channels
- * else get the valid channel for 6Ghz frequency.
- *
- * Return: true if "in_chan" is valid channel/frequency; false otherwise
- */
-static bool hdd_check_chan_and_fill_freq(struct wlan_objmgr_pdev *pdev,
-					 uint32_t *in_chan, qdf_freq_t *freq)
-{
-	if (IS_CHANNEL_VALID(*in_chan)) {
-		*freq = wlan_reg_legacy_chan_to_freq(pdev, *in_chan);
-	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(*in_chan) ||
-		   WLAN_REG_IS_5GHZ_CH_FREQ(*in_chan) ||
-		   WLAN_REG_IS_6GHZ_CHAN_FREQ(*in_chan)) {
-		*freq = *in_chan;
-		*in_chan = wlan_reg_freq_to_chan(pdev, *in_chan);
-	} else {
-		return false;
-	}
-
-	return true;
-}
-
-/**
  * hdd_parse_disable_chan_cmd() - Parse the channel list received
  * in command.
  * @adapter: pointer to hdd adapter
@@ -6321,13 +6293,11 @@ static bool hdd_check_chan_and_fill_freq(struct wlan_objmgr_pdev *pdev,
  * This function parses the channel list received in the command.
  * command should be a string having format
  * SET_DISABLE_CHANNEL_LIST <num of channels>
- * <channels separated by spaces>/<frequency separated by spaces>
- * If this command has frequency as input, this function first converts into
- * equivalent channel.
- * If the command comes multiple times then the channels received in the
- * command or channels converted from frequency will be compared with the
- * channels cached in the first command, if the channel list matches with
- * the cached channels, it returns success otherwise returns failure.
+ * <channels separated by spaces>.
+ * If the command comes multiple times than this function will compare
+ * the channels received in the command with the channles cached in the
+ * first command, if the channel list matches with the cached channles,
+ * it returns success otherwise returns failure.
  *
  * Return: 0 on success, Error code on failure
  */
@@ -6339,7 +6309,6 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 	int j, i, temp_int, ret = 0, num_channels;
 	qdf_freq_t *chan_freq_list = NULL;
 	bool is_command_repeated = false;
-	qdf_freq_t freq = 0;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD Context is NULL");
@@ -6439,16 +6408,15 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 			goto parse_failed;
 		}
 
-		if (!hdd_check_chan_and_fill_freq(hdd_ctx->pdev, &temp_int,
-						  &freq)) {
+		if (!IS_CHANNEL_VALID(temp_int)) {
 			hdd_err("Invalid channel number received");
 			ret = -EINVAL;
 			goto parse_failed;
 		}
 
-		hdd_debug("channel[%d] = %d Frequency[%d] = %d", j, temp_int,
-			  j, freq);
-		chan_freq_list[j] = freq;
+		hdd_debug("channel[%d] = %d", j, temp_int);
+		chan_freq_list[j] = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+								 temp_int);
 	}
 
 	/*extra arguments check*/
@@ -7101,8 +7069,7 @@ exit:
 }
 
 #ifdef CONFIG_COMPAT
-static int hdd_driver_compat_ioctl(struct hdd_adapter *adapter,
-				   void __user *data)
+static int hdd_driver_compat_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 {
 	struct {
 		compat_uptr_t buf;
@@ -7116,7 +7083,7 @@ static int hdd_driver_compat_ioctl(struct hdd_adapter *adapter,
 	 * Note that adapter and ifr have already been verified by caller,
 	 * and HDD context has also been validated
 	 */
-	if (copy_from_user(&compat_priv_data, data,
+	if (copy_from_user(&compat_priv_data, ifr->ifr_data,
 			   sizeof(compat_priv_data))) {
 		ret = -EFAULT;
 		goto exit;
@@ -7129,15 +7096,14 @@ exit:
 	return ret;
 }
 #else /* CONFIG_COMPAT */
-static int hdd_driver_compat_ioctl(struct hdd_adapter *adapter,
-				   void __user *data)
+static int hdd_driver_compat_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 {
 	/* will never be invoked */
 	return 0;
 }
 #endif /* CONFIG_COMPAT */
 
-static int hdd_driver_ioctl(struct hdd_adapter *adapter, void __user *data)
+static int hdd_driver_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 {
 	struct hdd_priv_data priv_data;
 	int ret = 0;
@@ -7146,7 +7112,7 @@ static int hdd_driver_ioctl(struct hdd_adapter *adapter, void __user *data)
 	 * Note that adapter and ifr have already been verified by caller,
 	 * and HDD context has also been validated
 	 */
-	if (copy_from_user(&priv_data, data, sizeof(priv_data)))
+	if (copy_from_user(&priv_data, ifr->ifr_data, sizeof(priv_data)))
 		ret = -EFAULT;
 	else
 		ret = hdd_driver_command(adapter, &priv_data);
@@ -7157,7 +7123,7 @@ static int hdd_driver_ioctl(struct hdd_adapter *adapter, void __user *data)
 /**
  * __hdd_ioctl() - ioctl handler for wlan network interfaces
  * @dev: device upon which the ioctl was received
- * @data: pointer to the raw command data in the ioctl request
+ * @ifr: ioctl request information
  * @cmd: ioctl command
  *
  * This function does initial processing of wlan device ioctls.
@@ -7172,7 +7138,7 @@ static int hdd_driver_ioctl(struct hdd_adapter *adapter, void __user *data)
  *
  * Return: 0 on success, non-zero on error
  */
-static int __hdd_ioctl(struct net_device *dev, void __user *data, int cmd)
+static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
@@ -7186,7 +7152,7 @@ static int __hdd_ioctl(struct net_device *dev, void __user *data, int cmd)
 		goto exit;
 	}
 
-	if (!data) {
+	if ((!ifr) || (!ifr->ifr_data)) {
 		hdd_err("invalid data cmd: %d", cmd);
 		ret = -EINVAL;
 		goto exit;
@@ -7194,7 +7160,7 @@ static int __hdd_ioctl(struct net_device *dev, void __user *data, int cmd)
 #if  defined(QCA_WIFI_FTM) && defined(LINUX_QCMBR)
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		if (SIOCIOCTLTX99 == cmd) {
-			ret = wlan_hdd_qcmbr_unified_ioctl(adapter, data);
+			ret = wlan_hdd_qcmbr_unified_ioctl(adapter, ifr);
 			goto exit;
 		}
 	}
@@ -7208,9 +7174,9 @@ static int __hdd_ioctl(struct net_device *dev, void __user *data, int cmd)
 	switch (cmd) {
 	case (SIOCDEVPRIVATE + 1):
 		if (in_compat_syscall())
-			ret = hdd_driver_compat_ioctl(adapter, data);
+			ret = hdd_driver_compat_ioctl(adapter, ifr);
 		else
-			ret = hdd_driver_ioctl(adapter, data);
+			ret = hdd_driver_ioctl(adapter, ifr);
 		break;
 	default:
 		hdd_warn("unknown ioctl %d", cmd);
@@ -7222,6 +7188,17 @@ exit:
 	return ret;
 }
 
+/**
+ * hdd_ioctl() - ioctl handler (wrapper) for wlan network interfaces
+ * @net_dev: device upon which the ioctl was received
+ * @ifr: ioctl request information
+ * @cmd: ioctl command
+ *
+ * This function acts as an SSR-protecting wrapper to __hdd_ioctl()
+ * which is where the ioctls are really handled.
+ *
+ * Return: 0 on success, non-zero on error
+ */
 int hdd_ioctl(struct net_device *net_dev, struct ifreq *ifr, int cmd)
 {
 	struct osif_vdev_sync *vdev_sync;
@@ -7231,26 +7208,10 @@ int hdd_ioctl(struct net_device *net_dev, struct ifreq *ifr, int cmd)
 	if (errno)
 		return errno;
 
-	errno = __hdd_ioctl(net_dev, ifr->ifr_data, cmd);
+	errno = __hdd_ioctl(net_dev, ifr, cmd);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
 	return errno;
 }
 
-int hdd_dev_private_ioctl(struct net_device *dev, struct ifreq *ifr,
-			  void __user *data, int cmd)
-{
-	struct osif_vdev_sync *vdev_sync;
-	int errno;
-
-	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
-	if (errno)
-		return errno;
-
-	errno = __hdd_ioctl(dev, data, cmd);
-
-	osif_vdev_sync_op_stop(vdev_sync);
-
-	return errno;
-}

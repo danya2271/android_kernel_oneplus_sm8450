@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1262,8 +1262,6 @@ enum qdisc_filter_status {
  * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
  * @cache_sta_count: number of currently cached stations
  * @acs_complete_event: acs complete event
- * @mc_addr_list: multicast address list
- * @mc_list_lock: spin lock for multicast list
  * @latency_level: 0 - normal, 1 - xr, 2 - low, 3 - ultralow
  * @multi_client_ll_support: to check multi client ll support in driver
  * @client_info: To store multi client id information
@@ -1290,7 +1288,6 @@ enum qdisc_filter_status {
  * @is_virtual_iface: Indicates that netdev is called from virtual interface
  * @mon_adapter: hdd_adapter of monitor mode.
  * @set_mac_addr_req_ctx: Set MAC address command request context
- * @delta_qtime: delta between host qtime and monotonic time
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1382,6 +1379,8 @@ struct hdd_adapter {
 	/* Completion variable for action frame */
 	struct completion tx_action_cnf_event;
 
+	struct completion sta_authorized_event;
+
 	/* Track whether the linkup handling is needed  */
 	bool is_link_up_service_needed;
 
@@ -1456,7 +1455,6 @@ struct hdd_adapter {
 #endif
 
 	struct hdd_multicast_addr_list mc_addr_list;
-	qdf_spinlock_t mc_list_lock;
 	uint8_t addr_filter_pattern;
 
 	struct hdd_scan_info scan_info;
@@ -1552,7 +1550,7 @@ struct hdd_adapter {
 	uint32_t pkt_type_bitmap;
 	uint32_t track_arp_ip;
 	uint8_t dns_payload[256];
-	uint8_t track_dns_domain_len;
+	uint32_t track_dns_domain_len;
 	uint32_t track_src_port;
 	uint32_t track_dest_port;
 	uint32_t track_dest_ipv4;
@@ -1629,7 +1627,6 @@ struct hdd_adapter {
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	void *set_mac_addr_req_ctx;
 #endif
-	int64_t delta_qtime;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
@@ -1997,7 +1994,6 @@ struct hdd_rtpm_tput_policy_context {
  * @bus_bw_work: work for periodically computing DDR bus bandwidth requirements
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
- * @sar_flag: SAR flags supported by firmware
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
  * @sar_cmd_params: SAR command params to be configured to the FW
  * @country_change_work: work for updating vdev when country changes
@@ -2017,8 +2013,6 @@ struct hdd_rtpm_tput_policy_context {
  * @twt_en_dis_work: work to send twt enable/disable cmd on MCC/SCC concurrency
  * @dump_in_progress: Stores value of dump in progress
  * @hdd_dual_sta_policy: Concurrent STA policy configuration
- * @last_pagefault_ssr_time: Time when last recovery was triggered because of
- * @host wakeup from fw with reason as pagefault
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2315,7 +2309,6 @@ struct hdd_context {
 	qdf_mutex_t cache_channel_lock;
 #endif
 	enum sar_version sar_version;
-	enum sar_flag sar_flag;
 	struct hdd_dynamic_mac dynamic_mac_list[QDF_MAX_CONCURRENCY_PERSONA];
 	bool dynamic_nss_chains_support;
 	struct qdf_mac_addr hw_macaddr;
@@ -2399,7 +2392,6 @@ struct hdd_context {
 #ifdef CONFIG_WLAN_FREQ_LIST
 	uint8_t power_type;
 #endif
-	qdf_time_t last_pagefault_ssr_time;
 };
 
 /**
@@ -2469,6 +2461,26 @@ struct hdd_channel_info {
 	u_int8_t vht_center_freq_seg0;
 	u_int8_t vht_center_freq_seg1;
 };
+
+#ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+//Add for wifi switch monitor
+enum wlan_hostdriver_loadstatus {
+	INSMOD_SUCCESS = 1,
+	INSMOD_FAIL,
+	RMMOD_SUCCESS,
+	RMMOD_FAIL,
+	INI_PRASE_SUCCESS,
+	INI_PRASE_FAIL,
+};
+
+struct wlan_hostdriver_loadresult {
+	u_int8_t insmod_status;
+	u_int8_t rmmod_status;
+	u_int8_t ini_prase_status;
+};
+
+void wlan_driver_send_uevent(char *enable);
+#endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
 
 /**
  * struct hdd_chwidth_info - channel width related info
@@ -2699,19 +2711,6 @@ void hdd_adapter_dev_put_debug(struct hdd_adapter *adapter,
 			       wlan_net_dev_ref_dbgid dbgid);
 
 /**
- * hdd_validate_next_adapter - API to check for infinite loop
- *                             in the adapter list traversal
- * @curr: current adapter pointer
- * @next: next adapter pointer
- * @dbg_id: Debug ID corresponding to API that is requesting the dev_put
- *
- * Return: None
- */
-void hdd_validate_next_adapter(struct hdd_adapter **curr,
-			       struct hdd_adapter **next,
-			       wlan_net_dev_ref_dbgid dbg_id);
-
-/**
  * __hdd_take_ref_and_fetch_front_adapter_safe - Helper macro to lock, fetch
  * front and next adapters, take ref and unlock.
  * @hdd_ctx: the global HDD context
@@ -2742,7 +2741,6 @@ void hdd_validate_next_adapter(struct hdd_adapter **curr,
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock), \
 	adapter = next_adapter, \
 	hdd_get_next_adapter_no_lock(hdd_ctx, adapter, &next_adapter), \
-	hdd_validate_next_adapter(&adapter, &next_adapter, dbgid), \
 	(next_adapter) ? hdd_adapter_dev_hold_debug(next_adapter, dbgid) : \
 			 (false), \
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock)
@@ -5353,12 +5351,10 @@ static inline int hdd_set_suspend_mode(struct hdd_context *hdd_ctx)
 	return 0;
 }
 #endif
-/**
- * hdd_update_multicast_list() - update the multicast list
- * @vdev: pointer to VDEV object
- *
- * Return: none
- */
-void hdd_update_multicast_list(struct wlan_objmgr_vdev *vdev);
+
+//#ifdef OPLUS_FEATURE_WIFI_WSA
+//Add for STBC&MRC
+int send_oplus_uevent(const char *src);
+//#endif OPLUS_FEATURE_WIFI_WSA
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
