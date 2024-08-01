@@ -1136,9 +1136,6 @@ wlan_cfg80211_mc_cp_get_big_data_stats(struct wlan_objmgr_vdev *vdev,
 	*errno = osif_request_wait_for_response(request);
 	if (*errno) {
 		osif_err("wait failed or timed out ret: %d", *errno);
-		ucfg_mc_cp_stats_reset_pending_req(hdd_ctx->psoc,
-						   TYPE_BIG_DATA_STATS,
-						   &last_req, &pending);
 		goto get_station_stats_fail;
 	}
 

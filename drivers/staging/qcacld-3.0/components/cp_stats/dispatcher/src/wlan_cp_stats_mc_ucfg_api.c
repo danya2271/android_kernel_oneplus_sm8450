@@ -658,80 +658,6 @@ QDF_STATUS ucfg_mc_cp_stats_get_vdev_wake_lock_stats(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
-				struct wlan_objmgr_psoc *psoc,
-				char *buffer, uint16_t max_len, int *ret)
-{
-	QDF_STATUS status;
-	uint32_t unspecified_wake_count;
-	struct wake_lock_stats wow_stats = {0};
-	struct psoc_mc_cp_stats *psoc_mc_stats;
-	struct psoc_cp_stats *psoc_cp_stats_priv;
-
-	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
-	if (!psoc_cp_stats_priv) {
-		cp_stats_err("psoc cp stats object is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	/* get stats from psoc */
-	status = ucfg_mc_cp_stats_get_psoc_wake_lock_stats(psoc, &wow_stats);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cp_stats_err("Failed to get WoW stats");
-		return status;
-	}
-
-	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
-	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
-	unspecified_wake_count = psoc_mc_stats->wow_unspecified_wake_up_count;
-	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
-
-	*ret = qdf_scnprintf(buffer, max_len,
-			     "WoW Wake Reasons\n"
-			     "\tunspecified wake count: %u\n"
-			     "\tunicast: %u\n"
-			     "\tbroadcast: %u\n"
-			     "\tIPv4 multicast: %u\n"
-			     "\tIPv6 multicast: %u\n"
-			     "\tIPv6 multicast RA: %u\n"
-			     "\tIPv6 multicast NS: %u\n"
-			     "\tIPv6 multicast NA: %u\n"
-			     "\tICMPv4: %u\n"
-			     "\tICMPv6: %u\n"
-			     "\tRSSI Breach: %u\n"
-			     "\tLow RSSI: %u\n"
-			     "\tG-Scan: %u\n"
-			     "\tPNO Complete: %u\n"
-			     "\tPNO Match: %u\n"
-			     "\tUC Drop wake_count: %u\n"
-			     "\twake count due to fatal event: %u\n"
-			     "\tOEM rsp wake_count: %u\n"
-			     "\twake count due to pwr_save_fail_detected: %u\n"
-			     "\twake count due to 11d scan: %u\n",
-			     unspecified_wake_count,
-			     wow_stats.ucast_wake_up_count,
-			     wow_stats.bcast_wake_up_count,
-			     wow_stats.ipv4_mcast_wake_up_count,
-			     wow_stats.ipv6_mcast_wake_up_count,
-			     wow_stats.ipv6_mcast_ra_stats,
-			     wow_stats.ipv6_mcast_ns_stats,
-			     wow_stats.ipv6_mcast_na_stats,
-			     wow_stats.icmpv4_count,
-			     wow_stats.icmpv6_count,
-			     wow_stats.rssi_breach_wake_up_count,
-			     wow_stats.low_rssi_wake_up_count,
-			     wow_stats.gscan_wake_up_count,
-			     wow_stats.pno_complete_wake_up_count,
-			     wow_stats.pno_match_wake_up_count,
-			     wow_stats.uc_drop_wake_up_count,
-			     wow_stats.fatal_event_wake_up_count,
-			     wow_stats.oem_response_wake_up_count,
-			     wow_stats.pwr_save_fail_detected,
-			     wow_stats.scan_11d);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 					       enum stats_req_type type,
 					       struct request_info *info)
@@ -873,41 +799,6 @@ QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
 	}
 	psoc_mc_stats->pending.type_map |= (1 << type);
 	psoc_mc_stats->pending.req[type] = *req;
-	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
-					      enum stats_req_type type,
-					      struct request_info *last_req,
-					      bool *pending)
-{
-	struct psoc_mc_cp_stats *psoc_mc_stats;
-	struct psoc_cp_stats *psoc_cp_stats_priv;
-
-	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
-	if (!psoc_cp_stats_priv) {
-		cp_stats_err("psoc cp stats object is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (type >= TYPE_MAX) {
-		cp_stats_err("Invalid type index: %d", type);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
-	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
-	if (psoc_mc_stats->pending.type_map & (1 << type)) {
-		*last_req = psoc_mc_stats->pending.req[type];
-		*pending = true;
-	} else {
-		*pending = false;
-	}
-	psoc_mc_stats->pending.type_map &= ~(1 << type);
-	qdf_mem_zero(&psoc_mc_stats->pending.req[type],
-		     sizeof(psoc_mc_stats->pending.req[type]));
 	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
 
 	return QDF_STATUS_SUCCESS;

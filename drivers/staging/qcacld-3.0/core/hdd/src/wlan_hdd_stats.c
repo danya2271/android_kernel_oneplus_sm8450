@@ -2007,9 +2007,6 @@ wlan_hdd_reset_station_stats_request_pending(struct wlan_objmgr_psoc *psoc,
 		hdd_err("ucfg_mc_cp_stats_get_pending_req failed");
 		return;
 	}
-
-	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_STATION_STATS,
-					   &last_req, &pending);
 }
 
 static QDF_STATUS wlan_hdd_stats_request_needed(struct hdd_adapter *adapter)
