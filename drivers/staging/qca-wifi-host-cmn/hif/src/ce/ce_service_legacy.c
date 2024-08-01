@@ -1320,7 +1320,7 @@ struct ce_ops ce_service_legacy = {
 #endif
 };
 
-struct ce_ops *ce_services_legacy(void)
+struct ce_ops *ce_services_legacy()
 {
 	return &ce_service_legacy;
 }

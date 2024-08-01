@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,6 @@
 #include "cfg_nan_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "qdf_util.h"
-#include "qdf_net_if.h"
 #include <cdp_txrx_misc.h>
 #include "wlan_fwol_ucfg_api.h"
 
@@ -202,6 +201,13 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 }
 #endif /* NDP_SAP_CONCURRENCY_ENABLE */
 
+static void hdd_swap_frequencies(uint32_t *a, uint32_t *b)
+{
+	*b ^= *a;
+	*a ^= *b;
+	*b ^= *a;
+}
+
 /**
  * hdd_ndi_config_ch_list() - Configure the channel list for NDI start
  * @hdd_ctx: hdd context
@@ -227,12 +233,8 @@ hdd_ndi_config_ch_list(struct hdd_context *hdd_ctx,
 		       tCsrChannelInfo *ch_info)
 {
 	struct regulatory_channel *cur_chan_list;
-	int i;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	static const qdf_freq_t valid_freq[] = {NAN_SOCIAL_FREQ_5GHZ_UPPER_BAND,
-						NAN_SOCIAL_FREQ_5GHZ_LOWER_BAND,
-						NAN_SOCIAL_FREQ_2_4GHZ};
-	enum channel_state state;
+	int i = 0, swap_index = 0;
+	QDF_STATUS status;
 
 	ch_info->numOfChannels = 0;
 	cur_chan_list = qdf_mem_malloc(sizeof(*cur_chan_list) *
@@ -243,26 +245,14 @@ hdd_ndi_config_ch_list(struct hdd_context *hdd_ctx,
 	status = ucfg_reg_get_current_chan_list(hdd_ctx->pdev, cur_chan_list);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err_rl("Failed to get the current channel list");
-		status = QDF_STATUS_E_IO;
-		goto end;
+		qdf_mem_free(cur_chan_list);
+		return QDF_STATUS_E_IO;
 	}
 
 	ch_info->freq_list = qdf_mem_malloc(sizeof(uint32_t) * NUM_CHANNELS);
 	if (!ch_info->freq_list) {
-		status = QDF_STATUS_E_NOMEM;
-		goto end;
-	}
-
-	for (i = 0; i < ARRAY_SIZE(valid_freq); i++) {
-		state = wlan_reg_get_channel_state_for_freq(hdd_ctx->pdev,
-							    valid_freq[i]);
-		if (state != CHANNEL_STATE_DISABLE &&
-		    state != CHANNEL_STATE_INVALID) {
-			ch_info->freq_list[0] =  valid_freq[i];
-			ch_info->numOfChannels = 1;
-			status = QDF_STATUS_SUCCESS;
-			goto end;
-		}
+		qdf_mem_free(cur_chan_list);
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	for (i = 0; i < NUM_CHANNELS; i++) {
@@ -284,19 +274,51 @@ hdd_ndi_config_ch_list(struct hdd_context *hdd_ctx,
 		if (wlan_reg_is_6ghz_chan_freq(cur_chan_list[i].center_freq))
 			continue;
 
-		ch_info->freq_list[0] = cur_chan_list[i].center_freq;
-		ch_info->numOfChannels = 1;
-		status = QDF_STATUS_SUCCESS;
-		goto end;
+		ch_info->freq_list[ch_info->numOfChannels++] =
+					cur_chan_list[i].center_freq;
 	}
 
 	if (!ch_info->numOfChannels) {
 		status = QDF_STATUS_E_NULL_VALUE;
 		qdf_mem_free(ch_info->freq_list);
+		goto end;
+	}
+
+	/**
+	 * Keep the valid channels in list in below order,
+	 * 149, 44, 6, rest of the channels
+	 */
+	for (i = ch_info->numOfChannels - 1; i >= 0; i--) {
+		if (ch_info->freq_list[i] != NAN_SOCIAL_FREQ_5GHZ_UPPER_BAND)
+			continue;
+		hdd_swap_frequencies(&ch_info->freq_list[i],
+				     &ch_info->freq_list[swap_index]);
+		swap_index++;
+		break;
+	}
+
+	for (i = ch_info->numOfChannels - 1; i >= 0; i--) {
+		if (ch_info->freq_list[i] != NAN_SOCIAL_FREQ_5GHZ_LOWER_BAND)
+			continue;
+
+		hdd_swap_frequencies(&ch_info->freq_list[i],
+				     &ch_info->freq_list[swap_index]);
+		swap_index++;
+		break;
+	}
+
+	for (i = ch_info->numOfChannels - 1; i >= 0; i--) {
+		if (ch_info->freq_list[i] != NAN_SOCIAL_FREQ_2_4GHZ)
+			continue;
+
+		hdd_swap_frequencies(&ch_info->freq_list[i],
+				     &ch_info->freq_list[swap_index]);
+		break;
 	}
 
 end:
 	qdf_mem_free(cur_chan_list);
+
 	return status;
 }
 
@@ -661,7 +683,7 @@ error_init_txrx:
 	return ret_val;
 }
 
-int hdd_ndi_open(const char *iface_name, bool is_add_virtual_iface)
+int hdd_ndi_open(char *iface_name)
 {
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	struct qdf_mac_addr random_ndi_mac;
@@ -685,10 +707,6 @@ int hdd_ndi_open(const char *iface_name, bool is_add_virtual_iface)
 			MAX_NDI_ADAPTERS);
 		return -EINVAL;
 	}
-
-	params.is_add_virtual_iface = is_add_virtual_iface;
-
-	hdd_debug("is_add_virtual_iface %d", is_add_virtual_iface);
 
 	if (cfg_nan_get_ndi_mac_randomize(hdd_ctx->psoc)) {
 		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
@@ -718,45 +736,6 @@ int hdd_ndi_open(const char *iface_name, bool is_add_virtual_iface)
 	hdd_exit();
 	return 0;
 }
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
-int hdd_ndi_set_mode(const char *iface_name)
-{
-	struct hdd_adapter *adapter;
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct qdf_mac_addr random_ndi_mac;
-	uint8_t *ndi_mac_addr = NULL;
-
-	hdd_enter();
-	if (!hdd_ctx)
-		return -EINVAL;
-
-	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, iface_name);
-	if (!adapter) {
-		hdd_err("adapter is null");
-		return -EINVAL;
-	}
-
-	if (cfg_nan_get_ndi_mac_randomize(hdd_ctx->psoc)) {
-		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
-			hdd_err("get random mac address failed");
-			return -EFAULT;
-		}
-		ndi_mac_addr = &random_ndi_mac.bytes[0];
-		hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr,
-				       (struct qdf_mac_addr *)ndi_mac_addr);
-		qdf_mem_copy(&adapter->mac_addr, ndi_mac_addr, ETH_ALEN);
-		qdf_net_update_net_device_dev_addr(adapter->dev,
-						   ndi_mac_addr, ETH_ALEN);
-	}
-
-	adapter->device_mode = QDF_NDI_MODE;
-	hdd_debug("Created NDI with device mode:%d and iface_name:%s",
-		  adapter->device_mode, iface_name);
-
-	return 0;
-}
-#endif
 
 int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 {
@@ -814,40 +793,6 @@ err_handler:
 	return ret;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
-static int hdd_delete_ndi_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
-{
-	struct net_device *dev = wdev->netdev;
-	struct hdd_context *hdd_ctx = (struct hdd_context *)wiphy_priv(wiphy);
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-
-	hdd_enter_dev(dev);
-
-	wlan_hdd_release_intf_addr(hdd_ctx,
-				   adapter->mac_addr.bytes);
-	hdd_stop_adapter(hdd_ctx, adapter);
-	hdd_deinit_adapter(hdd_ctx, adapter, true);
-
-	hdd_exit();
-
-	return 0;
-}
-#else
-static int hdd_delete_ndi_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
-{
-	int ret;
-
-	ret = __wlan_hdd_del_virtual_intf(wiphy, wdev);
-
-	if (ret)
-		hdd_err("NDI delete request failed");
-	else
-		hdd_err("NDI delete request successfully issued");
-
-	return ret;
-}
-#endif
-
 int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 {
 	int ret;
@@ -883,7 +828,11 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 	/* Delete the interface */
 	adapter->is_virtual_iface = true;
-	ret = hdd_delete_ndi_intf(hdd_ctx->wiphy, &adapter->wdev);
+	ret = __wlan_hdd_del_virtual_intf(hdd_ctx->wiphy, &adapter->wdev);
+	if (ret)
+		hdd_err("NDI delete request failed");
+	else
+		hdd_err("NDI delete request successfully issued");
 
 	return ret;
 }
@@ -1179,11 +1128,10 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 
 	hdd_delete_peer(sta_ctx, peer_mac_addr);
 
-	ucfg_nan_clear_peer_mc_list(hdd_ctx->psoc, adapter->vdev,
-				    peer_mac_addr);
-
 	if (last_peer) {
 		hdd_debug("No more ndp peers.");
+		ucfg_nan_clear_peer_mc_list(hdd_ctx->psoc, adapter->vdev,
+					    peer_mac_addr);
 		hdd_cleanup_ndi(hdd_ctx, adapter);
 		qdf_event_set(&adapter->peer_cleanup_done);
 		/*

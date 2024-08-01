@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -324,7 +324,6 @@ static void reg_modify_chan_list_for_dfs_channels(
 	}
 }
 
-#ifdef CONFIG_REG_CLIENT
 /**
  * reg_modify_chan_list_for_indoor_channels() - Disable the indoor channels if
  * indoor_chan_enabled flag is set to false.
@@ -344,8 +343,12 @@ static void reg_modify_chan_list_for_indoor_channels(
 			     chan_list[chan_enum].chan_flags)) {
 				chan_list[chan_enum].state =
 					CHANNEL_STATE_DFS;
-				chan_list[chan_enum].chan_flags |=
-					REGULATORY_CHAN_NO_IR;
+				if (!(pdev_priv_obj->
+				      sta_sap_scc_on_indoor_channel &&
+				      reg_is_5ghz_ch_freq(
+					    chan_list[chan_enum].center_freq)))
+					chan_list[chan_enum].chan_flags |=
+							REGULATORY_CHAN_NO_IR;
 			}
 		}
 	}
@@ -364,70 +367,6 @@ static void reg_modify_chan_list_for_indoor_channels(
 		}
 	}
 }
-
-/**
- *reg_modify_chan_list_for_indoor_concurrency() - Enable/Disable the indoor
- *channels for SAP operation based on the indoor concurrency list
- *
- * @pdev_priv_obj: Pointer to regulatory private pdev structure.
- */
-static void reg_modify_chan_list_for_indoor_concurrency(
-		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
-{
-	struct indoor_concurrency_list *indoor_list = NULL;
-	struct regulatory_channel *chan_list = pdev_priv_obj->cur_chan_list;
-	enum channel_enum chan, min_enum, max_enum;
-	uint8_t i;
-
-	if (pdev_priv_obj->indoor_chan_enabled ||
-	    !pdev_priv_obj->sta_sap_scc_on_indoor_channel) {
-		return;
-	}
-
-	indoor_list = pdev_priv_obj->indoor_list;
-
-	if (!indoor_list)
-		return;
-
-	for (i = 0; i < MAX_INDOOR_LIST_SIZE; i++, indoor_list++) {
-		if (indoor_list->freq == 0 &&
-		    indoor_list->vdev_id == INVALID_VDEV_ID)
-			continue;
-
-		if (!indoor_list->chan_range) {
-			min_enum =
-				reg_get_chan_enum_for_freq(indoor_list->freq);
-			max_enum = min_enum;
-		} else {
-			min_enum =
-				reg_get_chan_enum_for_freq(
-					indoor_list->chan_range->start_freq);
-			max_enum =
-				reg_get_chan_enum_for_freq(
-					indoor_list->chan_range->end_freq);
-		}
-
-		if (min_enum == NUM_CHANNELS || max_enum == NUM_CHANNELS)
-			continue;
-
-		for (chan = min_enum; chan <= max_enum; chan++) {
-			if (chan_list[chan].chan_flags & REGULATORY_CHAN_INDOOR_ONLY &&
-			    !(chan_list[chan].chan_flags & REGULATORY_CHAN_DISABLED))
-				chan_list[chan].chan_flags &= ~REGULATORY_CHAN_NO_IR;
-		}
-	}
-}
-#else
-static void reg_modify_chan_list_for_indoor_channels(
-		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
-{
-}
-
-static void reg_modify_chan_list_for_indoor_concurrency(
-		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
-{
-}
-#endif
 
 #ifdef CONFIG_BAND_6GHZ
 static void reg_modify_chan_list_for_band_6G(
@@ -805,9 +744,7 @@ static void reg_modify_chan_list_for_cached_channels(
 {
 	uint32_t i, j;
 	uint32_t num_cache_channels = pdev_priv_obj->num_cache_channels;
-	struct regulatory_channel *cur_chan_list = pdev_priv_obj->cur_chan_list;
-	struct regulatory_channel *sec_chan_list =
-					pdev_priv_obj->secondary_cur_chan_list;
+	struct regulatory_channel *chan_list = pdev_priv_obj->cur_chan_list;
 	struct regulatory_channel *cache_chan_list =
 					pdev_priv_obj->cache_disable_chan_list;
 
@@ -815,24 +752,15 @@ static void reg_modify_chan_list_for_cached_channels(
 		return;
 
 	if (pdev_priv_obj->disable_cached_channels) {
-		for (i = 0; i < num_cache_channels; i++) {
-			for (j = 0; j < NUM_CHANNELS; j++) {
+		for (i = 0; i < num_cache_channels; i++)
+			for (j = 0; j < NUM_CHANNELS; j++)
 				if (cache_chan_list[i].center_freq ==
-				    cur_chan_list[j].center_freq) {
-					cur_chan_list[j].state =
+				    chan_list[j].center_freq) {
+					chan_list[j].state =
 							CHANNEL_STATE_DISABLE;
-					cur_chan_list[j].chan_flags |=
+					chan_list[j].chan_flags |=
 						REGULATORY_CHAN_DISABLED;
 				}
-				if (cache_chan_list[i].center_freq ==
-				    sec_chan_list[j].center_freq) {
-					sec_chan_list[j].state =
-							CHANNEL_STATE_DISABLE;
-					sec_chan_list[j].chan_flags |=
-						REGULATORY_CHAN_DISABLED;
-				}
-			}
-		}
 	}
 }
 #else
@@ -1833,13 +1761,13 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 
 	reg_modify_chan_list_for_indoor_channels(pdev_priv_obj);
 
-	reg_modify_chan_list_for_indoor_concurrency(pdev_priv_obj);
-
 	reg_modify_chan_list_for_fcc_channel(pdev_priv_obj->cur_chan_list,
 					     pdev_priv_obj->set_fcc_channel);
 
 	reg_modify_chan_list_for_chan_144(pdev_priv_obj->cur_chan_list,
 					  pdev_priv_obj->en_chan_144);
+
+	reg_modify_chan_list_for_cached_channels(pdev_priv_obj);
 
 	reg_modify_chan_list_for_srd_channels(pdev_priv_obj->pdev_ptr,
 					      pdev_priv_obj->cur_chan_list);
@@ -1856,8 +1784,6 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 						  cur_chan_list);
 
 	reg_populate_secondary_cur_chan_list(pdev_priv_obj);
-
-	reg_modify_chan_list_for_cached_channels(pdev_priv_obj);
 
 	reg_modify_chan_list_for_avoid_chan_ext(pdev_priv_obj);
 }

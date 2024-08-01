@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,7 @@
 #include <qdf_module.h>
 #include <qdf_util.h>
 #include <qdf_mem.h>
+#include <soc/oplus/system/oplus_project.h>
 
 /* macro to map qdf trace levels into the bitmask */
 #define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
@@ -51,6 +52,11 @@ qdf_declare_param(qdf_log_flush_timer_period, uint);
 #ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
 #include <wlan_connectivity_logging.h>
 #endif
+
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+//Add for softap connect SAE status
+#include <wlan_hdd_hostapd.h>
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
 
 /* Global qdf print id */
 
@@ -984,6 +990,28 @@ qdf_export_symbol(qdf_dp_trace_set_track);
 static void
 dump_dp_hex_trace(char *prepend_str, uint8_t *inbuf, uint8_t inbuf_len)
 {
+	unsigned char outbuf[BUFFER_SIZE];
+	const uint8_t *inbuf_ptr = inbuf;
+	char *outbuf_ptr = outbuf;
+	int outbytes_written = 0;
+
+	qdf_mem_zero(outbuf, sizeof(outbuf));
+	do {
+		outbytes_written += scnprintf(outbuf_ptr,
+					BUFFER_SIZE - outbytes_written,
+					"%02x", *inbuf_ptr);
+		outbuf_ptr = outbuf + outbytes_written;
+
+		if ((inbuf_ptr - inbuf) &&
+		    (inbuf_ptr - inbuf + 1) % QDF_DUMP_DP_GROUP_SIZE == 0) {
+			outbytes_written += scnprintf(outbuf_ptr,
+						BUFFER_SIZE - outbytes_written,
+						" ");
+			outbuf_ptr = outbuf + outbytes_written;
+		}
+		inbuf_ptr++;
+	} while (inbuf_ptr < (inbuf + inbuf_len));
+	DPTRACE_PRINT("%s %s", prepend_str, outbuf);
 }
 
 /**
@@ -1571,6 +1599,22 @@ void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
 	else
 		last_ticks_rx[subtype] = curr_ticks;
 
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+//Add for softap connect fail monitor
+	switch (subtype) {
+	case QDF_PROTO_EAPOL_M2:
+	case QDF_PROTO_EAPOL_M4:
+	case QDF_PROTO_DHCP_DISCOVER:
+	case QDF_PROTO_DHCP_REQUEST:
+		if (dir == QDF_RX) {
+			hostapd_send_eapol_uevent(type, subtype, status);
+		}
+		break;
+	default:
+		break;
+	}
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
+
 	if (status == QDF_TX_RX_STATUS_INVALID)
 		qdf_nofl_info("%s %s: SA:" QDF_MAC_ADDR_FMT " DA:" QDF_MAC_ADDR_FMT,
 			      qdf_get_pkt_type_string(type, subtype),
@@ -1585,6 +1629,30 @@ void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
 }
 
 qdf_export_symbol(qdf_dp_log_proto_pkt_info);
+
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+//Add for softap connect EAPOL status
+void hostapd_send_eapol_uevent(uint8_t type, uint8_t subtype, uint8_t status)
+{
+	char event[] = "HOSTAPD_EVENT=sta_connect";
+	char sta_connect_event[30] = {'\0'};
+	char pkt_type[30] = {'\0'};
+	char pkt_statu[30] = {'\0'};
+	char *envp[5];
+
+	snprintf(sta_connect_event, sizeof(sta_connect_event), "STA_CONNECT_EVENT=auth");
+	snprintf(pkt_type, sizeof(pkt_type), "PKTTYPE=%s", qdf_get_pkt_type_string(type, subtype));
+	snprintf(pkt_statu, sizeof(pkt_statu), "PKTSTATU=%s", qdf_get_pkt_status_string(status));
+
+	envp[0] = (char *)&event;
+	envp[1] = (char *)&sta_connect_event;
+	envp[2] = (char *)&pkt_type;
+	envp[3] = (char *)&pkt_statu;
+	envp[4] = NULL;
+
+	hostapdConnSendUevent(envp);
+}
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
 
 /**
  * qdf_log_icmpv6_pkt() - log ICMPv6 packet
@@ -2094,6 +2162,20 @@ qdf_export_symbol(qdf_dp_trace_log_pkt);
 void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
 			      uint16_t index, uint8_t pdev_id, uint8_t info)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_mgmt_buf *buf =
+		(struct qdf_dp_trace_mgmt_buf *)record->data;
+
+	qdf_mem_zero(prepend_str, sizeof(prepend_str));
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, info, record);
+
+	DPTRACE_PRINT("%s [%d] [%s %s]",
+		      prepend_str,
+		      buf->vdev_id,
+		      qdf_dp_type_to_str(buf->type),
+		      qdf_dp_subtype_to_str(buf->subtype));
 }
 qdf_export_symbol(qdf_dp_display_mgmt_pkt);
 
@@ -2102,6 +2184,20 @@ void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 		uint8_t pdev_id, enum qdf_proto_type type,
 		enum qdf_proto_subtype subtype)
 {
+	struct qdf_dp_trace_mgmt_buf buf;
+	int buf_size = sizeof(struct qdf_dp_trace_mgmt_buf);
+
+	if (qdf_dp_enable_check(NULL, code, QDF_NA) == false)
+		return;
+
+	if (buf_size > QDF_DP_TRACE_RECORD_SIZE)
+		QDF_BUG(0);
+
+	buf.type = type;
+	buf.subtype = subtype;
+	buf.vdev_id = vdev_id;
+	qdf_dp_add_record(code, pdev_id, (uint8_t *)&buf, buf_size,
+			  NULL, 0, true);
 }
 qdf_export_symbol(qdf_dp_trace_mgmt_pkt);
 
@@ -2110,11 +2206,54 @@ qdf_dpt_display_credit_record_debugfs(qdf_debugfs_file_t file,
 				      struct qdf_dp_trace_record_s *record,
 				      uint32_t index)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_credit_record *buf =
+		(struct qdf_dp_trace_credit_record *)record->data;
+
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, 0, record);
+	if (buf->operation == QDF_OP_NA)
+		qdf_debugfs_printf(file, "%s [%s] [T: %d G0: %d G1: %d]\n",
+				   prepend_str,
+				   qdf_dp_credit_source_to_str(buf->source),
+				   buf->total_credits, buf->g0_credit,
+				   buf->g1_credit);
+	else
+		qdf_debugfs_printf(file,
+				   "%s [%s] [T: %d G0: %d G1: %d] [%s %d]\n",
+				   prepend_str,
+				   qdf_dp_credit_source_to_str(buf->source),
+				   buf->total_credits, buf->g0_credit,
+				   buf->g1_credit,
+				   qdf_dp_operation_to_str(buf->operation),
+				   buf->delta);
 }
 
 void qdf_dp_display_credit_record(struct qdf_dp_trace_record_s *record,
 				  uint16_t index, uint8_t pdev_id, uint8_t info)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_credit_record *buf =
+		(struct qdf_dp_trace_credit_record *)record->data;
+
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, info, record);
+	if (buf->operation == QDF_OP_NA)
+		DPTRACE_PRINT("%s [%s] [T: %d G0: %d G1: %d]",
+			      prepend_str,
+			      qdf_dp_credit_source_to_str(buf->source),
+			      buf->total_credits, buf->g0_credit,
+			      buf->g1_credit);
+	else
+		DPTRACE_PRINT("%s [%s] [T: %d G0: %d G1: %d] [%s %d]",
+			      prepend_str,
+			      qdf_dp_credit_source_to_str(buf->source),
+			      buf->total_credits, buf->g0_credit,
+			      buf->g1_credit,
+			      qdf_dp_operation_to_str(buf->operation),
+			      buf->delta);
 }
 
 void qdf_dp_trace_credit_record(enum QDF_CREDIT_UPDATE_SOURCE source,
@@ -2122,12 +2261,47 @@ void qdf_dp_trace_credit_record(enum QDF_CREDIT_UPDATE_SOURCE source,
 				int delta, int total_credits,
 				int g0_credit, int g1_credit)
 {
+	struct qdf_dp_trace_credit_record buf;
+	int buf_size = sizeof(struct qdf_dp_trace_credit_record);
+	enum QDF_DP_TRACE_ID code = QDF_DP_TRACE_TX_CREDIT_RECORD;
+
+	if (qdf_dp_enable_check(NULL, code, QDF_NA) == false)
+		return;
+
+	if (!(qdf_dp_get_proto_bitmap() & QDF_HL_CREDIT_TRACKING))
+		return;
+
+	if (buf_size > QDF_DP_TRACE_RECORD_SIZE)
+		QDF_BUG(0);
+
+	buf.source = source;
+	buf.operation = operation;
+	buf.delta = delta;
+	buf.total_credits = total_credits;
+	buf.g0_credit = g0_credit;
+	buf.g1_credit = g1_credit;
+
+	qdf_dp_add_record(code, QDF_TRACE_DEFAULT_PDEV_ID, (uint8_t *)&buf,
+			  buf_size, NULL, 0, false);
 }
 qdf_export_symbol(qdf_dp_trace_credit_record);
 
 void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
 			      uint16_t index, uint8_t pdev_id, uint8_t info)
 {
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_event_buf *buf =
+		(struct qdf_dp_trace_event_buf *)record->data;
+
+	qdf_mem_zero(prepend_str, sizeof(prepend_str));
+	qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+				   index, info, record);
+
+	DPTRACE_PRINT("%s [%d] [%s %s]",
+		      prepend_str,
+		      buf->vdev_id,
+		      qdf_dp_type_to_str(buf->type),
+		      qdf_dp_subtype_to_str(buf->subtype));
 }
 qdf_export_symbol(qdf_dp_display_event_record);
 
@@ -2145,6 +2319,20 @@ void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 		uint8_t pdev_id, enum qdf_proto_type type,
 		enum qdf_proto_subtype subtype)
 {
+	struct qdf_dp_trace_event_buf buf;
+	int buf_size = sizeof(struct qdf_dp_trace_event_buf);
+
+	if (qdf_dp_enable_check(NULL, code, QDF_NA) == false)
+		return;
+
+	if (buf_size > QDF_DP_TRACE_RECORD_SIZE)
+		QDF_BUG(0);
+
+	buf.type = type;
+	buf.subtype = subtype;
+	buf.vdev_id = vdev_id;
+	qdf_dp_add_record(code, pdev_id,
+			  (uint8_t *)&buf, buf_size, NULL, 0, true);
 }
 qdf_export_symbol(qdf_dp_trace_record_event);
 
@@ -2152,6 +2340,24 @@ qdf_export_symbol(qdf_dp_trace_record_event);
 void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 			      uint16_t index, uint8_t pdev_id, uint8_t info)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_proto_buf *buf =
+		(struct qdf_dp_trace_proto_buf *)record->data;
+
+	qdf_mem_zero(prepend_str, sizeof(prepend_str));
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, info, record);
+	DPTRACE_PRINT("%s [%d] [%s] SA: "
+		      QDF_MAC_ADDR_FMT " %s DA:"
+		      QDF_MAC_ADDR_FMT " proto priv data = %08x",
+		      prepend_str,
+		      buf->vdev_id,
+		      qdf_dp_subtype_to_str(buf->subtype),
+		      QDF_MAC_ADDR_REF(buf->sa.bytes),
+		      qdf_dp_dir_to_str(buf->dir),
+		      QDF_MAC_ADDR_REF(buf->da.bytes),
+		      buf->proto_priv_data);
 }
 qdf_export_symbol(qdf_dp_display_proto_pkt);
 
@@ -2160,12 +2366,58 @@ void qdf_dp_trace_proto_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 		enum qdf_proto_subtype subtype, enum qdf_proto_dir dir,
 		uint8_t pdev_id, bool print, uint32_t proto_priv_data)
 {
+	struct qdf_dp_trace_proto_buf buf;
+	int buf_size = sizeof(struct qdf_dp_trace_proto_buf);
+
+	if (qdf_dp_enable_check(NULL, code, dir) == false)
+		return;
+
+	if (buf_size > QDF_DP_TRACE_RECORD_SIZE)
+		QDF_BUG(0);
+
+	memcpy(&buf.sa, sa, QDF_NET_ETH_LEN);
+	memcpy(&buf.da, da, QDF_NET_ETH_LEN);
+	buf.dir = dir;
+	buf.type = type;
+	buf.subtype = subtype;
+	buf.vdev_id = vdev_id;
+	buf.proto_priv_data = proto_priv_data;
+	qdf_dp_add_record(code, pdev_id,
+			  (uint8_t *)&buf, buf_size, NULL, 0, print);
 }
 qdf_export_symbol(qdf_dp_trace_proto_pkt);
 
 void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *record,
 				uint16_t index, uint8_t pdev_id, uint8_t info)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_ptr_buf *buf =
+		(struct qdf_dp_trace_ptr_buf *)record->data;
+	bool is_free_pkt_ptr_record = false;
+
+	if ((record->code == QDF_DP_TRACE_FREE_PACKET_PTR_RECORD) ||
+	    (record->code == QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD))
+		is_free_pkt_ptr_record = true;
+
+	qdf_mem_zero(prepend_str, sizeof(prepend_str));
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, info, record);
+
+	if (loc < sizeof(prepend_str))
+		scnprintf(&prepend_str[loc], sizeof(prepend_str) - loc,
+			  "[msdu id %d %s %d]",
+			  buf->msdu_id,
+			  is_free_pkt_ptr_record ? "status" : "vdev_id",
+			  buf->status);
+
+	if (info & QDF_DP_TRACE_RECORD_INFO_LIVE) {
+		/* In live mode donot dump the contents of the cookie */
+		DPTRACE_PRINT("%s", prepend_str);
+	} else {
+		dump_dp_hex_trace(prepend_str, (uint8_t *)&buf->cookie,
+			sizeof(buf->cookie));
+	}
 }
 qdf_export_symbol(qdf_dp_display_ptr_record);
 
@@ -2296,6 +2548,37 @@ void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 		uint16_t msdu_id, uint16_t buf_arg_status,
 		enum qdf_dp_tx_rx_status qdf_tx_status)
 {
+	struct qdf_dp_trace_ptr_buf buf;
+	int buf_size = sizeof(struct qdf_dp_trace_ptr_buf);
+	enum qdf_proto_type pkt_type;
+	enum qdf_proto_subtype subtype;
+
+	pkt_type = qdf_dp_get_pkt_proto_type(nbuf);
+	if ((code == QDF_DP_TRACE_FREE_PACKET_PTR_RECORD ||
+	     code == QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD) &&
+	    qdf_dp_proto_log_enable_check(pkt_type, qdf_tx_status)) {
+		subtype = qdf_dp_get_pkt_subtype(nbuf, pkt_type);
+		qdf_dp_log_proto_pkt_info(nbuf->data + QDF_NBUF_SRC_MAC_OFFSET,
+					 nbuf->data + QDF_NBUF_DEST_MAC_OFFSET,
+					 pkt_type, subtype,
+					 QDF_TX, msdu_id, qdf_tx_status);
+		qdf_fill_wlan_connectivity_log(pkt_type, subtype,
+					       QDF_TX, qdf_tx_status,
+					       QDF_NBUF_CB_TX_VDEV_CTX(nbuf),
+					       nbuf->data);
+	}
+
+	if (qdf_dp_enable_check(nbuf, code, QDF_TX) == false)
+		return;
+
+	if (buf_size > QDF_DP_TRACE_RECORD_SIZE)
+		QDF_BUG(0);
+
+	qdf_mem_copy(&buf.cookie, data, size);
+	buf.msdu_id = msdu_id;
+	buf.status = buf_arg_status;
+	qdf_dp_add_record(code, pdev_id, (uint8_t *)&buf, buf_size, NULL, 0,
+			  QDF_NBUF_CB_DP_TRACE_PRINT(nbuf));
 }
 qdf_export_symbol(qdf_dp_trace_ptr);
 
@@ -2303,6 +2586,28 @@ void qdf_dp_trace_data_pkt(qdf_nbuf_t nbuf, uint8_t pdev_id,
 			   enum QDF_DP_TRACE_ID code, uint16_t msdu_id,
 			   enum qdf_proto_dir dir)
 {
+	struct qdf_dp_trace_data_buf buf;
+	enum qdf_proto_type pkt_type;
+
+	pkt_type = qdf_dp_get_pkt_proto_type(nbuf);
+	if (code == QDF_DP_TRACE_DROP_PACKET_RECORD &&
+	    qdf_dp_proto_log_enable_check(pkt_type, QDF_TX_RX_STATUS_DROP))
+		qdf_dp_log_proto_pkt_info(nbuf->data + QDF_NBUF_SRC_MAC_OFFSET,
+					 nbuf->data + QDF_NBUF_DEST_MAC_OFFSET,
+					 pkt_type,
+					 qdf_dp_get_pkt_subtype(nbuf, pkt_type),
+					 QDF_TX, msdu_id,
+					 QDF_TX_RX_STATUS_DROP);
+
+	buf.msdu_id = msdu_id;
+	if (!qdf_dp_enable_check(nbuf, code, dir))
+		return;
+
+	qdf_dp_add_record(code, pdev_id,
+			  nbuf ? qdf_nbuf_data(nbuf) : NULL,
+			  nbuf ? nbuf->len - nbuf->data_len : 0,
+			  (uint8_t *)&buf, sizeof(struct qdf_dp_trace_data_buf),
+			  (nbuf) ? QDF_NBUF_CB_DP_TRACE_PRINT(nbuf) : false);
 }
 
 qdf_export_symbol(qdf_dp_trace_data_pkt);
@@ -2310,6 +2615,32 @@ qdf_export_symbol(qdf_dp_trace_data_pkt);
 void qdf_dp_display_record(struct qdf_dp_trace_record_s *record,
 			   uint16_t index, uint8_t pdev_id, uint8_t info)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+
+	if (!(pdev_id == QDF_TRACE_DEFAULT_PDEV_ID ||
+		pdev_id == record->pdev_id))
+		return;
+
+	qdf_mem_zero(prepend_str, sizeof(prepend_str));
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, info, record);
+
+	switch (record->code) {
+	case  QDF_DP_TRACE_HDD_TX_TIMEOUT:
+		DPTRACE_PRINT(" %s: HDD TX Timeout", prepend_str);
+		break;
+	case  QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT:
+		DPTRACE_PRINT(" %s: HDD SoftAP TX Timeout", prepend_str);
+		break;
+	case  QDF_DP_TRACE_CE_FAST_PACKET_ERR_RECORD:
+		DPTRACE_PRINT(" %s: CE Fast Packet Error", prepend_str);
+		break;
+	case QDF_DP_TRACE_LI_DP_NULL_RX_PACKET_RECORD:
+	default:
+		dump_dp_hex_trace(prepend_str, record->data, record->size);
+		break;
+	};
 }
 qdf_export_symbol(qdf_dp_display_record);
 
@@ -2318,6 +2649,21 @@ qdf_dp_display_data_pkt_record(struct qdf_dp_trace_record_s *record,
 			       uint16_t rec_index, uint8_t pdev_id,
 			       uint8_t info)
 {
+	int loc;
+	char prepend_str[DP_TRACE_META_DATA_STRLEN + 10];
+	struct qdf_dp_trace_data_buf *buf =
+		(struct qdf_dp_trace_data_buf *)record->data;
+
+	qdf_mem_zero(prepend_str, sizeof(prepend_str));
+
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 rec_index, info, record);
+	if (loc < sizeof(prepend_str))
+		loc += snprintf(&prepend_str[loc], sizeof(prepend_str) - loc,
+				"[%d]", buf->msdu_id);
+	dump_dp_hex_trace(prepend_str,
+			  &record->data[sizeof(struct qdf_dp_trace_data_buf)],
+			  record->size);
 }
 
 /**
@@ -2333,6 +2679,13 @@ qdf_dp_display_data_pkt_record(struct qdf_dp_trace_record_s *record,
 void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 	uint8_t *data, uint8_t size, enum qdf_proto_dir dir)
 {
+
+	if (qdf_dp_enable_check(nbuf, code, dir) == false)
+		return;
+
+	qdf_dp_add_record(code, pdev_id, nbuf ? qdf_nbuf_data(nbuf) : NULL,
+			  size, NULL, 0,
+			  (nbuf) ? QDF_NBUF_CB_DP_TRACE_PRINT(nbuf) : false);
 }
 qdf_export_symbol(qdf_dp_trace);
 
@@ -2345,6 +2698,7 @@ qdf_export_symbol(qdf_dp_trace);
  */
 void qdf_dp_trace_spin_lock_init(void)
 {
+	spin_lock_init(&l_dp_trace_lock);
 }
 qdf_export_symbol(qdf_dp_trace_spin_lock_init);
 
@@ -2355,6 +2709,7 @@ qdf_export_symbol(qdf_dp_trace_spin_lock_init);
  */
 void qdf_dp_trace_disable_live_mode(void)
 {
+	g_qdf_dp_trace_data.force_live_mode = 0;
 }
 qdf_export_symbol(qdf_dp_trace_disable_live_mode);
 
@@ -2365,6 +2720,7 @@ qdf_export_symbol(qdf_dp_trace_disable_live_mode);
  */
 void qdf_dp_trace_enable_live_mode(void)
 {
+	g_qdf_dp_trace_data.force_live_mode = 1;
 }
 qdf_export_symbol(qdf_dp_trace_enable_live_mode);
 
@@ -2375,11 +2731,44 @@ qdf_export_symbol(qdf_dp_trace_enable_live_mode);
  */
 void qdf_dp_trace_clear_buffer(void)
 {
+	g_qdf_dp_trace_data.head = INVALID_QDF_DP_TRACE_ADDR;
+	g_qdf_dp_trace_data.tail = INVALID_QDF_DP_TRACE_ADDR;
+	g_qdf_dp_trace_data.num = 0;
+	g_qdf_dp_trace_data.dump_counter = 0;
+	g_qdf_dp_trace_data.num_records_to_dump = MAX_QDF_DP_TRACE_RECORDS;
+	if (g_qdf_dp_trace_data.enable)
+		memset(g_qdf_dp_trace_tbl, 0,
+		       MAX_QDF_DP_TRACE_RECORDS *
+		       sizeof(struct qdf_dp_trace_record_s));
 }
 qdf_export_symbol(qdf_dp_trace_clear_buffer);
 
 void qdf_dp_trace_dump_stats(void)
 {
+		DPTRACE_PRINT("STATS |DPT: tx %u rx %u icmp(%u %u) arp(%u %u) icmpv6(%u %u %u %u %u %u) dhcp(%u %u %u %u %u %u) eapol(%u %u %u %u %u)",
+			      g_qdf_dp_trace_data.tx_count,
+			      g_qdf_dp_trace_data.rx_count,
+			      g_qdf_dp_trace_data.icmp_req,
+			      g_qdf_dp_trace_data.icmp_resp,
+			      g_qdf_dp_trace_data.arp_req,
+			      g_qdf_dp_trace_data.arp_resp,
+			      g_qdf_dp_trace_data.icmpv6_req,
+			      g_qdf_dp_trace_data.icmpv6_resp,
+			      g_qdf_dp_trace_data.icmpv6_ns,
+			      g_qdf_dp_trace_data.icmpv6_na,
+			      g_qdf_dp_trace_data.icmpv6_rs,
+			      g_qdf_dp_trace_data.icmpv6_ra,
+			      g_qdf_dp_trace_data.dhcp_disc,
+			      g_qdf_dp_trace_data.dhcp_off,
+			      g_qdf_dp_trace_data.dhcp_req,
+			      g_qdf_dp_trace_data.dhcp_ack,
+			      g_qdf_dp_trace_data.dhcp_nack,
+			      g_qdf_dp_trace_data.dhcp_others,
+			      g_qdf_dp_trace_data.eapol_m1,
+			      g_qdf_dp_trace_data.eapol_m2,
+			      g_qdf_dp_trace_data.eapol_m3,
+			      g_qdf_dp_trace_data.eapol_m4,
+			      g_qdf_dp_trace_data.eapol_others);
 }
 qdf_export_symbol(qdf_dp_trace_dump_stats);
 
@@ -2395,7 +2784,20 @@ qdf_export_symbol(qdf_dp_trace_dump_stats);
 static void qdf_dpt_dump_hex_trace_debugfs(qdf_debugfs_file_t file,
 				char *str, uint8_t *buf, uint8_t buf_len)
 {
+	unsigned char linebuf[BUFFER_SIZE];
+	const u8 *ptr = buf;
+	int i, linelen, remaining = buf_len;
 
+	/* Dump the bytes in the last line */
+	for (i = 0; i < buf_len; i += ROW_SIZE) {
+		linelen = min(remaining, ROW_SIZE);
+		remaining -= ROW_SIZE;
+
+		hex_dump_to_buffer(ptr + i, linelen, ROW_SIZE, 1,
+				linebuf, sizeof(linebuf), false);
+
+		qdf_debugfs_printf(file, "%s %s\n", str, linebuf);
+	}
 }
 
 /**
@@ -2410,7 +2812,23 @@ static void qdf_dpt_display_proto_pkt_debugfs(qdf_debugfs_file_t file,
 				struct qdf_dp_trace_record_s *record,
 				uint32_t index)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_proto_buf *buf =
+		(struct qdf_dp_trace_proto_buf *)record->data;
 
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, 0, record);
+	qdf_debugfs_printf(file, "%s [%d] [%s] SA: "
+			   QDF_MAC_ADDR_FMT " %s DA: "
+			   QDF_MAC_ADDR_FMT,
+			   prepend_str,
+			   buf->vdev_id,
+			   qdf_dp_subtype_to_str(buf->subtype),
+			   QDF_MAC_ADDR_REF(buf->sa.bytes),
+			   qdf_dp_dir_to_str(buf->dir),
+			   QDF_MAC_ADDR_REF(buf->da.bytes));
+	qdf_debugfs_printf(file, "\n");
 }
 
 /**
@@ -2425,6 +2843,20 @@ static void qdf_dpt_display_mgmt_pkt_debugfs(qdf_debugfs_file_t file,
 				struct qdf_dp_trace_record_s *record,
 				uint32_t index)
 {
+
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_mgmt_buf *buf =
+		(struct qdf_dp_trace_mgmt_buf *)record->data;
+
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, 0, record);
+
+	qdf_debugfs_printf(file, "%s [%d] [%s %s]\n",
+			   prepend_str,
+			   buf->vdev_id,
+			   qdf_dp_type_to_str(buf->type),
+			   qdf_dp_subtype_to_str(buf->subtype));
 }
 
 /**
@@ -2439,6 +2871,17 @@ static void qdf_dpt_display_event_record_debugfs(qdf_debugfs_file_t file,
 				struct qdf_dp_trace_record_s *record,
 				uint32_t index)
 {
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_event_buf *buf =
+		(struct qdf_dp_trace_event_buf *)record->data;
+
+	qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+				   index, 0, record);
+	qdf_debugfs_printf(file, "%s [%d] [%s %s]\n",
+			   prepend_str,
+			   buf->vdev_id,
+			   qdf_dp_type_to_str(buf->type),
+			   qdf_dp_subtype_to_str(buf->subtype));
 }
 
 /**
@@ -2453,6 +2896,25 @@ static void qdf_dpt_display_ptr_record_debugfs(qdf_debugfs_file_t file,
 				struct qdf_dp_trace_record_s *record,
 				uint32_t index)
 {
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	int loc;
+	struct qdf_dp_trace_ptr_buf *buf =
+		(struct qdf_dp_trace_ptr_buf *)record->data;
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, 0, record);
+
+	if (loc < sizeof(prepend_str))
+		scnprintf(&prepend_str[loc], sizeof(prepend_str) - loc,
+			  "[msdu id %d %s %d]",
+			  buf->msdu_id,
+			  (record->code ==
+				QDF_DP_TRACE_FREE_PACKET_PTR_RECORD) ?
+			  "status" : "vdev_id",
+			  buf->status);
+
+	qdf_dpt_dump_hex_trace_debugfs(file, prepend_str,
+				       (uint8_t *)&buf->cookie,
+				       sizeof(buf->cookie));
 }
 
 /**
@@ -2467,19 +2929,230 @@ static void qdf_dpt_display_record_debugfs(qdf_debugfs_file_t file,
 				struct qdf_dp_trace_record_s *record,
 				uint32_t index)
 {
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_data_buf *buf =
+		(struct qdf_dp_trace_data_buf *)record->data;
+
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, 0, record);
+	if (loc < sizeof(prepend_str))
+		loc += snprintf(&prepend_str[loc], sizeof(prepend_str) - loc,
+				"[%d]", buf->msdu_id);
+	qdf_dpt_dump_hex_trace_debugfs(file, prepend_str,
+				       record->data, record->size);
 }
 
 uint32_t qdf_dpt_get_curr_pos_debugfs(qdf_debugfs_file_t file,
 				      enum qdf_dpt_debugfs_state state)
 {
-	return 0;
+	uint32_t i = 0;
+	uint32_t tail;
+	uint32_t count = g_qdf_dp_trace_data.num;
+
+	if (!g_qdf_dp_trace_data.enable) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: Tracing Disabled", __func__);
+		return QDF_STATUS_E_EMPTY;
+	}
+
+	if (!count) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: no packets", __func__);
+		return QDF_STATUS_E_EMPTY;
+	}
+
+	if (state == QDF_DPT_DEBUGFS_STATE_SHOW_IN_PROGRESS)
+		return g_qdf_dp_trace_data.curr_pos;
+
+	qdf_debugfs_printf(file,
+		"DPT: config - bitmap 0x%x verb %u #rec %u rec_requested %u live_config %u thresh %u time_limit %u\n",
+		g_qdf_dp_trace_data.proto_bitmap,
+		g_qdf_dp_trace_data.verbosity,
+		g_qdf_dp_trace_data.no_of_record,
+		g_qdf_dp_trace_data.num_records_to_dump,
+		g_qdf_dp_trace_data.live_mode_config,
+		g_qdf_dp_trace_data.high_tput_thresh,
+		g_qdf_dp_trace_data.thresh_time_limit);
+
+	qdf_debugfs_printf(file,
+		"STATS |DPT: icmp(%u %u) arp(%u %u) icmpv6(%u %u %u %u %u %u) dhcp(%u %u %u %u %u %u) eapol(%u %u %u %u %u)\n",
+		g_qdf_dp_trace_data.icmp_req,
+		g_qdf_dp_trace_data.icmp_resp,
+		g_qdf_dp_trace_data.arp_req,
+		g_qdf_dp_trace_data.arp_resp,
+		g_qdf_dp_trace_data.icmpv6_req,
+		g_qdf_dp_trace_data.icmpv6_resp,
+		g_qdf_dp_trace_data.icmpv6_ns,
+		g_qdf_dp_trace_data.icmpv6_na,
+		g_qdf_dp_trace_data.icmpv6_rs,
+		g_qdf_dp_trace_data.icmpv6_ra,
+		g_qdf_dp_trace_data.dhcp_disc,
+		g_qdf_dp_trace_data.dhcp_off,
+		g_qdf_dp_trace_data.dhcp_req,
+		g_qdf_dp_trace_data.dhcp_ack,
+		g_qdf_dp_trace_data.dhcp_nack,
+		g_qdf_dp_trace_data.dhcp_others,
+		g_qdf_dp_trace_data.eapol_m1,
+		g_qdf_dp_trace_data.eapol_m2,
+		g_qdf_dp_trace_data.eapol_m3,
+		g_qdf_dp_trace_data.eapol_m4,
+		g_qdf_dp_trace_data.eapol_others);
+
+	qdf_debugfs_printf(file,
+		"DPT: Total Records: %d, Head: %d, Tail: %d\n",
+		g_qdf_dp_trace_data.num, g_qdf_dp_trace_data.head,
+		g_qdf_dp_trace_data.tail);
+
+	spin_lock_bh(&l_dp_trace_lock);
+	if (g_qdf_dp_trace_data.head != INVALID_QDF_DP_TRACE_ADDR) {
+		i = g_qdf_dp_trace_data.head;
+		tail = g_qdf_dp_trace_data.tail;
+
+		if (count > g_qdf_dp_trace_data.num)
+			count = g_qdf_dp_trace_data.num;
+
+		if (tail >= (count - 1))
+			i = tail - count + 1;
+		else if (count != MAX_QDF_DP_TRACE_RECORDS)
+			i = MAX_QDF_DP_TRACE_RECORDS - ((count - 1) -
+						     tail);
+		g_qdf_dp_trace_data.curr_pos = 0;
+		g_qdf_dp_trace_data.saved_tail = tail;
+	}
+	spin_unlock_bh(&l_dp_trace_lock);
+
+	return g_qdf_dp_trace_data.saved_tail;
 }
 qdf_export_symbol(qdf_dpt_get_curr_pos_debugfs);
 
 QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
 				      uint32_t curr_pos)
 {
-	return 0;
+	struct qdf_dp_trace_record_s p_record;
+	uint32_t i = curr_pos;
+	uint16_t num_records_to_dump = g_qdf_dp_trace_data.num_records_to_dump;
+
+	if (!g_qdf_dp_trace_data.enable) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Tracing Disabled", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (num_records_to_dump > g_qdf_dp_trace_data.num)
+		num_records_to_dump = g_qdf_dp_trace_data.num;
+
+	/*
+	 * Max dp trace record size should always be less than
+	 * QDF_DP_TRACE_PREPEND_STR_SIZE(100) + BUFFER_SIZE(121).
+	 */
+	if (WARN_ON(QDF_DP_TRACE_MAX_RECORD_SIZE <
+				QDF_DP_TRACE_PREPEND_STR_SIZE + BUFFER_SIZE))
+		return QDF_STATUS_E_FAILURE;
+
+	spin_lock_bh(&l_dp_trace_lock);
+	p_record = g_qdf_dp_trace_tbl[i];
+	spin_unlock_bh(&l_dp_trace_lock);
+
+	for (;; ) {
+		/*
+		 * Initially we get file as 1 page size, and
+		 * if remaining size in file is less than one record max size,
+		 * then return so that it gets an extra page.
+		 */
+		if ((file->size - file->count) < QDF_DP_TRACE_MAX_RECORD_SIZE) {
+			spin_lock_bh(&l_dp_trace_lock);
+			g_qdf_dp_trace_data.curr_pos = i;
+			spin_unlock_bh(&l_dp_trace_lock);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		switch (p_record.code) {
+		case QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD:
+		case QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD:
+		case QDF_DP_TRACE_FREE_PACKET_PTR_RECORD:
+			qdf_dpt_display_ptr_record_debugfs(file, &p_record, i);
+			break;
+
+		case QDF_DP_TRACE_EAPOL_PACKET_RECORD:
+		case QDF_DP_TRACE_DHCP_PACKET_RECORD:
+		case QDF_DP_TRACE_ARP_PACKET_RECORD:
+		case QDF_DP_TRACE_ICMP_PACKET_RECORD:
+		case QDF_DP_TRACE_ICMPv6_PACKET_RECORD:
+			qdf_dpt_display_proto_pkt_debugfs(file, &p_record, i);
+			break;
+
+		case QDF_DP_TRACE_TX_CREDIT_RECORD:
+			qdf_dpt_display_credit_record_debugfs(file, &p_record,
+							      i);
+			break;
+
+		case QDF_DP_TRACE_MGMT_PACKET_RECORD:
+			qdf_dpt_display_mgmt_pkt_debugfs(file, &p_record, i);
+			break;
+
+		case QDF_DP_TRACE_EVENT_RECORD:
+			qdf_dpt_display_event_record_debugfs(file, &p_record,
+							     i);
+			break;
+
+		case QDF_DP_TRACE_HDD_TX_TIMEOUT:
+			qdf_debugfs_printf(
+					file, "DPT: %04d: %llu %s\n",
+					i, p_record.time,
+					qdf_dp_code_to_string(p_record.code));
+			qdf_debugfs_printf(file, "HDD TX Timeout\n");
+			break;
+
+		case QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT:
+			qdf_debugfs_printf(
+					file, "DPT: %04d: %llu %s\n",
+					i, p_record.time,
+					qdf_dp_code_to_string(p_record.code));
+			qdf_debugfs_printf(file, "HDD SoftAP TX Timeout\n");
+			break;
+
+		case QDF_DP_TRACE_CE_FAST_PACKET_ERR_RECORD:
+			qdf_debugfs_printf(
+					file, "DPT: %04d: %llu %s\n",
+					i, p_record.time,
+					qdf_dp_code_to_string(p_record.code));
+			qdf_debugfs_printf(file, "CE Fast Packet Error\n");
+			break;
+
+		case QDF_DP_TRACE_MAX:
+			qdf_debugfs_printf(file,
+				"%s: QDF_DP_TRACE_MAX event should not be generated\n",
+				__func__);
+			break;
+
+		case QDF_DP_TRACE_HDD_TX_PACKET_RECORD:
+		case QDF_DP_TRACE_HDD_RX_PACKET_RECORD:
+		case QDF_DP_TRACE_TX_PACKET_RECORD:
+		case QDF_DP_TRACE_RX_PACKET_RECORD:
+		case QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD:
+		case QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD:
+
+		default:
+			qdf_dpt_display_record_debugfs(file, &p_record, i);
+			break;
+		}
+
+		if (++g_qdf_dp_trace_data.dump_counter == num_records_to_dump)
+			break;
+
+		spin_lock_bh(&l_dp_trace_lock);
+		if (i == 0)
+			i = MAX_QDF_DP_TRACE_RECORDS;
+
+		i -= 1;
+		p_record = g_qdf_dp_trace_tbl[i];
+		spin_unlock_bh(&l_dp_trace_lock);
+	}
+
+	g_qdf_dp_trace_data.dump_counter = 0;
+
+	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(qdf_dpt_dump_stats_debugfs);
 
@@ -2793,7 +3466,6 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_MON] = {"MONITOR"},
 	[QDF_MODULE_ID_AFC] = {"AFC"},
 	[QDF_MODULE_ID_TWT] = {"TWT"},
-	[QDF_MODULE_ID_COAP] = {"COAP"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 qdf_export_symbol(g_qdf_category_name);
@@ -2997,6 +3669,8 @@ void qdf_trace_msg_cmn(unsigned int idx,
 		vscnprintf(str_buffer + n, QDF_TRACE_BUFFER_SIZE - n,
 			   str_format, val);
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE)
+		wlan_log_to_user(verbose, (char *)str_buffer,
+				 strlen(str_buffer));
 		if (qdf_unlikely(qdf_log_dump_at_kernel_enable))
 			print_to_console(str_buffer);
 #else
@@ -3366,7 +4040,6 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_MON] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_MGMT_RX_REO] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_TWT] = QDF_TRACE_LEVEL_ERROR,
-		[QDF_MODULE_ID_COAP] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 	};
 
@@ -3705,19 +4378,30 @@ qdf_export_symbol(QDF_PRINT_INFO);
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 void qdf_logging_init(void)
 {
+	wlan_logging_sock_init_svc();
+	nl_srv_init(NULL, WLAN_NLINK_PROTO_FAMILY);
+	wlan_logging_notifier_init(qdf_log_dump_at_kernel_enable);
+	wlan_logging_set_flush_timer(qdf_log_flush_timer_period);
 }
 
 void qdf_logging_exit(void)
 {
+	wlan_logging_notifier_deinit(qdf_log_dump_at_kernel_enable);
+	nl_srv_exit();
+	wlan_logging_sock_deinit_svc();
 }
 
 int qdf_logging_set_flush_timer(uint32_t milliseconds)
 {
-	return QDF_STATUS_SUCCESS;
+	if (wlan_logging_set_flush_timer(milliseconds) == 0)
+		return QDF_STATUS_SUCCESS;
+	else
+		return QDF_STATUS_E_FAILURE;
 }
 
 void qdf_logging_flush_logs(void)
 {
+	wlan_flush_host_logs_for_fatal();
 }
 
 #else
@@ -3777,7 +4461,16 @@ qdf_export_symbol(qdf_get_pidx);
 #ifdef CONFIG_SLUB_DEBUG
 void __qdf_bug(void)
 {
-	BUG();
+//#ifndef OPLUS_BUG_STABILITY
+//modify for: close bug in user build
+//	BUG();
+//#else /* OPLUS_BUG_STABILITY */
+	if (AGING == get_eng_version()) {
+		BUG();
+	} else {
+		WARN_ON(1);
+	}
+//#endif /* OPLUS_BUG_STABILITY */
 }
 qdf_export_symbol(__qdf_bug);
 #endif /* CONFIG_SLUB_DEBUG */

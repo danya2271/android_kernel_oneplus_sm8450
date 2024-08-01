@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -411,6 +410,10 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 		 */
 		ol_txrx_err("peer not found or peer ID is %d invalid",
 			    peer_id);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_MAP_EVENT,
+				    peer_id, peer_mac_addr,
+				    peer, 0, 0);
 
 		return;
 	}
@@ -451,6 +454,12 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 	   "%s: peer %pK ID %d peer_id[%d] peer_id_ref_cnt %d peer->ref_cnt %d",
 	   __func__, peer, peer_id, i, peer_id_ref_cnt, peer_ref_cnt);
+	wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+			    DEBUG_PEER_MAP_EVENT,
+			    peer_id, &peer->mac_addr.raw, peer,
+			    peer_id_ref_cnt,
+			    peer_ref_cnt);
+
 
 	if (status) {
 		/* TBDXXX: assert for now */
@@ -629,6 +638,9 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	if (peer_id == HTT_INVALID_PEER) {
 		ol_txrx_err(
 		   "invalid peer ID %d\n", peer_id);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_UNMAP_EVENT,
+				    peer_id, NULL, NULL, 0, 0x100);
 		return;
 	}
 
@@ -659,6 +671,9 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		ref_cnt = qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
 							del_peer_id_ref_cnt);
 		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_UNMAP_EVENT,
+				    peer_id, NULL, NULL, ref_cnt, 0x101);
 		ol_txrx_dbg("peer already deleted, peer_id %d del_ref_cnt:%d del_peer_id_ref_cnt %d",
 			    peer_id, del_ref_cnt, ref_cnt);
 		return;
@@ -673,6 +688,9 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		 */
 		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		ol_txrx_info("peer not found for peer_id %d", peer_id);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_UNMAP_EVENT,
+				    peer_id, NULL, NULL, 0, 0x102);
 		return;
 	}
 
@@ -691,6 +709,11 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
 
 	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+
+	wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+			    DEBUG_PEER_UNMAP_EVENT,
+			    peer_id, &peer->mac_addr.raw, peer, ref_cnt,
+			    qdf_atomic_read(&peer->ref_cnt));
 
 	/*
 	 * Remove a reference to the peer.
@@ -764,11 +787,9 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 	}
 	qdf_atomic_init(&peer->del_ref_cnt);
-	if (num_deleted_maps != 0) {
-		qdf_atomic_add(num_deleted_maps, &peer->del_ref_cnt);
-		TAILQ_INSERT_TAIL(&pdev->inactive_peer_list, peer,
-				  inactive_peer_list_elem);
-	}
+	qdf_atomic_add(num_deleted_maps, &peer->del_ref_cnt);
+	TAILQ_INSERT_TAIL(&pdev->inactive_peer_list, peer,
+			  inactive_peer_list_elem);
 	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 
 	/* Debug print the information after releasing bh spinlock */

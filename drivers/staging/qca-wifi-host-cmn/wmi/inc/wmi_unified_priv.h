@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,14 +101,6 @@
 
 #if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
 #include <wlan_twt_public_structs.h>
-#endif
-
-#ifdef WLAN_FEATURE_COAP
-#include "wlan_coap_public_structs.h"
-#endif
-
-#ifdef FEATURE_SAR_LIMITS
-#include <wma_sar_public_structs.h>
 #endif
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
@@ -2132,11 +2124,6 @@ QDF_STATUS (*extract_sar_cap_service_ready_ext)(
 		uint8_t *evt_buf,
 		struct wlan_psoc_host_service_ext_param *ext_param);
 
-QDF_STATUS (*extract_sar_cap_service_ready_ext2)(
-		wmi_unified_t wmi_handle,
-		uint8_t *evt_buf,
-		struct wlan_psoc_host_service_ext2_param *ext2_param);
-
 #ifdef WLAN_SUPPORT_TWT
 QDF_STATUS (*extract_twt_cap_service_ready_ext2)(
 		wmi_unified_t wmi_handle,
@@ -2914,37 +2901,6 @@ QDF_STATUS (*extract_quiet_offload_event)(
 				wmi_unified_t wmi_handle, void *evt_buf,
 				struct vdev_sta_quiet_event *quiet_event);
 #endif
-
-#ifdef WLAN_FEATURE_COAP
-QDF_STATUS
-(*send_coap_add_pattern_cmd)(wmi_unified_t wmi_handle,
-			     struct coap_offload_reply_param *param);
-
-QDF_STATUS
-(*send_coap_del_pattern_cmd)(wmi_unified_t wmi_handle,
-			     uint8_t vdev_id, uint32_t pattern_id);
-
-QDF_STATUS
-(*send_coap_add_keepalive_pattern_cmd)(wmi_unified_t wmi_handle,
-		struct coap_offload_periodic_tx_param *param);
-
-QDF_STATUS
-(*send_coap_del_keepalive_pattern_cmd)(wmi_unified_t wmi_handle,
-				       uint8_t vdev_id, uint32_t pattern_id);
-
-QDF_STATUS
-(*send_coap_cache_get_cmd)(wmi_unified_t wmi_handle,
-			   uint8_t vdev_id, uint32_t pattern_id);
-
-QDF_STATUS (*extract_coap_buf_info)(wmi_unified_t wmi_handle, void *evt_buf,
-				    struct coap_buf_info *info);
-#endif
-
-#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
-QDF_STATUS
-(*send_peer_txq_flush_config_cmd)(wmi_unified_t wmi_handle,
-				  struct peer_txq_flush_config_params *param);
-#endif
 };
 
 /* Forward declartion for psoc*/
@@ -3090,7 +3046,6 @@ struct wmi_soc {
 	/* WMI service bitmap received from target */
 	uint32_t *wmi_service_bitmap;
 	uint32_t *wmi_ext_service_bitmap;
-	uint32_t wmi_ext2_service_bitmap_len;
 	uint32_t *wmi_ext2_service_bitmap;
 	uint32_t services[wmi_services_max];
 	uint16_t wmi_max_cmds;
@@ -3529,14 +3484,6 @@ static inline void wmi_mc_cp_stats_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif /* QCA_SUPPORT_MC_CP_STATS */
-
-#ifdef WLAN_FEATURE_COAP
-void wmi_coap_attach_tlv(wmi_unified_t wmi_handle);
-#else
-static inline void wmi_coap_attach_tlv(wmi_unified_t wmi_handle)
-{
-}
-#endif
 
 /*
  * wmi_map_ch_width() - map wmi channel width to host channel width

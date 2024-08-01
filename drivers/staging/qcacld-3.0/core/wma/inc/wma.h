@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -681,6 +681,8 @@ struct wma_invalid_peer_params {
  * @ns_offload_req: cached ns offload request
  * @rcpi_req: rcpi request
  * @in_bmps: Whether bmps for this interface has been enabled
+ * @vdev_set_key_wakelock: wakelock to protect vdev set key op with firmware
+ * @vdev_set_key_runtime_wakelock: runtime pm wakelock for set key
  * @ch_freq: channel frequency
  * @roam_scan_stats_req: cached roam scan stats request
  * @wma_invalid_peer_params: structure storing invalid peer params
@@ -727,6 +729,8 @@ struct wma_txrx_node {
 	bool in_bmps;
 	struct beacon_filter_param beacon_filter;
 	bool beacon_filter_enabled;
+	qdf_wake_lock_t vdev_set_key_wakelock;
+	qdf_runtime_lock_t vdev_set_key_runtime_wakelock;
 	struct roam_synch_frame_ind roam_synch_frame_ind;
 	bool is_waiting_for_key;
 	uint32_t ch_freq;
@@ -854,6 +858,7 @@ struct wma_wlm_stats_data {
  * @log_completion_timer: log completion timer
  * @old_hw_mode_index: Previous configured HW mode index
  * @new_hw_mode_index: Current configured HW mode index
+ * @peer_authorized_cb: peer authorized hdd callback
  * @ocb_config_req: OCB request context
  * @self_gen_frm_pwr: Self-generated frame power
  * @tx_chain_mask_cck: Is the CCK tx chain mask enabled
@@ -891,6 +896,7 @@ struct wma_wlm_stats_data {
  * @tx_fail_cnt: Number of TX failures
  * @wlm_data: Data required for WLM req and resp handling
  * @he_cap: 802.11ax capabilities
+ * @bandcapability: band capability configured through ini
  * @tx_bfee_8ss_enabled: Is Tx Beamformee support for 8x8 enabled?
  * @in_imps: Is device in Idle Mode Power Save?
  * @dynamic_nss_chains_update: per vdev nss, chains update
@@ -899,10 +905,6 @@ struct wma_wlm_stats_data {
  * * @fw_therm_throt_support: FW Supports thermal throttling?
  * @eht_cap: 802.11be capabilities
  * @set_hw_mode_resp_status: Set HW mode response status
- * @pagefault_wakeups_ts: Stores timestamps at which host wakes up by fw
- * because of pagefaults
- * @num_page_fault_wakeups: Stores the number of times host wakes up by fw
- * because of pagefaults
  *
  * This structure is the global wma context.  It contains global wma
  * module parameters and handles of other modules.
@@ -979,6 +981,7 @@ typedef struct {
 	qdf_mc_timer_t log_completion_timer;
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
+	wma_peer_authorized_fp peer_authorized_cb;
 	struct sir_ocb_config *ocb_config_req;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;
@@ -1021,6 +1024,7 @@ typedef struct {
 #ifdef WLAN_FEATURE_11AX
 	struct he_capability he_cap;
 #endif
+	uint8_t bandcapability;
 	bool tx_bfee_8ss_enabled;
 	bool in_imps;
 	bool dynamic_nss_chains_support;
@@ -1035,8 +1039,6 @@ typedef struct {
 	qdf_wake_lock_t sap_d3_wow_wake_lock;
 	qdf_wake_lock_t go_d3_wow_wake_lock;
 	enum set_hw_mode_status set_hw_mode_resp_status;
-	qdf_time_t *pagefault_wakeups_ts;
-	uint8_t num_page_fault_wakeups;
 } t_wma_handle, *tp_wma_handle;
 
 /**

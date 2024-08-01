@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -226,6 +226,8 @@ struct csr_scanstruct {
 	struct csr_channel base_channels;  /* The channel base to work on */
 	tDblLinkList channelPowerInfoList24;
 	tDblLinkList channelPowerInfoList5G;
+	uint8_t countryCodeDefault[REG_ALPHA2_LEN + 1];
+	uint8_t countryCodeCurrent[REG_ALPHA2_LEN + 1];
 	/*
 	 * Customer wants to optimize the scan time. Avoiding scans(passive)
 	 * on DFS channels while swipping through both bands can save some time
@@ -464,12 +466,12 @@ struct csr_roamstruct {
  * The function return the min of supported dot11 mode and vdev type dot11mode
  * for given vdev type.
  *
- * Return: mlme_dot11_mode
+ * Return:csr_cfgdot11mode
  */
-enum mlme_dot11_mode
+enum csr_cfgdot11mode
 csr_get_vdev_dot11_mode(struct mac_context *mac,
 			enum QDF_OPMODE device_mode,
-			enum mlme_dot11_mode curr_dot11_mode);
+			enum csr_cfgdot11mode curr_dot11_mode);
 
 QDF_STATUS csr_get_channel_and_power_list(struct mac_context *mac);
 
@@ -506,7 +508,7 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		struct csr_config_params *pParam);
 QDF_STATUS csr_msg_processor(struct mac_context *mac, void *msg_buf);
 QDF_STATUS csr_open(struct mac_context *mac);
-QDF_STATUS csr_init_chan_list(struct mac_context *mac);
+QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2);
 QDF_STATUS csr_close(struct mac_context *mac);
 QDF_STATUS csr_start(struct mac_context *mac);
 QDF_STATUS csr_stop(struct mac_context *mac);

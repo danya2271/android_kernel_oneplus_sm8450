@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,15 +62,6 @@
 #include "wma.h"
 #include "pktlog_ac.h"
 #include <cdp_txrx_misc.h>
-#endif
-
-/*
- * The following commit was introduced in v5.17:
- * cead18552660 ("exit: Rename complete_and_exit to kthread_complete_and_exit")
- * Use the old name for kernels before 5.17
- */
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0))
-#define kthread_complete_and_exit(c, s) complete_and_exit(c, s)
 #endif
 
 #define MAX_NUM_PKT_LOG 32
@@ -668,7 +659,6 @@ static int send_filled_buffers_to_user(void)
 	static int nlmsg_seq;
 	unsigned long flags;
 	static int rate_limit;
-	void *out;
 
 	while (!list_empty(&gwlan_logging.filled_list)
 	       && !gwlan_logging.exit) {
@@ -715,12 +705,7 @@ static int send_filled_buffers_to_user(void)
 
 		wnl = (tAniNlHdr *) nlh;
 		wnl->radio = plog_msg->radio;
-		/* kernel FORTIFY_SOURCE may warn when multiple struct
-		 * are copied using memcpy. So, to avoid, assign a
-		 * void pointer to the struct and copy using memcpy
-		 */
-		out = &wnl->wmsg;
-		memcpy(out, plog_msg->logbuf,
+		memcpy(&wnl->wmsg, plog_msg->logbuf,
 		       plog_msg->filled_length + sizeof(tAniHdr));
 
 		spin_lock_irqsave(&gwlan_logging.spin_lock, flags);
@@ -792,7 +777,7 @@ static void send_flush_completion_to_user(uint8_t ring_id)
 	wlan_report_log_completion(is_fatal, indicator, reason_code, ring_id);
 
 	if (recovery_needed)
-		cds_trigger_recovery(QDF_FLUSH_LOGS);
+		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 }
 #endif
 
@@ -938,7 +923,7 @@ static int wlan_logging_thread(void *Arg)
 			  &gwlan_logging.eventFlag);
 	}
 
-	kthread_complete_and_exit(&gwlan_logging.shutdown_comp, 0);
+	complete_and_exit(&gwlan_logging.shutdown_comp, 0);
 
 	return 0;
 }
@@ -957,6 +942,7 @@ qdf_export_symbol(wlan_set_console_log_levels);
 
 static void flush_log_buffers_timer(void *dummy)
 {
+	wlan_flush_host_logs_for_fatal();
 }
 
 int wlan_logging_set_flush_timer(uint32_t milliseconds)
@@ -1684,6 +1670,7 @@ static bool check_txrx_packetdump_count(uint8_t pdev_id)
 		LOGGING_TRACE(QDF_TRACE_LEVEL_DEBUG,
 			"%s gtx_count: %d grx_count: %d deregister packetdump",
 			__func__, gtx_count, grx_count);
+		wlan_deregister_txrx_packetdump(pdev_id);
 		return 1;
 	}
 	return 0;

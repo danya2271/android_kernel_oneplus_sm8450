@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -726,66 +726,41 @@ static inline QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
 }
 #endif /* WLAN_FEATURE_FILS_SK */
 
-/**
- * cm_get_vdev_id_with_active_vdev_op() - Get vdev id from serialization
- * pending queue for which disconnect or connect is ongoing
- * @pdev: pdev common object
- * @object: vdev object
- * @arg: vdev operation search arg
- *
- * Return: None
- */
-static void cm_get_vdev_id_with_active_vdev_op(struct wlan_objmgr_pdev *pdev,
-					       void *object, void *arg)
+static void cm_get_vdev_id_from_bssid(struct wlan_objmgr_pdev *pdev,
+				   void *object, void *arg)
 {
-	struct vdev_op_search_arg *vdev_arg = arg;
+	uint8_t *vdev_id = arg;
 	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	enum QDF_OPMODE opmode = wlan_vdev_mlme_get_opmode(vdev);
 
-	if (!vdev_arg)
+	if (!vdev_id)
 		return;
 
-	/* Avoid same vdev id check */
-	if (vdev_arg->current_vdev_id == vdev_id)
+	if (!(wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE ||
+	      wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_CLIENT_MODE))
 		return;
 
-	if (opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE) {
-		if (cm_is_vdev_disconnecting(vdev))
-			vdev_arg->sta_cli_vdev_id = vdev_id;
-		return;
-	}
-
-	if (opmode == QDF_SAP_MODE || opmode == QDF_P2P_GO_MODE ||
-	    opmode == QDF_NDI_MODE) {
-		/* Check if START/STOP AP OP is in progress */
-		if (wlan_ser_is_non_scan_cmd_type_in_vdev_queue(vdev,
-					WLAN_SER_CMD_VDEV_START_BSS) ||
-		    wlan_ser_is_non_scan_cmd_type_in_vdev_queue(vdev,
-					WLAN_SER_CMD_VDEV_STOP_BSS))
-			vdev_arg->sap_go_vdev_id = vdev_id;
-		return;
-	}
+	if (cm_is_vdev_disconnecting(vdev))
+		*vdev_id = wlan_vdev_get_id(vdev);
 }
 
 /**
- * cm_is_any_other_vdev_connecting_disconnecting() - check whether any other
- * vdev is in waiting for vdev operations (connect/disconnect or start/stop AP)
+ * cm_is_any_other_vdev_disconnecting() - check whether any other vdev is in
+ * disconnecting state
  * @cm_ctx: connection manager context
  * @cm_req: Connect request.
  *
- * As Connect is a blocking call this API will make sure the vdev operations on
- * other vdev doesn't starve
+ * As Connect is a blocking call this API will make sure the disconnect
+ * doesnt timeout on any vdev and thus make sure that PEER/VDEV SM are cleaned
+ * before vdev delete is sent.
  *
- * Return : true if any other vdev has pending operation
+ * Return : true if disconnection is on any vdev_id
  */
-static bool
-cm_is_any_other_vdev_connecting_disconnecting(struct cnx_mgr *cm_ctx,
-					      struct cm_req *cm_req)
+static bool cm_is_any_other_vdev_disconnecting(struct cnx_mgr *cm_ctx,
+					       struct cm_req *cm_req)
 {
 	struct wlan_objmgr_pdev *pdev;
+	uint8_t vdev_id;
 	uint8_t cur_vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
-	struct vdev_op_search_arg vdev_arg;
 
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
 	if (!pdev) {
@@ -794,32 +769,16 @@ cm_is_any_other_vdev_connecting_disconnecting(struct cnx_mgr *cm_ctx,
 		return false;
 	}
 
-	vdev_arg.current_vdev_id = cur_vdev_id;
-	vdev_arg.sap_go_vdev_id = WLAN_INVALID_VDEV_ID;
-	vdev_arg.sta_cli_vdev_id = WLAN_INVALID_VDEV_ID;
+	vdev_id = WLAN_INVALID_VDEV_ID;
 	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
-					  cm_get_vdev_id_with_active_vdev_op,
-					  &vdev_arg, 0,
+					  cm_get_vdev_id_from_bssid,
+					  &vdev_id, 0,
 					  WLAN_MLME_CM_ID);
 
-	/* For STA/CLI avoid the fist candidate itself if possible */
-	if (vdev_arg.sta_cli_vdev_id != WLAN_INVALID_VDEV_ID) {
-		mlme_info(CM_PREFIX_FMT "Abort connection as sta/cli vdev %d is disconnecting",
+	if (vdev_id != WLAN_INVALID_VDEV_ID && vdev_id != cur_vdev_id) {
+		mlme_info(CM_PREFIX_FMT "Abort connection as vdev %d is waiting for disconnect",
 			  CM_PREFIX_REF(cur_vdev_id, cm_req->cm_id),
-			  vdev_arg.sta_cli_vdev_id);
-		return true;
-	}
-
-	/*
-	 * For SAP/GO ops pending avoid the next candidate, this is to support
-	 * wifi sharing etc use case where we need to connect to AP in parallel
-	 * to SAP operation, so try atleast one candidate.
-	 */
-	if (cm_req->connect_req.cur_candidate &&
-	    vdev_arg.sap_go_vdev_id != WLAN_INVALID_VDEV_ID) {
-		mlme_info(CM_PREFIX_FMT "Avoid next candidate as SAP/GO/NDI vdev %d has pending vdev op",
-			  CM_PREFIX_REF(cur_vdev_id, cm_req->cm_id),
-			  vdev_arg.sap_go_vdev_id);
+			  vdev_id);
 		return true;
 	}
 
@@ -866,11 +825,9 @@ static bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
 	struct wlan_objmgr_psoc *psoc;
 	bool sae_connection;
 	QDF_STATUS status;
-	qdf_freq_t freq;
 
 	psoc = wlan_pdev_get_psoc(wlan_vdev_get_pdev(cm_ctx->vdev));
 	key_mgmt = req->cur_candidate->entry->neg_sec_info.key_mgmt;
-	freq = req->cur_candidate->entry->channel.chan_freq;
 
 	/* Try once again for the invalid PMKID case without PMKID */
 	if (resp->status_code == STATUS_INVALID_PMKID)
@@ -879,15 +836,7 @@ static bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
 	/* Try again for the JOIN timeout if only one candidate */
 	if (resp->reason == CM_JOIN_TIMEOUT &&
 	    qdf_list_size(req->candidate_list) == 1) {
-		/*
-		 * If there is a interface connected which can lead to MCC,
-		 * do not retry as it can lead to beacon miss on that interface.
-		 * Coz as part of vdev start mac remain on candidate freq for 3
-		 * sec.
-		 */
-		if (policy_mgr_will_freq_lead_to_mcc(psoc, freq))
-			return false;
-
+		/* Get assoc retry count */
 		wlan_mlme_get_sae_assoc_retry_count(psoc, &max_retry_count);
 		goto use_same_candidate;
 	}
@@ -1051,9 +1000,10 @@ static void cm_teardown_tdls(struct wlan_objmgr_vdev *vdev)
 }
 
 #else
-static inline bool
-cm_is_any_other_vdev_connecting_disconnecting(struct cnx_mgr *cm_ctx,
-					      struct cm_req *cm_req)
+
+static inline
+bool cm_is_any_other_vdev_disconnecting(struct cnx_mgr *cm_ctx,
+					struct cm_req *cm_req)
 {
 	return false;
 }
@@ -1366,7 +1316,7 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 		if (cm_roam_offload_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)))
 			cm_flush_pending_request(cm_ctx, ROAM_REQ_PREFIX,
 						 false);
-		fallthrough;
+		/* fallthrough */
 	case WLAN_CM_S_CONNECTED:
 	case WLAN_CM_SS_JOIN_ACTIVE:
 		/*
@@ -1389,7 +1339,7 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 		/* In the scan state abort the ongoing scan */
 		cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev),
 				    cm_ctx->vdev);
-		fallthrough;
+		/* fallthrough */
 	case WLAN_CM_SS_JOIN_PENDING:
 		/*
 		 * In case of scan or join pending there could be 2 scenarios:-
@@ -1555,14 +1505,10 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 	 * This can lead to vdev delete sent without vdev down/stop/peer delete
 	 * for the vdev.
 	 *
-	 * Same way if a SAP/GO has start/stop command or peer disconnect in
-	 * pending queue, delay in processing it can cause timeouts and other
-	 * issues.
-	 *
-	 * So abort the next connection attempt if any of the vdev is waiting
-	 * for vdev operation to avoid timeouts
+	 * So abort the connection if any of the vdev is waiting for disconnect,
+	 * to avoid disconnect timeout.
 	 */
-	if (cm_is_any_other_vdev_connecting_disconnecting(cm_ctx, cm_req)) {
+	if (cm_is_any_other_vdev_disconnecting(cm_ctx, cm_req)) {
 		status = QDF_STATUS_E_FAILURE;
 		goto flush_single_pmk;
 	}
@@ -1902,48 +1848,46 @@ void cm_update_per_peer_key_mgmt_crypto_params(struct wlan_objmgr_vdev *vdev,
 	 * As there can be multiple AKM present select the most secured AKM
 	 * present
 	 */
-	if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256);
-	else if (QDF_HAS_PARAM(neg_akm,
-			       WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384))
-		QDF_SET_PARAM(key_mgmt,
-			      WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384);
+	if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_SAE);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_SAE))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_SAE);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B);
 	else if (QDF_HAS_PARAM(neg_akm,
 			       WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192))
 		QDF_SET_PARAM(key_mgmt,
 			      WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_SAE);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_SAE))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_SAE);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_OWE))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_OWE);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_DPP))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_DPP);
+	else if (QDF_HAS_PARAM(neg_akm,
+			       WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384))
+		QDF_SET_PARAM(key_mgmt,
+			      WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_PSK))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_PSK);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_PSK))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_PSK);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SHA256))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SHA256);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_IEEE8021X);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_PSK_SHA256))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_PSK_SHA256);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_PSK_SHA384))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_PSK_SHA384);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_PSK_SHA384))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_PSK_SHA384);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_PSK_SHA256))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_PSK_SHA256);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_FT_PSK))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_PSK);
-	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_PSK))
-		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_PSK);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_WAPI_PSK))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_WAPI_PSK);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_WAPI_CERT))
@@ -1954,6 +1898,8 @@ void cm_update_per_peer_key_mgmt_crypto_params(struct wlan_objmgr_vdev *vdev,
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_OSEN);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_WPS))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_WPS);
+	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X))
+		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_IEEE8021X);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_NO_WPA))
 		QDF_SET_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_NO_WPA);
 	else if (QDF_HAS_PARAM(neg_akm, WLAN_CRYPTO_KEY_MGMT_WPA_NONE))

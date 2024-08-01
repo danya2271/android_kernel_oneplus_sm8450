@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -413,6 +413,7 @@ void hdd_tsf_ext_gpio_sync_work(void *data)
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("cap tsf fail");
 		qdf_mc_timer_stop(&adapter->host_capture_req_timer);
+		qdf_mc_timer_destroy(&adapter->host_capture_req_timer);
 	}
 }
 
@@ -528,6 +529,9 @@ static enum hdd_tsf_op_result hdd_capture_tsf_internal(
 
 	hdd_info("+ioctl issue cap tsf cmd");
 	cap_timer = &adapter->host_capture_req_timer;
+	qdf_mc_timer_init(cap_timer, QDF_TIMER_TYPE_SW,
+			  hdd_capture_req_timer_expired_handler,
+			  (void *)adapter);
 	qdf_mc_timer_start(cap_timer, WLAN_HDD_CAPTURE_TSF_REQ_TIMEOUT_MS);
 
 	/* Reset TSF value for new capture */
@@ -688,16 +692,9 @@ enum hdd_tsf_op_result __hdd_stop_tsf_sync(struct hdd_adapter *adapter)
 
 	ret = qdf_mc_timer_stop(&adapter->host_target_sync_timer);
 	if (ret != QDF_STATUS_SUCCESS) {
-		hdd_err("Failed to stop target timer, ret: %d", ret);
+		hdd_err("Failed to stop timer, ret: %d", ret);
 		return HDD_TSF_OP_FAIL;
 	}
-
-	ret = qdf_mc_timer_stop(&adapter->host_capture_req_timer);
-	if (ret != QDF_STATUS_SUCCESS) {
-		hdd_err("Failed to stop capture timer, ret: %d", ret);
-		return HDD_TSF_OP_FAIL;
-	}
-
 	hdd_tsf_stop_ext_gpio_sync(adapter);
 	hdd_tsf_gpio_sync_work_deinit(adapter);
 	return HDD_TSF_OP_SUCC;
@@ -1110,6 +1107,7 @@ void hdd_capture_req_timer_expired_handler(void *arg)
 	}
 
 	if (!hdd_tsf_is_initialized(adapter)) {
+		qdf_mc_timer_destroy(&adapter->host_capture_req_timer);
 		hdd_warn("tsf not init");
 		return;
 	}
@@ -1125,6 +1123,7 @@ void hdd_capture_req_timer_expired_handler(void *arg)
 
 	hdd_ctx->cap_tsf_context = NULL;
 	qdf_atomic_set(&hdd_ctx->cap_tsf_flag, 0);
+	qdf_mc_timer_destroy(&adapter->host_capture_req_timer);
 
 	sync_timer = &adapter->host_target_sync_timer;
 	capture_req_timer_status =
@@ -1175,7 +1174,7 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter)
 		hdd_warn("Reach the max continuous error count");
 
 		/* If reach MAX_CONTINUOUS_ERROR_CNT, treat it as valid pair */
-		fallthrough;
+		/* fallthrough */
 	case HDD_TS_STATUS_READY:
 		adapter->last_target_time = adapter->cur_target_time;
 		adapter->last_target_global_tsf_time =
@@ -1469,7 +1468,6 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(struct hdd_adapter *adapter)
 	QDF_STATUS ret;
 	struct hdd_context *hddctx;
 	struct net_device *net_dev;
-	uint64_t host_time, qtime;
 
 	if (!adapter)
 		return HDD_TSF_OP_FAIL;
@@ -1486,7 +1484,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(struct hdd_adapter *adapter)
 	}
 
 	if (!adapter->enable_dynamic_tsf_sync) {
-		hdd_debug("TSF sync feature not enabled");
+		hdd_err("TSF sync feature not enabled");
 		return HDD_TSF_OP_FAIL;
 	}
 
@@ -1504,17 +1502,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(struct hdd_adapter *adapter)
 				hdd_capture_tsf_timer_expired_handler,
 				(void *)adapter);
 	if (ret != QDF_STATUS_SUCCESS) {
-		hdd_err("Failed to init target timer, ret: %d", ret);
-		goto fail;
-	}
-
-	ret = qdf_mc_timer_init(&adapter->host_capture_req_timer,
-				QDF_TIMER_TYPE_SW,
-				hdd_capture_req_timer_expired_handler,
-				(void *)adapter);
-	if (ret != QDF_STATUS_SUCCESS) {
-		hdd_err("Failed to init capture timer, ret: %d", ret);
-		qdf_mc_timer_destroy(&adapter->host_target_sync_timer);
+		hdd_err("Failed to init timer, ret: %d", ret);
 		goto fail;
 	}
 
@@ -1522,14 +1510,6 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(struct hdd_adapter *adapter)
 	if (net_dev && hdd_tsf_is_dbg_fs_set(hddctx))
 		device_create_file(&net_dev->dev, &dev_attr_tsf);
 	hdd_set_th_sync_status(adapter, true);
-
-	qtime = qdf_get_log_timestamp();
-	host_time = hdd_get_monotonic_host_time(hddctx);
-
-	qtime = qdf_log_timestamp_to_usecs(qtime);
-	do_div(host_time, NSEC_PER_USEC);
-
-	adapter->delta_qtime = (qtime - host_time) * NSEC_PER_USEC;
 
 	return HDD_TSF_OP_SUCC;
 fail:
@@ -1552,11 +1532,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_deinit(struct hdd_adapter *adapter)
 	hdd_set_th_sync_status(adapter, false);
 	ret = qdf_mc_timer_destroy(&adapter->host_target_sync_timer);
 	if (ret != QDF_STATUS_SUCCESS)
-		hdd_err("Failed to destroy target timer, ret: %d", ret);
-
-	ret = qdf_mc_timer_destroy(&adapter->host_capture_req_timer);
-	if (ret != QDF_STATUS_SUCCESS)
-		hdd_err("Failed to destroy capture timer, ret: %d", ret);
+		hdd_err("Failed to destroy timer, ret: %d", ret);
 
 	hddctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -1798,18 +1774,10 @@ enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
 		int32_t ret = hdd_get_soctime_from_tsf64time(adapter,
 				tsf64_time, &soc_time);
 		if (!ret) {
-			/* Adjust delta_qtime to soc_time(Qtime), so that
-			 * System Monotonic time and Qtime are in sync.
-			 */
-			if (soc_time > (adapter->delta_qtime)) {
-				hwtstamps.hwtstamp =
-				soc_time - (adapter->delta_qtime);
-				*skb_hwtstamps(netbuf) = hwtstamps;
-				netbuf->tstamp = ktime_set(0, 0);
-				return HDD_TSF_OP_SUCC;
-			} else {
-				return HDD_TSF_OP_FAIL;
-			}
+			hwtstamps.hwtstamp = soc_time;
+			*skb_hwtstamps(netbuf) = hwtstamps;
+			netbuf->tstamp = ktime_set(0, 0);
+			return HDD_TSF_OP_SUCC;
 		}
 	}
 
@@ -1828,8 +1796,7 @@ enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
  *
  * Return: Describe the execute result of this routine
  */
-static int hdd_tx_timestamp(enum htt_tx_status status,
-			    qdf_nbuf_t netbuf, uint64_t target_time)
+static int hdd_tx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
 {
 	struct sock *sk = netbuf->sk;
 
@@ -1852,30 +1819,7 @@ static int hdd_tx_timestamp(enum htt_tx_status status,
 
 		serr = SKB_EXT_ERR(new_netbuf);
 		memset(serr, 0, sizeof(*serr));
-
-		switch (status) {
-		case htt_tx_status_ok:
-			serr->ee.ee_errno = ENOMSG;
-			break;
-		case htt_tx_status_discard:
-			serr->ee.ee_errno = ENOBUFS;
-			break;
-		case htt_tx_status_no_ack:
-			serr->ee.ee_errno = EREMOTEIO;
-			break;
-		default:
-			serr->ee.ee_errno = ENOMSG;
-			break;
-		}
-
-		/* Remove SKB from internal tracking table before submitting
-		 * it to stack
-		 */
-		qdf_net_buf_debug_release_skb(new_netbuf);
-
-		hdd_debug("packet status %d, sock ee_errno %d",
-			  status, serr->ee.ee_errno);
-
+		serr->ee.ee_errno = ENOMSG;
 		serr->ee.ee_origin = SO_EE_ORIGIN_TIMESTAMPING;
 
 		err = sock_queue_err_skb(sk, new_netbuf);
@@ -1933,7 +1877,35 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(struct hdd_context *hdd_ctx)
 static inline
 enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
+	QDF_TIMER_STATE capture_req_timer_status;
+	qdf_mc_timer_t *cap_timer;
+	struct hdd_adapter *adapter, *adapternode_ptr, *next_ptr;
+
 	wlan_hdd_tsf_plus_sock_ts_deinit(hdd_ctx);
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapternode_ptr);
+
+	while (adapternode_ptr && QDF_STATUS_SUCCESS == status) {
+		adapter = adapternode_ptr;
+		status =
+		    hdd_get_next_adapter(hdd_ctx, adapternode_ptr, &next_ptr);
+		adapternode_ptr = next_ptr;
+		if (adapter->host_capture_req_timer.state == 0)
+			continue;
+		cap_timer = &adapter->host_capture_req_timer;
+		capture_req_timer_status =
+			qdf_mc_timer_get_current_state(cap_timer);
+
+		if (capture_req_timer_status != QDF_TIMER_STATE_UNUSED) {
+			qdf_mc_timer_stop(cap_timer);
+			status =
+				qdf_mc_timer_destroy(cap_timer);
+			if (status != QDF_STATUS_SUCCESS)
+				hdd_err("remove timer failed: %d", status);
+		}
+	}
+
 	return HDD_TSF_OP_SUCC;
 }
 
@@ -2092,6 +2064,33 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(struct hdd_context *hdd_ctx)
 static inline
 enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
+	QDF_TIMER_STATE capture_req_timer_status;
+	qdf_mc_timer_t *cap_timer;
+	struct hdd_adapter *adapter, *adapternode_ptr, *next_ptr;
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapternode_ptr);
+
+	while (adapternode_ptr && QDF_STATUS_SUCCESS == status) {
+		adapter = adapternode_ptr;
+		status =
+		    hdd_get_next_adapter(hdd_ctx, adapternode_ptr, &next_ptr);
+		adapternode_ptr = next_ptr;
+		if (adapter->host_capture_req_timer.state == 0)
+			continue;
+		cap_timer = &adapter->host_capture_req_timer;
+		capture_req_timer_status =
+			qdf_mc_timer_get_current_state(cap_timer);
+
+		if (capture_req_timer_status != QDF_TIMER_STATE_UNUSED) {
+			qdf_mc_timer_stop(cap_timer);
+			status =
+				qdf_mc_timer_destroy(cap_timer);
+			if (status != QDF_STATUS_SUCCESS)
+				hdd_err_rl("remove timer failed: %d", status);
+		}
+	}
+
 	return HDD_TSF_OP_SUCC;
 }
 #else
@@ -2540,6 +2539,7 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 	struct hdd_adapter *adapter;
 	int ret;
 	uint64_t tsf_sync_soc_time;
+	QDF_STATUS status;
 	QDF_TIMER_STATE capture_req_timer_status;
 	qdf_mc_timer_t *capture_timer;
 
@@ -2585,6 +2585,10 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 	}
 
 	qdf_mc_timer_stop(capture_timer);
+	status = qdf_mc_timer_destroy(capture_timer);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_warn("destroy cap req timer fail, ret: %d", status);
+
 	adapter->cur_target_time = ((uint64_t)ptsf->tsf_high << 32 |
 			 ptsf->tsf_low);
 

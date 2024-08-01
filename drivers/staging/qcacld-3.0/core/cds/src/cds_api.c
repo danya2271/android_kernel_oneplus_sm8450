@@ -1334,13 +1334,9 @@ QDF_STATUS cds_post_disable(void)
 
 	/* flush any unprocessed scheduler messages */
 	sched_ctx = scheduler_get_context();
-	if (sched_ctx) {
-		qdf_status = scheduler_disable();
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			cds_err("Failed to disable scheduler");
-			return QDF_STATUS_E_INVAL;
-		}
-	}
+	if (sched_ctx)
+		scheduler_queues_flush(sched_ctx);
+
 	/*
 	 * With new state machine changes cds_close can be invoked without
 	 * cds_disable. So, send the following clean up prerequisites to fw,
@@ -1391,6 +1387,11 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		cds_err("Failed to close CDS Scheduler");
+
+	qdf_status = dispatcher_disable();
+	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		cds_err("Failed to disable dispatcher; status:%d", qdf_status);
 
 	dispatcher_psoc_close(psoc);
 
@@ -2462,6 +2463,8 @@ uint32_t cds_get_log_indicator(void)
  */
 void cds_wlan_flush_host_logs_for_fatal(void)
 {
+	if (cds_is_log_report_in_progress())
+		wlan_flush_host_logs_for_fatal();
 }
 
 /**
@@ -2523,6 +2526,7 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		qdf_trace_dump_all(p_cds_context->mac_context, 0, 0, 100, 0);
 
 	if (WLAN_LOG_INDICATOR_HOST_ONLY == indicator) {
+		cds_wlan_flush_host_logs_for_fatal();
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2547,6 +2551,8 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
  */
 void cds_logging_set_fw_flush_complete(void)
 {
+	if (cds_is_fatal_event_enabled())
+		wlan_logging_set_fw_flush_complete();
 }
 
 /**
@@ -2788,6 +2794,8 @@ inline void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump,
 	if (cds_get_ring_log_level(RING_ID_PER_PACKET_STATS) !=
 						WLAN_LOG_LEVEL_ACTIVE)
 		return;
+
+	wlan_pkt_stats_to_logger_thread(pl_hdr, pkt_dump, data);
 }
 #endif
 

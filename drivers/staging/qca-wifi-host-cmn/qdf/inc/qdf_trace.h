@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +27,7 @@
 
 /* Include Files */
 #include  <qdf_types.h>         /* For QDF_MODULE_ID... */
+#include  <stdarg.h>            /* For va_list... */
 #include  <qdf_status.h>
 #include  <qdf_nbuf.h>
 #include  <i_qdf_types.h>
@@ -141,6 +141,11 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 
 #endif
 #define NO_SESSION 0xFF
+
+#ifdef OPLUS_FEATURE_SOFTAP_DCS_SWITCH
+//Add for softap connect fail monitor
+void hostapd_send_eapol_uevent(uint8_t type, uint8_t subtype, uint8_t status);
+#endif /* OPLUS_FEATURE_SOFTAP_DCS_SWITCH */
 
 /**
  * typedef struct qdf_trace_record_s - keep trace record

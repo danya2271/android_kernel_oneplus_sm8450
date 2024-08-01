@@ -26,7 +26,9 @@
 #define roam_info(args ...) \
 		QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_ROAM_DEBUG, ## args)
 
-#define wlan_rec_conn_info(vdev_id, op, mac_addr, arg1, arg2) do {} while(0)
+#define wlan_rec_conn_info(vdev_id, op, mac_addr, arg1, arg2) \
+	wlan_rec_debug_log(REC_CONN, vdev_id, op, 0, mac_addr, 0, arg1,\
+			   arg2)
 
 #ifndef WLAN_ROAM_DEBUG_MAX_REC
 #define WLAN_ROAM_DEBUG_MAX_REC 128
