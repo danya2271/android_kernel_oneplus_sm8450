@@ -1499,13 +1499,9 @@ int dsi_display_set_power(struct drm_connector *connector,
 	switch (power_mode) {
 	case SDE_MODE_DPMS_LP1:
 		rc = dsi_panel_set_lp1(display->panel);
-		suspend_cpus_aod();
-		screen_off = true;
 		break;
 	case SDE_MODE_DPMS_LP2:
 		rc = dsi_panel_set_lp2(display->panel);
-		suspend_cpus_aod();
-		screen_off = true;
 		break;
 	case SDE_MODE_DPMS_ON:
 		if ((display->panel->power_mode == SDE_MODE_DPMS_LP1) ||
@@ -1513,9 +1509,6 @@ int dsi_display_set_power(struct drm_connector *connector,
 			rc = dsi_panel_set_nolp(display->panel);
 		break;
 	case SDE_MODE_DPMS_OFF:
-		suspend_cpus();
-		screen_off = true;
-		break;
 	default:
 		return rc;
 	}
@@ -8013,8 +8006,6 @@ int dsi_display_set_mode(struct dsi_display *display,
 	int rc = 0;
 	struct dsi_display_mode adj_mode;
 	struct dsi_mode_info timing;
-	screen_off = false;
-	activate_cpus();
 
 	if (!display || !mode || !display->panel) {
 		DSI_ERR("Invalid params\n");
