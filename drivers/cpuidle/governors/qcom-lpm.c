@@ -727,6 +727,7 @@ static int lpm_enable_device(struct cpuidle_driver *drv,
 	hrtimer_init(cpu_histtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	hrtimer_init(cpu_biastimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	if (!traces_registered) {
+#ifndef CONFIG_ANDROID_ONLY_VH_TRACING
 		ret = register_trace_ipi_raise(ipi_raise, NULL);
 		if (ret)
 			return ret;
@@ -754,7 +755,12 @@ static int lpm_enable_device(struct cpuidle_driver *drv,
 					lpm_idle_enter, NULL);
 			return ret;
 		}
-
+#else
+		register_trace_android_vh_cpu_idle_enter_prio(
+			lpm_idle_enter, NULL);
+		register_trace_android_vh_cpu_idle_exit_prio(
+			lpm_idle_exit, NULL);
+#endif
 		if (cluster_gov_ops && cluster_gov_ops->enable)
 			cluster_gov_ops->enable();
 
@@ -789,7 +795,7 @@ static void lpm_disable_device(struct cpuidle_driver *drv,
 		if (cpu_gov->enable)
 			return;
 	}
-
+#ifndef CONFIG_ANDROID_ONLY_VH_TRACING
 	if (traces_registered) {
 		unregister_trace_ipi_raise(ipi_raise, NULL);
 		unregister_trace_ipi_entry(ipi_entry, NULL);
@@ -802,6 +808,18 @@ static void lpm_disable_device(struct cpuidle_driver *drv,
 
 		traces_registered = false;
 	}
+#else
+if (traces_registered) {
+	unregister_trace_android_vh_cpu_idle_enter(
+		lpm_idle_enter, NULL);
+	unregister_trace_android_vh_cpu_idle_exit(
+		lpm_idle_exit, NULL);
+	if (cluster_gov_ops && cluster_gov_ops->disable)
+		cluster_gov_ops->disable();
+
+	traces_registered = false;
+}
+#endif
 }
 
 static void qcom_lpm_suspend_trace(void *unused, const char *action,
@@ -849,10 +867,11 @@ static int __init qcom_lpm_governor_init(void)
 	ret = cpuidle_register_governor(&lpm_governor);
 	if (ret)
 		goto cpuidle_reg_fail;
-
+#ifndef CONFIG_ANDROID_ONLY_VH_TRACING
 	ret = register_trace_suspend_resume(qcom_lpm_suspend_trace, NULL);
 	if (ret)
 		goto cpuidle_reg_fail;
+#endif
 
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "qcom-cpu-lpm",
 				lpm_online_cpu, lpm_offline_cpu);
