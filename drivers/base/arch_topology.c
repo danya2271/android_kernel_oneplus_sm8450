@@ -299,8 +299,10 @@ bool __init topology_parse_cpu_capacity(struct device_node *cpu_node, int cpu)
 	if (cap_parsing_failed)
 		return false;
 
-	ret = of_property_read_u32(cpu_node, "capacity-dmips-mhz",
-				   &cpu_capacity);
+	u32 hardcoded_capacities[] = {1224, 1224, 1224, 1224, 2253, 2253, 2253, 2293};
+	cpu_capacity = hardcoded_capacities[cpu];
+
+	ret = 0;
 	if (!ret) {
 		if (!raw_capacity) {
 			raw_capacity = kcalloc(num_possible_cpus(),
