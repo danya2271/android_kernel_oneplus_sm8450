@@ -743,8 +743,6 @@ fp_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		sendnlmsg(&msg);
 		break;
 	default:
-		pr_info("[%s] Unknown DRM_PANEL_EVENT_ONSCREENFINGERPRINT\n",
-			__func__);
 		break;
 	}
 }
