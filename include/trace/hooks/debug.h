@@ -21,8 +21,6 @@ struct pt_regs;
 DECLARE_HOOK(android_vh_ipi_stop,
 	TP_PROTO(struct pt_regs *regs),
 	TP_ARGS(regs))
-#define trace_android_vh_ipi_stop(regs)
-#define trace_android_vh_ipi_stop_rcuidle(regs)
 #else
 #define trace_android_vh_ipi_stop(regs)
 #define trace_android_vh_ipi_stop_rcuidle(regs)

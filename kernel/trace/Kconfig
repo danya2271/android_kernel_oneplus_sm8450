@@ -188,11 +188,6 @@ menuconfig FTRACE
 
 if FTRACE
 
-config REDUCE_TRACE
-	bool "Reduce amount of tracing"
-	help
-		Reduces amound of tracing without breaking code for GKI kernels
-
 config BOOTTIME_TRACING
 	bool "Boot-time Tracing support"
 	depends on TRACING
