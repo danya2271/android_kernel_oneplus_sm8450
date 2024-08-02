@@ -256,7 +256,7 @@ static const char **find_next(void *v, loff_t *pos)
 	const char **fmt = v;
 	int start_index;
 	int last_index;
-#ifndef CONFIG_REDUCE_TRACE
+
 	start_index = __stop___trace_bprintk_fmt - __start___trace_bprintk_fmt;
 
 	if (*pos < start_index)
@@ -282,9 +282,6 @@ static const char **find_next(void *v, loff_t *pos)
 
 	start_index += last_index;
 	return find_next_mod_format(start_index, v, fmt, pos);
-#else
-	return 0;
-#endif
 }
 
 static void *

@@ -236,9 +236,6 @@
 #define TRACEPOINT_STR() __start___tracepoint_str = .;	\
 			 KEEP(*(__tracepoint_str)) /* Trace_printk fmt' pointer */ \
 			 __stop___tracepoint_str = .;
-#elif CONFIG_REDUCE_TRACE
-#define TRACE_PRINTKS()
-#define TRACEPOINT_STR()
 #else
 #define TRACE_PRINTKS()
 #define TRACEPOINT_STR()
