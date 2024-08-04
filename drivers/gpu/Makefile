@@ -3,11 +3,6 @@
 # taken to initialize them in the correct order. Link order is the only way
 # to ensure this currently.
 
-# Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=3750
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=2000
-KBUILD_CFLAGS   += -mllvm -inlinehint-threshold=1800
-
 obj-$(CONFIG_TEGRA_HOST1X)	+= host1x/
 obj-y			+= drm/ vga/
 obj-$(CONFIG_IMX_IPUV3_CORE)	+= ipu-v3/
