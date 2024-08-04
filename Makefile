@@ -847,6 +847,14 @@ else ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS += -Os
 endif
 
+# Additional optimizations for better kernel speed
+KBUILD_CFLAGS +=  -fno-semantic-interposition -fno-signed-zeros  -ffinite-math-only -freciprocal-math -fcf-protection=none -fno-trapping-math -fno-math-errno -ffast-math -funroll-loops
+
+# Inlining optimization
+KBUILD_CFLAGS  += -mllvm -inline-threshold=3800
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=2500
+KBUILD_CFLAGS   += -mllvm -inlinehint-threshold=2000
+
 KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined
 
 #Enable MLGO
