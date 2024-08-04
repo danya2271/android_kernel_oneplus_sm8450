@@ -7,6 +7,11 @@ KBUILD_CFLAGS	+= -mllvm -inline-threshold=3750
 KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=2000
 KBUILD_CFLAGS   += -mllvm -inlinehint-threshold=1800
 
+# Inlining optimization
+KBUILD_CFLAGS  += -mllvm -inline-threshold=9800
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=7500
+KBUILD_CFLAGS   += -mllvm -inlinehint-threshold=8000
+
 obj-y     = fork.o exec_domain.o panic.o \
 	    cpu.o exit.o softirq.o resource.o \
 	    sysctl.o capability.o ptrace.o user.o \
