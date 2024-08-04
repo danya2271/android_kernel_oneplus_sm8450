@@ -835,29 +835,6 @@ static inline bool walt_get_rtg_status(struct task_struct *p)
 }
 
 #define CPU_RESERVED 1
-static inline int is_reserved(int cpu)
-{
-	struct rq *rq = cpu_rq(cpu);
-	struct walt_rq *wrq = (struct walt_rq *) rq->android_vendor_data1;
-
-	return test_bit(CPU_RESERVED, &wrq->walt_flags);
-}
-
-static inline int mark_reserved(int cpu)
-{
-	struct rq *rq = cpu_rq(cpu);
-	struct walt_rq *wrq = (struct walt_rq *) rq->android_vendor_data1;
-
-	return test_and_set_bit(CPU_RESERVED, &wrq->walt_flags);
-}
-
-static inline void clear_reserved(int cpu)
-{
-	struct rq *rq = cpu_rq(cpu);
-	struct walt_rq *wrq = (struct walt_rq *) rq->android_vendor_data1;
-
-	clear_bit(CPU_RESERVED, &wrq->walt_flags);
-}
 
 static inline void walt_irq_work_queue(struct irq_work *work)
 {
