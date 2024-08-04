@@ -6,11 +6,6 @@
 # Rewritten to use lists instead of if-statements.
 #
 
-# Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=3750
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=2000
-KBUILD_CFLAGS   += -mllvm -inlinehint-threshold=1800
-
 obj-$(CONFIG_NET)		:= devres.o socket.o core/
 
 tmp-$(CONFIG_COMPAT) 		:= compat.o
