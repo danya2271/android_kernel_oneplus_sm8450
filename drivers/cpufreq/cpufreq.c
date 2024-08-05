@@ -790,9 +790,22 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	char str_governor[16];
 	int ret;
 
-	ret = sscanf(buf, "%15s", str_governor);
-	if (ret != 1)
-		return -EINVAL;
+	// Define the CPUs we want to force the 'schedutil' governor for
+	cpumask_t forced_schedutil_cpus;
+	cpumask_clear(&forced_schedutil_cpus); // Clear the mask
+	cpumask_set_cpu(4, &forced_schedutil_cpus); // Set CPU 4
+	cpumask_set_cpu(7, &forced_schedutil_cpus); // Set CPU 7
+
+	// Check if the current CPU belongs to the forced CPU mask
+	if (cpumask_test_cpu(policy->cpu, &forced_schedutil_cpus)) {
+		// Force 'schedutil' governor
+		strncpy(str_governor, "schedutil", sizeof(str_governor));
+	} else {
+		// Get the governor name from the buffer
+		ret = sscanf(buf, "%15s", str_governor);
+		if (ret != 1)
+			return -EINVAL;
+	}
 
 	if (cpufreq_driver->setpolicy) {
 		unsigned int new_pol;
