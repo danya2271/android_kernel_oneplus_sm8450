@@ -384,12 +384,6 @@ static void qcom_cpufreq_ready(struct cpufreq_policy *policy)
 
 	mutex_unlock(&c->dcvsh_lock);
 
-	struct cpufreq_qcom *c = qcom_freq_domain_map[cpu];
-
-	mutex_lock(&c->dcvsh_lock);
-	c->exited = true;
-	mutex_unlock(&c->dcvsh_lock);
-
 	if (cdev[cpu])
 		return;
 
