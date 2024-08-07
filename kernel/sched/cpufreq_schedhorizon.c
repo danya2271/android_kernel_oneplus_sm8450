@@ -19,10 +19,10 @@ static unsigned int default_efficient_freq_lp[] = {0};
 static u64 default_up_delay_lp[] = {0};
 
 static unsigned int default_efficient_freq_hp[] = {1555200};
-static u64 default_up_delay_hp[] = {20 * NSEC_PER_MSEC};
+static u64 default_up_delay_hp[] = {40 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_pr[] = {2054400};
-static u64 default_up_delay_pr[] = {20 * NSEC_PER_MSEC};
+static u64 default_up_delay_pr[] = {40 * NSEC_PER_MSEC};
 
 struct sugov_tunables {
 	struct gov_attr_set	attr_set;
@@ -341,6 +341,7 @@ static void sugov_update_single(struct update_util_data *hook, u64 time,
 		return;
 
 	util = sugov_get_util(sg_cpu);
+	util = apply_dvfs_headroom(util, sg_cpu->cpu);
 	max = sg_cpu->max;
 	next_f = get_next_freq(sg_policy, util, max, time);
 	/*
