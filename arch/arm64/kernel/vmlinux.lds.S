@@ -32,7 +32,7 @@
 #define HYPERVISOR_RELOC_SECTION				\
 	.hyp.reloc : ALIGN(4) {					\
 		__hyp_reloc_begin = .;				\
-		KEEP(*(.hyp.reloc))				\
+		*(.hyp.reloc)					\
 		__hyp_reloc_end = .;				\
 	}
 
@@ -213,7 +213,7 @@ SECTIONS
 	. = ALIGN(4);
 	.altinstructions : {
 		__alt_instructions = .;
-		KEEP(*(.altinstructions))
+		*(.altinstructions)
 		__alt_instructions_end = .;
 	}
 
