@@ -2197,7 +2197,7 @@ int oplus_ofp_notify_fp_press(void *buf)
 	if (*fp_press) {
 		/* finger is pressed down and pressed icon layer is ready */
 		p_oplus_ofp_params->fp_press = true;
-		cpu_input_boost_kick_max(2000);
+		cpu_input_boost_kick_max(900);
 	} else {
 		p_oplus_ofp_params->fp_press = false;
 	}
