@@ -278,4 +278,3 @@ msm_drm-$(CONFIG_DRM_MSM) += msm_atomic.o \
 			     msm_smmu.o \
 			     msm_prop.o
 
-obj-$(CONFIG_DRM) += msm_disp_notifier.o
