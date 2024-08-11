@@ -119,6 +119,7 @@ extern const char *cmd_set_prop_map[DSI_CMD_SET_MAX];
 			pr_info("[OFP][%u][DEBUG][%s:%d]"pr_fmt(fmt), oplus_ofp_display_id, __func__, __LINE__, ##arg);	\
 	} while (0)
 
+#ifdef CONFIG_FTRACE
 /* debug trace */
 #define OPLUS_OFP_TRACE_BEGIN(name)	\
 	do {	\
@@ -137,6 +138,16 @@ extern const char *cmd_set_prop_map[DSI_CMD_SET_MAX];
 		if (oplus_display_trace_enable & OPLUS_DISPLAY_OFP_TRACE_ENABLE)	\
 			SDE_ATRACE_INT(name, value);	\
 	} while (0)
+#else
+	#define OPLUS_OFP_TRACE_BEGIN(name)	\
+	do {} while (0)
+
+	#define OPLUS_OFP_TRACE_END(name)	\
+	do {} while (0)
+
+	#define OPLUS_OFP_TRACE_INT(name, value)	\
+	do {} while (0)
+#endif
 
 /* -------------------- oplus_ofp_params -------------------- */
 int oplus_ofp_update_display_id(void);
