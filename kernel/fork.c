@@ -104,6 +104,7 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 #include <linux/cpu_input_boost.h>
+#include <linux/gpu_input_boost.h>
 
 #include <trace/events/sched.h>
 
@@ -2547,6 +2548,7 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 
 	if (task_is_zygote(current)) {
 		cpu_input_boost_kick_max(150);
+		gpu_input_boost_kick_max(150);
 	}
 
 	/*
