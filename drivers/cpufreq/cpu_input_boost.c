@@ -150,6 +150,7 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
 		policy->min = get_idle_freq(policy);
+		policy->max = get_idle_freq(policy);
 		return;
 	}
 
