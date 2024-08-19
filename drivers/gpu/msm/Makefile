@@ -3,6 +3,9 @@ ccflags-y += -I$(src)
 
 obj-$(CONFIG_QCOM_KGSL) += msm_kgsl.o
 
+# GPU Input Boost
+obj-$(CONFIG_GPU_INPUT_BOOST)		+= gpu_input_boost.o
+
 msm_kgsl-y = \
 	kgsl.o \
 	kgsl_bus.o \
