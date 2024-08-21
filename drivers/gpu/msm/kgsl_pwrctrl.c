@@ -834,9 +834,9 @@ static ssize_t default_pwrlevel_store(struct device *dev,
 		return count;
 
 	mutex_lock(&device->mutex);
-	pwr->default_pwrlevel = level;
+	pwr->default_pwrlevel = 11;
 	pwrscale->gpu_profile.profile.initial_freq
-			= pwr->pwrlevels[level].gpu_freq;
+			= pwr->pwrlevels[11].gpu_freq;
 
 	mutex_unlock(&device->mutex);
 	return count;

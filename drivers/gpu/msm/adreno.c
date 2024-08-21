@@ -724,7 +724,7 @@ static void adreno_of_get_initial_pwrlevels(struct kgsl_pwrctrl *pwr,
 		level = 1;
 
 	pwr->active_pwrlevel = level;
-	pwr->default_pwrlevel = level;
+	pwr->default_pwrlevel = 11;
 
 	/* Set the max power level */
 	pwr->max_pwrlevel = 0;
