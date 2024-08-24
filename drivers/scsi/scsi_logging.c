@@ -14,7 +14,7 @@
 #include <scsi/scsi_device.h>
 #include <scsi/scsi_eh.h>
 #include <scsi/scsi_dbg.h>
-
+#ifdef CONFIG_DEBUG
 static char *scsi_log_reserve_buffer(size_t *len)
 {
 	*len = 128;
@@ -442,3 +442,118 @@ out_printk:
 	scsi_log_release_buffer(logbuf);
 }
 EXPORT_SYMBOL(scsi_print_result);
+
+#else
+static char *scsi_log_reserve_buffer(size_t *len)
+{
+	return 0;
+}
+
+static void scsi_log_release_buffer(char *bufptr)
+{
+}
+
+static inline const char *scmd_name(const struct scsi_cmnd *scmd)
+{
+	return 0;
+}
+
+static size_t sdev_format_header(char *logbuf, size_t logbuf_len,
+								 const char *name, int tag)
+{
+		return 0;
+}
+
+void sdev_prefix_printk(const char *level, const struct scsi_device *sdev,
+						const char *name, const char *fmt, ...)
+{
+}
+EXPORT_SYMBOL(sdev_prefix_printk);
+
+void scmd_printk(const char *level, const struct scsi_cmnd *scmd,
+				 const char *fmt, ...)
+{
+}
+EXPORT_SYMBOL(scmd_printk);
+
+static size_t scsi_format_opcode_name(char *buffer, size_t buf_len,
+									  const unsigned char *cdbp)
+{
+	return 0;
+}
+
+size_t __scsi_format_command(char *logbuf, size_t logbuf_len,
+							 const unsigned char *cdb, size_t cdb_len)
+{
+	return 0;
+}
+EXPORT_SYMBOL(__scsi_format_command);
+
+void scsi_print_command(struct scsi_cmnd *cmd)
+{
+}
+EXPORT_SYMBOL(scsi_print_command);
+
+static size_t
+scsi_format_extd_sense(char *buffer, size_t buf_len,
+					   unsigned char asc, unsigned char ascq)
+{
+	return 0;
+}
+
+static size_t
+scsi_format_sense_hdr(char *buffer, size_t buf_len,
+					  const struct scsi_sense_hdr *sshdr)
+{
+	return 0;
+}
+
+static void
+scsi_log_dump_sense(const struct scsi_device *sdev, const char *name, int tag,
+					const unsigned char *sense_buffer, int sense_len)
+{
+}
+
+static void
+scsi_log_print_sense_hdr(const struct scsi_device *sdev, const char *name,
+						 int tag, const struct scsi_sense_hdr *sshdr)
+{
+}
+
+static void
+scsi_log_print_sense(const struct scsi_device *sdev, const char *name, int tag,
+					 const unsigned char *sense_buffer, int sense_len)
+{
+}
+
+/*
+ * Print normalized SCSI sense header with a prefix.
+ */
+void
+scsi_print_sense_hdr(const struct scsi_device *sdev, const char *name,
+					 const struct scsi_sense_hdr *sshdr)
+{
+}
+EXPORT_SYMBOL(scsi_print_sense_hdr);
+
+/* Normalize and print sense buffer with name prefix */
+void __scsi_print_sense(const struct scsi_device *sdev, const char *name,
+						const unsigned char *sense_buffer, int sense_len)
+{
+}
+EXPORT_SYMBOL(__scsi_print_sense);
+
+/* Normalize and print sense buffer in SCSI command */
+void scsi_print_sense(const struct scsi_cmnd *cmd)
+{
+}
+EXPORT_SYMBOL(scsi_print_sense);
+
+void scsi_print_result(const struct scsi_cmnd *cmd, const char *msg,
+					   int disposition)
+{
+}
+EXPORT_SYMBOL(scsi_print_result);
+
+
+#endif
