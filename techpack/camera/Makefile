@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Inlining optimization
+KBUILD_CFLAGS  += -mllvm -inline-threshold=225
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=325
+
 # Include Architecture configurations
 ifeq ($(CONFIG_ARCH_KALAMA), y)
 include $(srctree)/techpack/camera/config/kalama.mk
