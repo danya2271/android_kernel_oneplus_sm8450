@@ -35,7 +35,11 @@ static int mmrm_sw_vdd_corner[] = {
 };
 
 #define MMRM_SW_CLIENTS_NUM_MAX 35
+#ifdef CONFIG_DEBUG
 extern u8 msm_mmrm_enable_throttle_feature;
+#else
+static u8 msm_mmrm_enable_throttle_feature;
+#endif
 typedef int (*notifier_callback_fn_t)(
 	struct mmrm_client_notifier_data *notifier_data);
 
