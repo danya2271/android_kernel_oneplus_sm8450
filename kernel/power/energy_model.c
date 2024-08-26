@@ -15,6 +15,8 @@
 #include <linux/energy_model.h>
 #include <linux/sched/topology.h>
 #include <linux/slab.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 /*
  * Mutex serializing the registrations of performance domains and letting
@@ -329,6 +331,7 @@ int em_dev_register_perf_domain(struct device *dev, unsigned int nr_states,
 
 	em_debug_create_pd(dev);
 	dev_info(dev, "EM: created perf domain\n");
+	devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 35000);
 
 unlock:
 	mutex_unlock(&em_pd_mutex);
