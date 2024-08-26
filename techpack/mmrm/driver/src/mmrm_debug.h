@@ -27,7 +27,7 @@ enum mmrm_msg_prio {
 	MMRM_PRINTK = 0x010000,
 	MMRM_FTRACE = 0x020000,
 };
-
+#ifdef CONFIG_DEBUG
 extern int msm_mmrm_debug;
 extern u8 msm_mmrm_allow_multiple_register;
 
@@ -68,5 +68,31 @@ static inline char *get_debug_level_str(int level)
 
 struct dentry *msm_mmrm_debugfs_init(void);
 void msm_mmrm_debugfs_deinit(struct dentry *dir);
+
+#else
+
+static int msm_mmrm_debug;
+static u8 msm_mmrm_allow_multiple_register;
+
+#define dprintk(__level, __fmt, ...) \
+do {} while (0)
+
+#define d_mpr_e(__fmt, ...) do {} while (0)
+#define d_mpr_h(__fmt, ...) do {} while (0)
+#define d_mpr_l(__fmt, ...) do {} while (0)
+#define d_mpr_w(__fmt, ...) do {} while (0)
+#define d_mpr_p(__fmt, ...) do {} while (0)
+
+static inline char *get_debug_level_str(int level)
+{
+	return 0;
+}
+
+static struct dentry *msm_mmrm_debugfs_init(void)
+{return 0;}
+static void msm_mmrm_debugfs_deinit(struct dentry *dir)
+{}
+
+#endif
 
 #endif
