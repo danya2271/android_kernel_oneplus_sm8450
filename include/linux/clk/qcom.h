@@ -20,8 +20,14 @@ enum branch_mem_flags {
 
 int qcom_clk_get_voltage(struct clk *clk, unsigned long rate);
 int qcom_clk_set_flags(struct clk *clk, unsigned long flags);
+#ifdef CONFIG_DEBUG
 void qcom_clk_dump(struct clk *clk, struct regulator *regulator,
 		   bool calltrace);
+#else
+static void qcom_clk_dump(struct clk *clk, struct regulator *regulator,
+				   bool calltrace)
+{}
+#endif
 void qcom_clk_bulk_dump(int num_clks, struct clk_bulk_data *clks,
 			struct regulator *regulator, bool calltrace);
 
