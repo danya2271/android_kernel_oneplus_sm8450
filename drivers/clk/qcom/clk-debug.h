@@ -84,7 +84,7 @@ struct clk_debug_mux {
 };
 
 #define to_clk_measure(_hw) container_of((_hw), struct clk_debug_mux, hw)
-
+#ifdef CONFIG_DEBUG
 extern const struct clk_ops clk_debug_mux_ops;
 
 int clk_debug_measure_register(struct clk_hw *hw);
@@ -122,5 +122,44 @@ extern void clk_debug_print_hw(struct clk_hw *hw, struct seq_file *f);
 		else						\
 			pr_cont(fmt, ##__VA_ARGS__);		\
 	} while (0)
+
+#else
+static const struct clk_ops clk_debug_mux_ops = {
+};
+EXPORT_SYMBOL(clk_debug_mux_ops);
+
+static int clk_debug_measure_register(struct clk_hw *hw)
+{return 0;}
+static int devm_clk_register_debug_mux(struct device *pdev, struct clk_debug_mux *mux)
+{return 0;}
+static void clk_debug_measure_add(struct clk_hw *hw, struct dentry *dentry)
+{}
+static int map_debug_bases(struct platform_device *pdev, const char *base,
+					struct clk_debug_mux *mux)
+{return 0;}
+
+static void clk_common_debug_init(struct clk_hw *hw, struct dentry *dentry)
+{}
+
+/* hw debug registration */
+static int clk_hw_debug_register(struct device *dev, struct clk_hw *clk_hw)
+{return 0;}
+static int clk_debug_init(void)
+{return 0;}
+static void clk_debug_exit(void)
+{}
+static void clk_debug_print_hw(struct clk_hw *hw, struct seq_file *f)
+{}
+
+#define WARN_CLK(hw, cond, fmt, ...)						\
+do {} while (0)
+
+#define clock_debug_output(m, fmt, ...)			\
+do {} while (0)
+
+#define clock_debug_output_cont(s, fmt, ...)			\
+do {} while (0)
+
+#endif
 
 #endif
