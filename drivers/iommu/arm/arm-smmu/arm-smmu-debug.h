@@ -103,7 +103,7 @@ enum testbus_ops {
 	TESTBUS_OUTPUT,
 };
 
-#if IS_ENABLED(CONFIG_ARM_SMMU)
+#if IS_ENABLED(CONFIG_DEBUG)
 
 u32 arm_smmu_debug_qtb_debugchain_load(void __iomem *debugchain_base);
 u64 arm_smmu_debug_qtb_debugchain_dump(void __iomem *debugchain_base);
@@ -130,15 +130,15 @@ void arm_smmu_debug_get_capture_snapshot(void __iomem *tbu_base,
 		u64 snapshot[NO_OF_CAPTURE_POINTS][REGS_PER_CAPTURE_POINT]);
 void arm_smmu_debug_clear_intr_and_validbits(void __iomem *tbu_base);
 #else
-u32 arm_smmu_debug_qtb_debugchain_load(void __iomem *debugchain_base);
+u32 arm_smmu_debug_qtb_debugchain_load(void __iomem *debugchain_base)
 {
 	return 0;
 }
-u64 arm_smmu_debug_qtb_debugchain_dump(void __iomem *debugchain_base);
+u64 arm_smmu_debug_qtb_debugchain_dump(void __iomem *debugchain_base)
 {
 	return 0;
 }
-void arm_smmu_debug_dump_debugchain(struct device *dev, void __iomem *debugchain_base);
+void arm_smmu_debug_dump_debugchain(struct device *dev, void __iomem *debugchain_base)
 {
 }
 void arm_smmu_debug_dump_qtb_regs(struct device *dev, void __iomem *tbu_base)
@@ -157,6 +157,7 @@ u32 arm_smmu_debug_tcu_testbus_select(phys_addr_t phys_addr,
 		void __iomem *tcu_base, enum tcu_testbus testbus,
 		bool write, u32 val)
 {
+	return 0;
 }
 static inline u32 arm_smmu_debug_tcu_testbus_output(phys_addr_t phys_addr)
 {
