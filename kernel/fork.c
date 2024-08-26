@@ -105,6 +105,7 @@
 #include <asm/tlbflush.h>
 #include <linux/cpu_input_boost.h>
 #include <linux/gpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 #include <trace/events/sched.h>
 
@@ -2547,6 +2548,7 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 		return -EINVAL;
 
 	if (task_is_zygote(current)) {
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 150);
 		cpu_input_boost_kick_max(150);
 		gpu_input_boost_kick_max(150);
 	}
