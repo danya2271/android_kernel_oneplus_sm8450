@@ -860,15 +860,11 @@ KBUILD_CFLAGS  += -mllvm -inline-savings-profitable-multiplier=6
 KBUILD_CFLAGS  += -mllvm -inline-size-allowance=30
 KBUILD_CFLAGS  += -mllvm -inlinecold-threshold=130
 KBUILD_CFLAGS  += -mllvm -locally-hot-callsite-threshold=750
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=18
+KBUILD_CFLAGS  += -mllvm -inline-instr-cost=12
 KBUILD_CFLAGS  += -mllvm -inline-call-penalty=5
 KBUILD_CFLAGS  += -mllvm -hot-callsite-rel-freq=100
 KBUILD_CFLAGS  += -mllvm -cold-callsite-rel-freq=5
 KBUILD_CFLAGS  += -mllvm -inline-enable-cost-benefit-analysis
-KBUILD_CFLAGS  += -mllvm -hot-callsite-threshold=5000
-KBUILD_CFLAGS  += -mllvm -inline-cost-full
-KBUILD_CFLAGS  += -mllvm -inline-caller-superset-nobuiltin=0
-KBUILD_CFLAGS  += -mllvm -disable-gep-const-evaluation
 
 KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined
 
@@ -886,6 +882,12 @@ endif
 
 ifdef CONFIG_LLVM_POLLY
 KBUILD_CFLAGS	+= -mllvm -polly \
+		   -mllvm -polly-parallel \
+		   -mllvm -polly-parallel-force \
+		   -mllvm -polly-ast-detect-parallel \
+		   -mllvm -polly-detect-track-failures=0 \
+		   -mllvm -polly-detect-full-functions \
+		   -mllvm -polly-ignore-aliasing \
 		   -mllvm -polly-run-inliner \
 		   -mllvm -polly-parallel \
 		   -mllvm -polly-ast-use-context \

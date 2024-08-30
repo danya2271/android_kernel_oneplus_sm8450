@@ -6,6 +6,7 @@
 # Inlining optimization
 KBUILD_CFLAGS  += -mllvm -inline-threshold=7800
 KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=6000
+KBUILD_CFLAGS  += -mllvm -inline-instr-cost=28
 
 obj-y     = fork.o exec_domain.o panic.o \
 	    cpu.o exit.o softirq.o resource.o \
