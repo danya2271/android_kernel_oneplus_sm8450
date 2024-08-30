@@ -615,7 +615,7 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 		priv->disp_thread[i].dev = ddev;
 		if (i == 0) {
 		priv->disp_thread[i].thread =
-			kthread_run_perf_critical(cpu_prime_mask, kthread_worker_fn,
+			kthread_run_perf_critical(cpu_perf_mask, kthread_worker_fn,
 				&priv->disp_thread[i].worker,
 				"crtc_commit:%d", priv->disp_thread[i].crtc_id);
 			pr_info("%i to big cluster", priv->disp_thread[i].crtc_id);
@@ -643,7 +643,7 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 		/* Only pin first event thread to big cluster */
 		if (i == 0) {
 			priv->event_thread[i].thread =
-				kthread_run_perf_critical(cpu_prime_mask,
+				kthread_run_perf_critical(cpu_perf_mask,
 					kthread_worker_fn,
 					&priv->event_thread[i].worker,
 					"crtc_event:%d", priv->event_thread[i].crtc_id);
@@ -698,7 +698,7 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 	 * other important events.
 	 */
 	kthread_init_worker(&priv->pp_event_worker);
-	priv->pp_event_thread = kthread_run_perf_critical(cpu_prime_mask, kthread_worker_fn,
+	priv->pp_event_thread = kthread_run_perf_critical(cpu_perf_mask, kthread_worker_fn,
 			&priv->pp_event_worker, "pp_event");
 	kthread_init_work(&priv->thread_priority_work, msm_drm_display_thread_priority_worker);
 	kthread_queue_work(&priv->pp_event_worker, &priv->thread_priority_work);

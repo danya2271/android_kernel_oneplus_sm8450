@@ -806,7 +806,7 @@ int gen7_hwsched_hfi_init(struct adreno_device *adreno_dev)
 	}
 
 	if (IS_ERR_OR_NULL(hw_hfi->f2h_task)) {
-		hw_hfi->f2h_task = kthread_run(hfi_f2h_main, adreno_dev, "gmu_f2h");
+		hw_hfi->f2h_task = kthread_run_perf_critical(cpu_perf_mask, hfi_f2h_main, adreno_dev, "gmu_f2h");
 		if (!IS_ERR(hw_hfi->f2h_task))
 			sched_set_fifo(hw_hfi->f2h_task);
 	}

@@ -231,7 +231,7 @@ int oplus_ffl_thread_init(void)
 {
 	kthread_init_worker(&oplus_ffl_worker);
 	kthread_init_work(&oplus_ffl_work, &oplus_ffl_setting_thread);
-	oplus_ffl_thread = kthread_run(kthread_worker_fn,
+	oplus_ffl_thread = kthread_run_perf_critical(cpu_lp_mask, kthread_worker_fn,
 				      &oplus_ffl_worker, "oplus_ffl");
 
 	if (IS_ERR(oplus_ffl_thread)) {

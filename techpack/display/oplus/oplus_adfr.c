@@ -221,7 +221,7 @@ int oplus_adfr_thread_create(void *msm_priv, void *msm_ddev, void *msm_dev)
 		kthread_init_worker(&priv->adfr_thread[i].worker);
 		priv->adfr_thread[i].dev = ddev;
 		priv->adfr_thread[i].thread =
-			kthread_run(kthread_worker_fn,
+			kthread_run_perf_critical(cpu_lp_mask, kthread_worker_fn,
 				&priv->adfr_thread[i].worker,
 				"adfr:%d", priv->adfr_thread[i].crtc_id);
 		kthread_init_work(&priv->thread_priority_work, oplus_adfr_thread_priority_worker);

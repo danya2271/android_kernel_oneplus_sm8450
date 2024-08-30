@@ -631,7 +631,7 @@ static int smcinvoke_create_kthreads(void)
 	for (i = 0; i < MAX_THREAD_NUMBER; i++) {
 		init_waitqueue_head(&smcinvoke[i].postprocess_kthread_wq);
 		smcinvoke[i].type = thread_type[i];
-		smcinvoke[i].postprocess_kthread_task = kthread_run(
+		smcinvoke[i].postprocess_kthread_task = kthread_run_perf_critical(cpu_lp_mask,
 				smcinvoke_postprocess_kthread_func,
 				&smcinvoke[i], thread_name[i]);
 		if (IS_ERR(smcinvoke[i].postprocess_kthread_task)) {

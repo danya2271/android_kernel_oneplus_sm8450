@@ -1071,7 +1071,7 @@ static int sde_rotator_init_queue(struct sde_rot_mgr *mgr)
 				mgr->device->id, i);
 		SDEROT_DBG("work queue name=%s\n", name);
 		kthread_init_worker(&mgr->commitq[i].rot_kw);
-		mgr->commitq[i].rot_thread = kthread_run(kthread_worker_fn,
+		mgr->commitq[i].rot_thread = kthread_run_perf_critical(cpu_lp_mask, kthread_worker_fn,
 				&mgr->commitq[i].rot_kw, name);
 		if (IS_ERR(mgr->commitq[i].rot_thread)) {
 			ret = -EPERM;
@@ -1102,7 +1102,7 @@ static int sde_rotator_init_queue(struct sde_rot_mgr *mgr)
 				mgr->device->id, i);
 		SDEROT_DBG("work queue name=%s\n", name);
 		kthread_init_worker(&mgr->doneq[i].rot_kw);
-		mgr->doneq[i].rot_thread = kthread_run(kthread_worker_fn,
+		mgr->doneq[i].rot_thread = kthread_run_perf_critical(cpu_lp_mask, kthread_worker_fn,
 				&mgr->doneq[i].rot_kw, name);
 		if (IS_ERR(mgr->doneq[i].rot_thread)) {
 			ret = -EPERM;

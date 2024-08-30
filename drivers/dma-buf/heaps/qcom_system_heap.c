@@ -439,7 +439,7 @@ void qcom_system_heap_create(const char *name, const char *system_alias, bool un
 	}
 
 	if (IS_ENABLED(CONFIG_QCOM_DMABUF_HEAPS_PAGE_POOL_REFILL)) {
-		refill_worker = kthread_run(system_heap_refill_worker, sys_heap->pool_list,
+		refill_worker = kthread_run_perf_critical(cpu_lp_mask, system_heap_refill_worker, sys_heap->pool_list,
 					    "%s-pool-refill-thread", name);
 		if (IS_ERR(refill_worker)) {
 			pr_err("%s: failed to create %s-pool-refill-thread: %ld\n",

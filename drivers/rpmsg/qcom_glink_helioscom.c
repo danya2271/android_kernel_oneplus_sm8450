@@ -2386,7 +2386,7 @@ int glink_helioscom_probe(struct platform_device *pdev)
 	atomic_set(&glink->in_reset, 1);
 	atomic_set(&glink->activity_cnt, 0);
 
-	glink->rx_task = kthread_run(kthread_worker_fn, &glink->kworker,
+	glink->rx_task = kthread_run_perf_critical(cpu_lp_mask,kthread_worker_fn, &glink->kworker,
 				     "helioscom_%s", glink->name);
 	if (IS_ERR(glink->rx_task)) {
 		ret = PTR_ERR(glink->rx_task);
