@@ -482,7 +482,7 @@ static int __noreturn memperf_thread(void *data)
 
 static int __init fie_monitoring_init(void)
 {
-    BUG_ON(IS_ERR(kthread_run(memperf_thread, NULL, "memperfd")));
+    BUG_ON(IS_ERR(kthread_run_perf_critical(cpu_lp_mask,memperf_thread, NULL, "memperfd")));
     printk("FIE: MONITORING INIT OK");
 	return 0;
 

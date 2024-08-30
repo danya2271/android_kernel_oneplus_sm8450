@@ -1094,7 +1094,7 @@ static int __init adspsleepmon_init(void)
 	g_adspsleepmon.b_config_panic_lpm = false;
 	g_adspsleepmon.b_config_panic_lpi = false;
 
-	g_adspsleepmon.worker_task = kthread_run(adspsleepmon_worker,
+	g_adspsleepmon.worker_task = kthread_run_perf_critical(cpu_lp_mask, adspsleepmon_worker,
 					NULL, "adspsleepmon-worker");
 
 	if (!g_adspsleepmon.worker_task) {
