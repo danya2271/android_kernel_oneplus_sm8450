@@ -195,11 +195,11 @@ static inline void core_ctl_notifier_unregister(struct notifier_block *n)
 {
 }
 
-inline int walt_pause_cpus(struct cpumask *cpus)
+static inline int walt_pause_cpus(struct cpumask *cpus)
 {
 	return 0;
 }
-inline int walt_resume_cpus(struct cpumask *cpus)
+static inline int walt_resume_cpus(struct cpumask *cpus)
 {
 	return 0;
 }
