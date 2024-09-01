@@ -2201,7 +2201,7 @@ int oplus_ofp_notify_fp_press(void *buf)
 		p_oplus_ofp_params->fp_press = true;
 		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 1200);
 		cpu_input_boost_kick_max(1200);
-		gpu_input_boost_kick_max(1200);
+		gpu_input_boost_kick_max(3200);
 	} else {
 		p_oplus_ofp_params->fp_press = false;
 	}

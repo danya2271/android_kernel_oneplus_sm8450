@@ -300,6 +300,7 @@ extern ssize_t oplus_sde_evtlog_dump_read(struct file *file, char __user *buff,
 static ssize_t panel_read(struct file *filp, char __user *buffer,
 			  size_t count, loff_t *offset)
 {
+#ifdef CONFIG_DEBUG
 	ssize_t lens = 0;
 
 	lens += oplus_sde_evtlog_dump_read(filp, buffer, count, offset);
@@ -309,6 +310,9 @@ static ssize_t panel_read(struct file *filp, char __user *buffer,
 	/*other dump add here, as for lens add*/
 
 	return lens;
+#else
+	return 0;
+#endif
 }
 
 static ssize_t panel_write(struct file *file, const char __user *buffer,
