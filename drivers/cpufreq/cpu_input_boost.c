@@ -150,6 +150,7 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
+		prediction_disabled = false;
 		sleep_disabled = false;
 		policy->min = get_idle_freq(policy);
 		policy->max = get_idle_freq(policy);
@@ -158,6 +159,7 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 
 	/* Boost CPU to max frequency for max boost */
 	if (test_bit(MAX_BOOST, &b->state)) {
+		prediction_disabled = true;
 		sleep_disabled = true;
 		policy->min = get_max_boost_freq(policy);
 		return;
@@ -168,9 +170,11 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	 * unboosting, set policy->min to the absolute min freq for the CPU.
 	 */
 	if (test_bit(INPUT_BOOST, &b->state)) {
+		prediction_disabled = true;
 		sleep_disabled = true;
 		policy->min = get_input_boost_freq(policy);
 	} else {
+		prediction_disabled = false ;
 		sleep_disabled = false;
 		policy->min = get_min_freq(policy);
 	}
