@@ -8526,11 +8526,11 @@ static void uclamp_set(struct cgroup_subsys_state *css)
 
 	static struct uclamp_param tgts[] = {
 		{"top-app",             "20", "max", 1},  // 20-100%
-		{"foreground",          "10", "80",  1},  // 10-80%
-		{"background",          "0",  "50",  0},  // 0-50%
-		{"system-background",   "0",  "60",  0},  // 0-60%
+		{"foreground",          "30", "max",  1},  // 30-100%
+		{"background",          "0",  "30",  0},  // 0-30%
+		{"system-background",   "0",  "50",  0},  // 0-50%
 		{"restricted",          "0",  "20",  0},  // 0-20%
-		{"camera-daemon",       "20", "max", 1},  // 20-100%
+		{"camera-daemon",       "40", "max", 1},  // 40-100%
 	};
 
 	if (!css->cgroup->kn)
