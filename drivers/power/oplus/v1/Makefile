@@ -68,23 +68,11 @@ oplus_chg-y += oplus_region_check.o
 oplus_chg-y += oplus_pps_ops_manager.o
 oplus_chg-y += adapter_ic/oplus_stm.o
 oplus_chg-y += charger_ic/oplus_short_ic.o
-oplus_chg-y += gauge_ic/oplus_bq27541.o
-oplus_chg-y += gauge_ic/oplus_sh366002.o
 ifeq ($(CONFIG_OPLUS_SM6375R_CHARGER),y)
 oplus_chg-y += gauge_ic/oplus_sm5602.o
 endif
-oplus_chg-y += vooc_ic/oplus_stm8s.o
-oplus_chg-y += vooc_ic/oplus_n76e.o
-oplus_chg-y += vooc_ic/oplus_rk826.o
 oplus_chg-y += vooc_ic/oplus_op10.o
-oplus_chg-y += vooc_ic/oplus_rt5125.o
 oplus_chg-y += vooc_ic/oplus_vooc_fw.o
-oplus_chg-y += voocphy/oplus_sy6529.o
-oplus_chg-y += voocphy/oplus_hl7138.o
-oplus_chg-y += voocphy/oplus_hl7138_slave.o
-oplus_chg-y += voocphy/oplus_sc8517.o
-oplus_chg-y += voocphy/oplus_sc8547.o
-oplus_chg-y += voocphy/oplus_sc8547_slave.o
 oplus_chg-y += voocphy/oplus_cp_intf.o
 oplus_chg-y += charger_ic/s2asl01_switching.o
 ifeq ($(CONFIG_OPLUS_SM6375R_CHARGER),y)
@@ -92,7 +80,6 @@ oplus_chg-y += wireless_ic/oplus_p922x.o
 oplus_chg-y += wireless_ic/oplus_ra9530.o
 endif
 oplus_chg-y += charger_ic/oplus_switching.o
-oplus_chg-y += wireless_ic/oplus_nu1619.o
 oplus_chg-y += wireless_ic/oplus_chargepump.o
 oplus_chg-y += gauge_ic/oplus_optiga/ECC/Optiga_Ecc.o
 oplus_chg-y += gauge_ic/oplus_optiga/ECC/Optiga_Math.o
@@ -106,20 +93,15 @@ oplus_chg-y += oplus_chg_voter.o
 oplus_chg-y += oplus_chg_comm.o
 oplus_chg-y += oplus_chg_track.o
 oplus_chg-y += ufcs/oplus_ufcs_protocol.o
-oplus_chg-y += ufcs/ufcs_ic/oplus_sc8547a.o
-oplus_chg-y += ufcs/ufcs_ic/oplus_sc2201.o
-oplus_chg-y += ufcs/ufcs_ic/oplus_nu2112a.o
-oplus_chg-y += ufcs/ufcs_ic/oplus_nu2112a_slave.o
 oplus_chg-y += oplus_ufcs.o
 oplus_chg-y += oplus_chg_exception.o
 oplus_chg-y += bob_ic/oplus_tps6128xd.o
 oplus_chg-$(CONFIG_OPLUS_DYNAMIC_CONFIG_CHARGER) += op_wlchg_v2/oplus_chg_wls_cfg.o
 
 oplus_chg-$(CONFIG_OPLUS_SM8350_CHARGER) += charger_ic/oplus_battery_sm8350.o charger_ic/oplus_da9313.o charger_ic/oplus_mp2650.o voocphy/oplus_adsp_voocphy.o voocphy/oplus_voocphy.o wireless_ic/oplus_p922x.o
-oplus_chg-$(CONFIG_OPLUS_SM8450_CHARGER) += charger_ic/oplus_battery_sm8450.o charger_ic/oplus_da9313.o charger_ic/oplus_mp2650.o voocphy/oplus_adsp_voocphy.o voocphy/oplus_voocphy.o wireless_ic/oplus_p922x.o \
+oplus_chg-$(CONFIG_OPLUS_SM8450_CHARGER) += charger_ic/oplus_battery_sm8450.o charger_ic/oplus_mp2650.o voocphy/oplus_adsp_voocphy.o voocphy/oplus_voocphy.o \
 		charger_ic/oplus_hl7227.o \
 		op_wlchg_v2/wireless_ic/oplus_p9415.o \
-		op_wlchg_v2/wireless_ic/oplus_nu1619a.o \
 		op_wlchg_v2/hal/oplus_chg_ic.o \
 		op_wlchg_v2/hal/wls_chg_fast.o \
 		op_wlchg_v2/hal/wls_chg_normal.o \
@@ -127,13 +109,6 @@ oplus_chg-$(CONFIG_OPLUS_SM8450_CHARGER) += charger_ic/oplus_battery_sm8450.o ch
 		op_wlchg_v2/oplus_chg_strategy.o \
 		op_wlchg_v2/oplus_chg_wls.o \
 		chargepump_ic/oplus_pps_cp.o \
-		chargepump_ic/oplus_sc8571_master.o \
-		chargepump_ic/oplus_sc8571_slave_a.o \
-		chargepump_ic/oplus_sc8571_slave_b.o \
-		chargepump_ic/oplus_bq25980_master.o \
-		chargepump_ic/oplus_bq25980_slave.o \
-		chargepump_ic/oplus_nu2205_master.o \
-		chargepump_ic/oplus_nu2205_slave.o \
 		charger_ic/oplus_mos_ctrl.o
 oplus_chg-$(CONFIG_OPLUS_SM8550_CHARGER) += charger_ic/oplus_battery_sm8550.o voocphy/oplus_adsp_voocphy.o voocphy/oplus_voocphy.o \
 		charger_ic/oplus_hl7227.o \
@@ -334,5 +309,4 @@ obj-y += oplus_chg_comm.o
 obj-y += ufcs/
 obj-y += oplus_ufcs.o
 obj-y += oplus_chg_exception.o
-obj-y += bob_ic/oplus_tps6128xd.o
 endif # gki_support

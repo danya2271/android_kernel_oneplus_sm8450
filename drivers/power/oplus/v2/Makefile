@@ -44,9 +44,6 @@ oplus_chg_v2-y += oplus_smart_chg.o
 oplus_chg_v2-y += oplus_chg_pps.o
 oplus_chg_v2-$(CONFIG_OPLUS_CHG_PARALLEL) += oplus_parallel.o
 
-oplus_chg_v2-y += gauge_ic/oplus_hal_bq27541.o
-
-oplus_chg_v2-y += vooc_ic/oplus_hal_rk826.o
 oplus_chg_v2-y += vooc_ic/oplus_hal_op10.o
 
 oplus_chg_v2-y += hal/oplus_chg_ic.o

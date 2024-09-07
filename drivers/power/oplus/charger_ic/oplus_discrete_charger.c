@@ -2829,7 +2829,6 @@ static int __init discrete_charger_init(void)
 	oplus_vooc_get_fastchg_ing_pfunc(&oplus_vooc_get_fastchg_ing);
 #endif
 	adapter_ic_init();
-	bq27541_driver_init();
 	sm5602_driver_init();
 	rk826_subsys_init();
 	op10_subsys_init();
@@ -2873,7 +2872,6 @@ static void __exit discrete_charger_exit(void)
 	op10_subsys_exit();
 	rk826_subsys_exit();
 	sm5602_driver_exit();
-	bq27541_driver_exit();
 	adapter_ic_exit();
 }
 oplus_chg_module_register(discrete_charger);
