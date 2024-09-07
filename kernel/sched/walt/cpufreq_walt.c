@@ -871,6 +871,21 @@ static int waltgov_init(struct cpufreq_policy *policy)
 		break;
 	}
 
+	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
+		tunables->up_rate_limit_us = 1000;
+		tunables->down_rate_limit_us = 500;
+	}
+
+	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
+		tunables->up_rate_limit_us = 5700;
+		tunables->down_rate_limit_us = 500;
+	}
+
+	if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
+		tunables->up_rate_limit_us = 3000;
+		tunables->down_rate_limit_us = 500;
+	}
+
 	policy->governor_data = wg_policy;
 	wg_policy->tunables = tunables;
 	waltgov_tunables_restore(policy);
