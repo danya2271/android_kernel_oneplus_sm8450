@@ -12202,11 +12202,8 @@ static int __init sm8350_chg_init(void)
 	oplus_pps_cp_init();
 #endif
 	adsp_voocphy_init();
-	bq27541_driver_init();
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
-	da9313_driver_init();
 	mp2650_driver_init();
-	sc8517_subsys_init();
 #endif
 	ret = platform_driver_register(&battery_chg_driver);
 	return ret;
@@ -12216,11 +12213,8 @@ static void __exit sm8350_chg_exit(void)
 {
 	platform_driver_unregister(&battery_chg_driver);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
-	sc8517_subsys_exit();
 	mp2650_driver_exit();
-	da9313_driver_exit();
 #endif
-	bq27541_driver_exit();
 	adsp_voocphy_exit();
 	oplus_pps_cp_deinit();
 	oplus_pps_ops_deinit();
