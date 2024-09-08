@@ -419,8 +419,13 @@ TRACE_EVENT(cam_tracing_mark_write,
 
 
 #define STR_BUFFER_MAX_LENGTH  512
+#ifdef CONFIG_DEBUG
 const char* GetFileName(const char* pFilePath);
 extern pid_t camera_provider_pid;
+#else
+static const char* GetFileName(const char* pFilePath) {return 0;}
+static pid_t camera_provider_pid;
+#endif
 #define trace_begin(...)                                                                                                    \
 do {                                                                                                                        \
 	char str_buffer[STR_BUFFER_MAX_LENGTH/2] = {0};                                                                         \
