@@ -51,7 +51,6 @@ enum msm_cvp_debugfs_event {
 	MSM_CVP_DEBUGFS_EVENT_FTB,
 	MSM_CVP_DEBUGFS_EVENT_FBD,
 };
-#ifdef CONFIG_DEBUG
 
 extern int msm_cvp_debug;
 extern int msm_cvp_debug_out;
@@ -92,47 +91,7 @@ struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 struct dentry *msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
 		struct dentry *parent);
 void msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst);
-#else
-static int msm_cvp_debug;
-static int msm_cvp_debug_out;
-static int msm_cvp_fw_debug;
-static int msm_cvp_fw_debug_mode;
-static int msm_cvp_fw_low_power_mode;
-static bool msm_cvp_fw_coverage;
-static bool msm_cvp_thermal_mitigation_disabled;
-static bool msm_cvp_cacheop_disabled;
-static int msm_cvp_clock_voting;
-static bool msm_cvp_syscache_disable;
-static bool msm_cvp_dsp_disable;
-static bool msm_cvp_mmrm_enabled;
-static bool msm_cvp_dcvs_disable;
-static int msm_cvp_minidump_enable;
 
-#define dprintk(__level, __fmt, arg...)	\
-do { \
-	if (msm_cvp_debug & __level) { \
-		if (msm_cvp_debug_out == CVP_OUT_PRINTK) { \
-			pr_info(CVP_DBG_TAG __fmt, \
-			get_debug_level_str(__level),	\
-			## arg); \
-		} \
-	} \
-} while (0)
-
-#define MSM_CVP_ERROR(value)					\
-do {	if (value)					\
-	dprintk(CVP_ERR, "BugOn");		\
-	WARN_ON(value);					\
-} while (0)
-
-
-static inline struct dentry *msm_cvp_debugfs_init_drv(void) {return 0;}
-static inline struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
-										 struct dentry *parent) {return 0;}
-static inline struct dentry *msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
-										 struct dentry *parent) {return 0;}
-static inline void msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst) {}
-#endif
 static inline char *get_debug_level_str(int level)
 {
 	switch (level) {

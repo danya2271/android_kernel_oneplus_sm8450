@@ -9,6 +9,7 @@ msm-eva-objs := eva/cvp.o \
                 eva/msm_cvp_core.o \
                 eva/msm_cvp.o \
                 eva/msm_smem.o \
+                eva/msm_cvp_debug.o \
                 eva/msm_cvp_res_parse.o \
                 eva/cvp_dump.o \
                 eva/cvp_hfi.o \
@@ -20,8 +21,6 @@ msm-eva-objs := eva/cvp.o \
                 eva/msm_cvp_buf.o \
                 eva/msm_cvp_synx.o \
 		eva/cvp_fw_load.o
-
-msm-eva-obj-$(CONFIG_DEBUG) += eva/msm_cvp_debug.o
 
 obj-$(CONFIG_MSM_EVA) := msm-eva.o
 
