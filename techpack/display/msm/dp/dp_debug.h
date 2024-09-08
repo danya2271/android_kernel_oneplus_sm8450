@@ -112,7 +112,7 @@ struct dp_debug_in {
 	struct dp_pll *pll;
 	struct dp_display *display;
 };
-#ifdef CONFIG_DEBUG
+
 /**
  * dp_debug_get() - configure and get the DisplayPlot debug module data
  *
@@ -132,8 +132,4 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in);
  * @dp_debug: instance of dp_debug
  */
 void dp_debug_put(struct dp_debug *dp_debug);
-#else
-static inline struct dp_debug *dp_debug_get(struct dp_debug_in *in) {return 0;}
-static inline void dp_debug_put(struct dp_debug *dp_debug) {}
-#endif
 #endif /* _DP_DEBUG_H_ */
