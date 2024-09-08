@@ -15,6 +15,9 @@
 #include "cvp_hfi_api.h"
 #include "msm_cvp_clocks.h"
 #include <linux/dma-buf.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/gpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 #define MAX_EVENTS 30
 #define NUM_CYCLES16X16_HCD_FRAME 95
@@ -168,6 +171,9 @@ void *msm_cvp_open(int core_id, int session_type)
 		goto err_invalid_core;
 	}
 
+	devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 300);
+	cpu_input_boost_kick_max(300);
+	gpu_input_boost_kick_max(300);
 	pr_info(CVP_DBG_TAG "Opening cvp instance: %pK\n", "sess", inst);
 	mutex_init(&inst->sync_lock);
 	mutex_init(&inst->lock);
