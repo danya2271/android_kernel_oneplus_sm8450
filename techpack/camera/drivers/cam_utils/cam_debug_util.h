@@ -182,7 +182,7 @@ enum cam_log_print_type {
 };
 
 #define __CAM_LOG_FMT KERN_INFO "%s: %s: %s: %d "
-
+#ifdef CONFIG_DEBUG
 /**
  * cam_print_log() - function to print logs (internal use only, use macros instead)
  *
@@ -193,6 +193,9 @@ enum cam_log_print_type {
  */
 
 void cam_print_log(int type, const char *fmt, ...);
+#else
+static inline void cam_print_log(int type, const char *fmt, ...) {}
+#endif
 
 #define __CAM_LOG(type, tag, module_id, fmt, args...)                               \
 ({                                                                                  \

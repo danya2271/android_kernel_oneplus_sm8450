@@ -143,7 +143,7 @@ void cam_print_to_buffer(char *buf, const size_t buf_size, size_t *len, unsigned
 	__cam_print_to_buffer(buf, buf_size, len, tag, module_id, fmt, args);
 	va_end(args);
 }
-
+#ifdef CONFIG_DEBUG
 static void __cam_print_log(int type, const char *fmt, va_list args)
 {
 	va_list args1, args2;
@@ -171,3 +171,4 @@ void cam_print_log(int type, const char *fmt, ...)
 	__cam_print_log(type, fmt, args);
 	va_end(args);
 }
+#endif

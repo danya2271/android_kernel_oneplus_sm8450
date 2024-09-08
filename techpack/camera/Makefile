@@ -3,6 +3,7 @@
 # Inlining optimization
 KBUILD_CFLAGS  += -mllvm -inline-threshold=225
 KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=325
+KBUILD_CFLAGS  += -mllvm -inline-instr-cost=60
 
 # Include Architecture configurations
 ifeq ($(CONFIG_ARCH_KALAMA), y)
@@ -74,11 +75,9 @@ camera-y := \
 	drivers/cam_req_mgr/cam_mem_mgr.o \
 	drivers/cam_req_mgr/cam_req_mgr_workq.o \
 	drivers/cam_req_mgr/cam_req_mgr_timer.o \
-	drivers/cam_req_mgr/cam_req_mgr_debug.o \
+	drivers/cam_utils/cam_debug_util.o \
 	drivers/cam_utils/cam_soc_util.o \
 	drivers/cam_utils/cam_packet_util.o \
-	drivers/cam_utils/cam_debug_util.o \
-	drivers/cam_utils/cam_trace.o \
 	drivers/cam_utils/cam_common_util.o \
 	drivers/cam_utils/cam_compat.o \
 	drivers/cam_core/cam_context.o \
@@ -99,6 +98,10 @@ camera-y := \
 	drivers/cam_cdm/cam_cdm_core_common.o \
 	drivers/cam_cdm/cam_cdm_virtual_core.o \
 	drivers/cam_cdm/cam_cdm_hw_core.o
+
+camera-$(CONFIG_DEBUG) += \
+	drivers/cam_req_mgr/cam_req_mgr_debug.o \
+	drivers/cam_utils/cam_trace.o
 
 ifeq (,$(filter $(CONFIG_CAM_PRESIL),y m))
 	camera-y += drivers/cam_presil/stub/cam_presil_hw_access_stub.o
