@@ -69,14 +69,7 @@ enum vidc_msg_prio {
 #define FW_LOGMASK     0x0FFF0000
 
 #define dprintk_inst(__level, __level_str, inst, __fmt, ...) \
-	do { \
-		if (inst && (msm_vidc_debug & (__level))) { \
-			pr_info(VIDC_DBG_TAG_INST __fmt, \
-				__level_str, \
-				inst->debug_str, \
-				##__VA_ARGS__); \
-		} \
-	} while (0)
+	do {} while (0)
 
 #define i_vpr_e(inst, __fmt, ...) dprintk_inst(VIDC_ERR,  "err ", inst, __fmt, ##__VA_ARGS__)
 #define i_vpr_i(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, "high", inst, __fmt, ##__VA_ARGS__)
@@ -90,15 +83,7 @@ enum vidc_msg_prio {
 	dprintk_inst(VIDC_HIGH | VIDC_PERF, "high", inst, __fmt, ##__VA_ARGS__)
 
 #define dprintk_core(__level, __level_str, __fmt, ...) \
-	do { \
-		if (msm_vidc_debug & (__level)) { \
-			pr_info(VIDC_DBG_TAG_CORE __fmt, \
-				__level_str, \
-				DEFAULT_SID, \
-				"codec", \
-				##__VA_ARGS__); \
-		} \
-	} while (0)
+	do {} while (0)
 
 #define d_vpr_e(__fmt, ...) dprintk_core(VIDC_ERR,  "err ", __fmt, ##__VA_ARGS__)
 #define d_vpr_h(__fmt, ...) dprintk_core(VIDC_HIGH, "high", __fmt, ##__VA_ARGS__)
@@ -115,13 +100,7 @@ enum vidc_msg_prio {
 	} while (0)
 
 #define dprintk_firmware(__level, __fmt, ...)	\
-	do { \
-		if (__level & FW_PRINTK) { \
-			pr_info(FW_DBG_TAG __fmt, \
-				"fw", \
-				##__VA_ARGS__); \
-		} \
-	} while (0)
+	do {} while (0)
 
 #define MSM_VIDC_FATAL(value)	\
 	do { \
