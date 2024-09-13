@@ -13,5 +13,5 @@
  * GNU General Public License for more details.
  */
 #include <linux/cpu_suspend.h>
-int screen_off;
+int screen_off = 0;
 

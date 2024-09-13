@@ -922,7 +922,7 @@ static void set_load_weight(struct task_struct *p)
 static DEFINE_MUTEX(uclamp_mutex);
 
 /* Max allowed minimum utilization */
-unsigned int sysctl_sched_uclamp_util_min = 128;
+unsigned int sysctl_sched_uclamp_util_min = 96;
 
 /* Max allowed maximum utilization */
 unsigned int sysctl_sched_uclamp_util_max = SCHED_CAPACITY_SCALE;
@@ -8525,10 +8525,10 @@ static void uclamp_set(struct cgroup_subsys_state *css)
 	int i;
 
 	static struct uclamp_param tgts[] = {
-		{"top-app",             "20", "max", 1},  // 20-100%
-		{"foreground",          "30", "max",  1},  // 30-100%
-		{"background",          "0",  "30",  0},  // 0-30%
-		{"system-background",   "0",  "50",  0},  // 0-50%
+		{"top-app",             "20", "100", 1},  // 20-100%
+		{"foreground",          "0", "40",  0},  // 0-40%
+		{"background",          "0",  "20",  0},  // 0-20%
+		{"system-background",   "0",  "20",  0},  // 0-20%
 		{"restricted",          "0",  "20",  0},  // 0-20%
 		{"camera-daemon",       "40", "max", 1},  // 40-100%
 	};

@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=12800
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=12000
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=6
+KBUILD_CFLAGS  += -mllvm -inline-instr-cost=1
 KBUILD_CFLAGS  += -mllvm -hot-callsite-rel-freq=400
 
 KCOV_INSTRUMENT := n

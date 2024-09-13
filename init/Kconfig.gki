@@ -162,7 +162,6 @@ config GKI_HIDDEN_RPMSG_CONFIGS
 
 config GKI_HIDDEN_GPU_CONFIGS
 	bool "Hidden GPU configuration needed for GKI"
-	select TRACE_GPU_MEM
 	select MMU_NOTIFIER
 	select HMM_MIRROR
 	help
