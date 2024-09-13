@@ -851,8 +851,8 @@ endif
 KBUILD_CFLAGS +=  -fno-semantic-interposition -fno-signed-zeros  -ffinite-math-only -freciprocal-math -fcf-protection=none -fno-trapping-math -fno-math-errno -ffast-math -funroll-loops
 
 # Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=4800
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=1500
+KBUILD_CFLAGS  += -mllvm -inline-threshold=480
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=350
 KBUILD_CFLAGS  += -mllvm -inline-savings-multiplier=12
 KBUILD_CFLAGS  += -mllvm -inline-cold-callsite-threshold=55
 KBUILD_CFLAGS  += -mllvm -ignore-tti-inline-compatible

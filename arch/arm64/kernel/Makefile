@@ -2,6 +2,10 @@
 #
 # Makefile for the linux kernel.
 #
+
+# Inlining optimization
+KBUILD_CFLAGS  += -mllvm -inline-instr-cost=1
+
 KBUILD_CFLAGS += -Wno-invalid-noreturn
 CFLAGS_armv8_deprecated.o := -I$(src)
 
