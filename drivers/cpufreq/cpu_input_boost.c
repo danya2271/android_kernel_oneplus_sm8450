@@ -7,13 +7,13 @@
 
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
-#include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/version.h>
 #include "../cpuidle/governors/qcom-lpm.h"
+#include <linux/msm_drm_notify.h>
 
 /* The sched_param struct is located elsewhere in newer kernels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
@@ -162,6 +162,7 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 		prediction_disabled = true;
 		sleep_disabled = true;
 		policy->min = get_max_boost_freq(policy);
+		policy->max = get_max_boost_freq(policy);
 		return;
 	}
 
@@ -310,14 +311,14 @@ static int fb_notifier_cb(struct notifier_block *nb,
 			       unsigned long action, void *data)
 {
 	struct boost_drv *b = container_of(nb, typeof(*b), fb_notif);
-	struct fb_event *evdata = data;
+	struct msm_drm_notifier *evdata = data;
 	int *blank = evdata->data;
 
-	if (action != FB_EVENT_BLANK)
+	if (action != MSM_DRM_EARLY_EVENT_BLANK)
 		return NOTIFY_OK;
 
 	/* Boost when the screen turns on and unboost when it turns off */
-	if (*blank == FB_BLANK_UNBLANK) {
+	if (*blank == MSM_DRM_BLANK_UNBLANK) {
 		clear_bit(SCREEN_OFF, &b->state);
 		__cpu_input_boost_kick_max(b, wake_boost_duration);
 	} else {
@@ -424,7 +425,7 @@ static int __init cpu_input_boost_init(void)
 
 	b->fb_notif.notifier_call = fb_notifier_cb;
 	b->fb_notif.priority = INT_MAX;
-	ret = fb_register_client(&b->fb_notif);
+	ret = msm_drm_register_client(&b->fb_notif);
 	if (ret) {
 		pr_err("Failed to register fb notifier, err: %d\n", ret);
 		goto unregister_handler;
@@ -440,7 +441,7 @@ static int __init cpu_input_boost_init(void)
 	return 0;
 
 unregister_fb_notif:
-	fb_unregister_client(&b->fb_notif);
+	msm_drm_unregister_client(&b->fb_notif);
 unregister_handler:
 	input_unregister_handler(&cpu_input_boost_input_handler);
 	return ret;

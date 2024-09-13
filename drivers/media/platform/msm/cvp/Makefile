@@ -9,7 +9,6 @@ msm-cvp-objs := cvp.o \
 				msm_cvp_core.o \
 				msm_cvp.o \
 				msm_smem.o \
-				msm_cvp_debug.o \
 				msm_cvp_res_parse.o \
 				cvp_hfi.o \
 				hfi_response_handler.o \
@@ -20,5 +19,7 @@ msm-cvp-objs := cvp.o \
 				msm_cvp_buf.o \
 				msm_cvp_synx.o \
 				cvp_fw_load.o
+
+msm-cvp-obj-$(CONFIG_DEBUG)  += msm_cvp_debug.o
 
 obj-$(CONFIG_MSM_CVP) := msm-cvp.o
