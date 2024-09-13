@@ -1,4 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
+# Inlining optimization
+KBUILD_CFLAGS  += -mllvm -inline-threshold=9800
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=7500
 KBUILD_CFLAGS  += -mllvm -inline-instr-cost=1
 KBUILD_CFLAGS += -Wno-declaration-after-statement -Wno-invalid-noreturn
 ifdef CONFIG_FUNCTION_TRACER
