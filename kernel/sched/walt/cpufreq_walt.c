@@ -474,10 +474,10 @@ static ssize_t up_rate_limit_us_store(struct gov_attr_set *attr_set,
 	if (kstrtouint(buf, 10, &rate_limit_us))
 		return -EINVAL;
 
-	tunables->up_rate_limit_us = 1000;
+	tunables->up_rate_limit_us = 500;
 
 	list_for_each_entry(wg_policy, &attr_set->policy_list, tunables_hook) {
-		wg_policy->up_rate_delay_ns = 1000 * NSEC_PER_USEC;
+		wg_policy->up_rate_delay_ns = 500 * NSEC_PER_USEC;
 		update_min_rate_limit_ns(wg_policy);
 	}
 
@@ -791,7 +791,7 @@ static void waltgov_tunables_save(struct cpufreq_policy *policy,
 	cached->hispeed_load = tunables->hispeed_load;
 	cached->rtg_boost_freq = 0;
 	cached->hispeed_freq = 0;
-	cached->up_rate_limit_us = 1000;
+	cached->up_rate_limit_us = tunables->up_rate_limit_us;
 	cached->down_rate_limit_us = 500;
 	cached->boost = tunables->boost;
 	cached->adaptive_low_freq = tunables->adaptive_low_freq;
@@ -871,20 +871,6 @@ static int waltgov_init(struct cpufreq_policy *policy)
 		break;
 	}
 
-	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
-		tunables->up_rate_limit_us = 1000;
-		tunables->down_rate_limit_us = 500;
-	}
-
-	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
-		tunables->up_rate_limit_us = 5700;
-		tunables->down_rate_limit_us = 500;
-	}
-
-	if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
-		tunables->up_rate_limit_us = 3000;
-		tunables->down_rate_limit_us = 500;
-	}
 
 	policy->governor_data = wg_policy;
 	wg_policy->tunables = tunables;
