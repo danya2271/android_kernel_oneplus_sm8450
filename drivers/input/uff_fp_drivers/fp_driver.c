@@ -320,7 +320,7 @@ static int irq_setup(struct fp_dev *fp_dev) {
 
     fp_dev->irq = fp_irq_num(fp_dev);
     status      = request_threaded_irq(
-        fp_dev->irq, NULL, fp_irq_handler, IRQF_TRIGGER_RISING | IRQF_ONESHOT, "oplusfp", fp_dev);
+        fp_dev->irq, NULL, fp_irq_handler, IRQF_TRIGGER_RISING | IRQF_ONESHOT | IRQF_PRIME_AFFINE, "oplusfp", fp_dev);
 
     if (status) {
         pr_err("failed to request IRQ:%d\n", fp_dev->irq);

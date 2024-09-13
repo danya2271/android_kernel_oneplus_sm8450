@@ -463,7 +463,7 @@ static inline void ep_pcie_write_reg_field(void __iomem *base, u32 offset,
 	/* ensure register write goes through before next regiser operation */
 	wmb();
 }
-
+#ifdef CONFIG_DEBUG
 extern int ep_pcie_core_register_event(struct ep_pcie_register_event *reg);
 extern int ep_pcie_get_debug_mask(void);
 extern void ep_pcie_phy_init(struct ep_pcie_dev_t *dev);
@@ -472,5 +472,15 @@ extern void ep_pcie_reg_dump(struct ep_pcie_dev_t *dev, u32 sel, bool linkdown);
 extern void ep_pcie_clk_dump(struct ep_pcie_dev_t *dev);
 extern void ep_pcie_debugfs_init(struct ep_pcie_dev_t *ep_dev);
 extern void ep_pcie_debugfs_exit(void);
+#else
+extern int ep_pcie_core_register_event(struct ep_pcie_register_event *reg);
+extern int ep_pcie_get_debug_mask(void);
+extern void ep_pcie_phy_init(struct ep_pcie_dev_t *dev);
+extern bool ep_pcie_phy_is_ready(struct ep_pcie_dev_t *dev);
+extern void ep_pcie_clk_dump(struct ep_pcie_dev_t *dev);
+extern void ep_pcie_debugfs_exit(void);
+static inline void ep_pcie_reg_dump(struct ep_pcie_dev_t *dev, u32 sel, bool linkdown) {}
+static inline void ep_pcie_debugfs_init(struct ep_pcie_dev_t *ep_dev) {}
+#endif
 
 #endif

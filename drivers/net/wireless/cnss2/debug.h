@@ -90,10 +90,19 @@ extern void *cnss_ipc_log_long_context;
 #define cnss_fatal_err(_fmt, ...)					\
 	cnss_pr_err("fatal: " _fmt, ##__VA_ARGS__)
 
+#ifdef CONFIG_DEBUG
 int cnss_debug_init(void);
 void cnss_debug_deinit(void);
 int cnss_debugfs_create(struct cnss_plat_data *plat_priv);
 void cnss_debugfs_destroy(struct cnss_plat_data *plat_priv);
 void cnss_debug_ipc_log_print(void *log_ctx, char *process, const char *fn,
 			      const char *log_level, char *fmt, ...);
+#else
+static inline int cnss_debug_init(void) {return 0;}
+static void cnss_debug_deinit(void) {}
+static inline int cnss_debugfs_create(struct cnss_plat_data *plat_priv) {return 0;}
+static void cnss_debugfs_destroy(struct cnss_plat_data *plat_priv) {}
+static void cnss_debug_ipc_log_print(void *log_ctx, char *process, const char *fn,
+							  const char *log_level, char *fmt, ...) {}
+#endif
 #endif /* _CNSS_DEBUG_H */

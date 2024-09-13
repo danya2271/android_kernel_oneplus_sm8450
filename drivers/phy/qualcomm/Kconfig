@@ -75,7 +75,7 @@ config PHY_QCOM_UFS_V4
 	  Support for 7nm UFS QMP phy present on QCOM chipsets.
 
 config PHY_QCOM_UFS_14NM
-	tristate
+	tristate "qcom_ufs_14nm"
 	default PHY_QCOM_UFS
 	help
 	  Support for 14nm UFS QMP phy present on QCOM chipsets.
@@ -97,7 +97,7 @@ config PHY_QCOM_UFS_QRBTC_SDM845
 	  Doesn't restrict number of lanes.
 
 config PHY_QCOM_UFS_V3
-	tristate
+	tristate "qcom_ufs_v3"
 	default PHY_QCOM_UFS
 	help
 	  Support for 8nm UFS QMP phy present on QCOM chipsets.
