@@ -2631,6 +2631,7 @@ static inline bool uclamp_rq_is_idle(struct rq *rq)
 #endif /* CONFIG_UCLAMP_TASK */
 
 #ifdef CONFIG_UCLAMP_TASK_GROUP
+#ifdef CONFIG_CPUSETS
 static inline bool uclamp_latency_sensitive(struct task_struct *p)
 {
 	struct cgroup_subsys_state *css = task_css(p, cpuset_cgrp_id);
@@ -2651,7 +2652,14 @@ static inline bool uclamp_latency_sensitive(struct task_struct *p)
 {
 	return false;
 }
+#endif
+#else
+static inline bool uclamp_latency_sensitive(struct task_struct *p)
+{
+	return false;
+}
 #endif /* CONFIG_UCLAMP_TASK_GROUP */
+
 
 #ifdef arch_scale_freq_capacity
 # ifndef arch_scale_freq_invariant
