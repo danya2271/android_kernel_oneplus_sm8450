@@ -474,10 +474,10 @@ static ssize_t up_rate_limit_us_store(struct gov_attr_set *attr_set,
 	if (kstrtouint(buf, 10, &rate_limit_us))
 		return -EINVAL;
 
-	tunables->up_rate_limit_us = 500;
+	tunables->up_rate_limit_us = 2000;
 
 	list_for_each_entry(wg_policy, &attr_set->policy_list, tunables_hook) {
-		wg_policy->up_rate_delay_ns = 500 * NSEC_PER_USEC;
+		wg_policy->up_rate_delay_ns = 2000 * NSEC_PER_USEC;
 		update_min_rate_limit_ns(wg_policy);
 	}
 
