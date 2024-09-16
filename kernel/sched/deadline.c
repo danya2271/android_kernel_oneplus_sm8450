@@ -2745,7 +2745,7 @@ void __getparam_dl(struct task_struct *p, struct sched_attr *attr)
  * guard against timer DoS.
  */
 unsigned int sysctl_sched_dl_period_max = 1 << 22; /* ~4 seconds */
-unsigned int sysctl_sched_dl_period_min = 100;     /* 100 us */
+unsigned int sysctl_sched_dl_period_min = 120;     /* 100 us */
 
 /*
  * This function validates the new parameters of a -deadline task.
