@@ -348,12 +348,12 @@ static long stats_data_ioctl(struct file *file, unsigned int cmd,
 	} else {
 		int modes = DDR_STATS_MAX_NUM_MODES;
 
-		if (ddr_freq_update) {
+/*		if (ddr_freq_update) {
 			ret = ddr_stats_freq_sync_send_msg();
 			if (ret < 0)
 				goto out_free;
 			udelay(500);
-		}
+		} */
 
 		ddr_stats_sleep_stat(drvdata, temp);
 		if (ddr_freq_update) {
