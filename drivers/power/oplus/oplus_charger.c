@@ -104,8 +104,8 @@ static struct oplus_chg_chip *g_charger_chip = NULL;
 #define UPDATE_TIME		1
 #define QC_SWITCH_VOL		7500
 
-#define OPLUS_CHG_UPDATE_INTERVAL_SEC			5
-#define OPLUS_CHG_UPDATE_NO_CHARGE_INTERVAL_SEC		10
+#define OPLUS_CHG_UPDATE_INTERVAL_SEC			1
+#define OPLUS_CHG_UPDATE_NO_CHARGE_INTERVAL_SEC		1
 /* first run after init 10s */
 #define OPLUS_CHG_UPDATE_INIT_DELAY	round_jiffies_relative(msecs_to_jiffies(500))
 /* update cycle 5s */
@@ -9935,12 +9935,6 @@ static void oplus_chg_update_ui_soc(struct oplus_chg_chip *chip)
 			oplus_chg_track_upload_vbatt_too_low_info(chip);
 	}
 	pre_vbatt_too_low = vbatt_too_low;
-
-	if (chip->batt_full) {
-		soc_up_limit = SOC_SYNC_UP_RATE_10S;
-	} else {
-		soc_up_limit = SOC_SYNC_UP_RATE_10S;
-	}
 
 #ifndef CONFIG_DISABLE_OPLUS_FUNCTION
 	if ((get_eng_version() == HIGH_TEMP_AGING || get_eng_version() == AGING || oplus_is_ptcrb_version()) &&
