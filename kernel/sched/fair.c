@@ -52,7 +52,7 @@ static unsigned int normalized_sysctl_sched_base_slice	= 3000000ULL;
  * parent will (try to) run first.
  */
 unsigned int sysctl_sched_child_runs_first __read_mostly;
-unsigned int sysctl_sched_min_util_for_headroom __read_mostly = 75;
+unsigned int sysctl_sched_min_util_for_headroom __read_mostly = 140;
 unsigned int sysctl_sched_max_util_for_headroom __read_mostly = 400;
 unsigned int sysctl_sched_little_headroom __read_mostly = 1280;
 unsigned int sysctl_sched_big_headroom __read_mostly = 120;

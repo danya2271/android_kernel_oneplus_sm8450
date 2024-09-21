@@ -412,13 +412,13 @@ void cpu_startup_entry(enum cpuhp_state state)
  */
 
 #ifdef CONFIG_SMP
-static int
+static inline int
 select_task_rq_idle(struct task_struct *p, int cpu, int sd_flag, int flags)
 {
 	return task_cpu(p); /* IDLE tasks as never migrated */
 }
 
-static int
+static inline int
 balance_idle(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 {
 	return WARN_ON_ONCE(1);
@@ -443,7 +443,7 @@ static void set_next_task_idle(struct rq *rq, struct task_struct *next, bool fir
 	schedstat_inc(rq->sched_goidle);
 }
 
-struct task_struct *pick_next_task_idle(struct rq *rq)
+inline struct task_struct *pick_next_task_idle(struct rq *rq)
 {
 	struct task_struct *next = rq->idle;
 
