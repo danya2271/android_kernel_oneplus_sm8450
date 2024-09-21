@@ -540,24 +540,10 @@ int gen7_ringbuffer_submitcmd(struct adreno_device *adreno_dev,
 	cmds = kvmalloc((GEN7_COMMAND_DWORDS + (numibs * 5)) << 2, GFP_KERNEL);
 	if (!cmds) {
 		ret = -ENOMEM;
-		goto done;
 	}
 
 	cmds[index++] = cp_type7_packet(CP_NOP, 1);
 	cmds[index++] = START_IB_IDENTIFIER;
-
-	/* Kernel profiling: 8 dwords */
-	if (IS_KERNEL_PROFILE(flags)) {
-		index += GEN7_KERNEL_PROFILE(adreno_dev, cmdobj, &cmds[index],
-			started);
-		index += GEN7_KERNEL_PROFILE_CONTEXT(adreno_dev, cmdobj, &cmds[index],
-			ctx_start);
-	}
-
-	/* User profiling: 4 dwords */
-	if (IS_USER_PROFILE(flags))
-		index += GEN7_USER_PROFILE_IB(rb, cmdobj, &cmds[index],
-			gpu_ticks_submitted);
 
 	if (is_concurrent_binning(drawctxt)) {
 		cmds[index++] = cp_type7_packet(CP_THREAD_CONTROL, 1);
@@ -600,19 +586,6 @@ int gen7_ringbuffer_submitcmd(struct adreno_device *adreno_dev,
 	cmds[index++] = cp_type7_packet(CP_EVENT_WRITE, 1);
 	cmds[index++] = 25;
 
-	/* 8 dwords */
-	if (IS_KERNEL_PROFILE(flags)) {
-		index += GEN7_KERNEL_PROFILE(adreno_dev, cmdobj, &cmds[index],
-			retired);
-		index += GEN7_KERNEL_PROFILE_CONTEXT(adreno_dev, cmdobj, &cmds[index],
-			ctx_end);
-	}
-
-	/* 4 dwords */
-	if (IS_USER_PROFILE(flags))
-		index += GEN7_USER_PROFILE_IB(rb, cmdobj, &cmds[index],
-			gpu_ticks_retired);
-
 	cmds[index++] = cp_type7_packet(CP_NOP, 1);
 	cmds[index++] = END_IB_IDENTIFIER;
 
@@ -630,17 +603,12 @@ int gen7_ringbuffer_submitcmd(struct adreno_device *adreno_dev,
 		if (ret != -ENOSPC && ret != -ENOENT)
 			dev_err(device->dev,
 				"Unable to switch draw context: %d\n", ret);
-		goto done;
 	}
 
 	adreno_drawobj_set_constraint(device, drawobj);
 
 	ret = gen7_ringbuffer_addcmds(adreno_dev, drawctxt->rb, drawctxt,
 		flags, cmds, index, drawobj->timestamp, time);
-
-done:
-	trace_kgsl_issueibcmds(device, drawctxt->base.id, numibs,
-		drawobj->timestamp, drawobj->flags, ret, drawctxt->type);
 
 	kvfree(cmds);
 	return ret;
