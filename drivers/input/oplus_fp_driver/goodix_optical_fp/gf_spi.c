@@ -31,32 +31,24 @@
 #include <linux/fb.h>
 #include <linux/pm_qos.h>
 #include <linux/cpufreq.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/gpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 #include "../include/wakelock.h"
 #include "gf_spi.h"
 #include "../include/oplus_fp_common.h"
-#if defined(USE_SPI_BUS)
-#include <linux/spi/spi.h>
-#include <linux/spi/spidev.h>
-#elif defined(USE_PLATFORM_BUS)
 #include <linux/platform_device.h>
-#endif
 #if IS_ENABLED(CONFIG_DRM_PANEL_NOTIFY_FINGERPRINT)
 #include <linux/soc/qcom/panel_event_notifier.h>
 #include <drm/drm_panel.h>
 #elif IS_ENABLED(CONFIG_DRM_OPLUS_NOTIFY) || IS_ENABLED(CONFIG_DRM_MSM)
 #include <linux/msm_drm_notify.h>
 #endif
-//#include <soc/oplus/system/boot_mode.h>
-#include <linux/version.h>
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
 #include <linux/uaccess.h>
-#endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 #define FB_EARLY_EVENT_BLANK    0x10
-#endif
 
 #define VER_MAJOR   1
 #define VER_MINOR   2
@@ -436,7 +428,7 @@ static void gf_auto_send_touchup(void)
     gf_opticalfp_irq_handler(&tp_info);
 }
 
-static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static inline long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     struct gf_dev *gf_dev = &gf;
     int retval = 0;
@@ -449,17 +441,9 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     }
 
     if (_IOC_DIR(cmd) & _IOC_READ) {
-        #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
         retval = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
-        #else
-        retval = !access_ok(VERIFY_WRITE, (void __user *)arg, _IOC_SIZE(cmd));
-        #endif
     } else if (_IOC_DIR(cmd) & _IOC_WRITE) {
-        #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
         retval = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
-        #else
-        retval = !access_ok(VERIFY_READ, (void __user *)arg, _IOC_SIZE(cmd));
-        #endif
     }
     if (retval) {
         return -EFAULT;
@@ -494,7 +478,9 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             gf_enable_irq(gf_dev);
             break;
         case GF_IOC_RESET:
-            pr_info("%s GF_IOC_RESET. \n", __func__);
+            devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 400);
+            cpu_input_boost_kick_max(400);
+            gpu_input_boost_kick_max(400);
             gf_hw_reset(gf_dev, 10);
             break;
         case GF_IOC_INPUT_KEY_EVENT:
@@ -506,22 +492,6 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             }
 
             gf_kernel_key_input(gf_dev, &gf_key);
-            break;
-        case GF_IOC_ENABLE_SPI_CLK:
-            pr_debug("%s GF_IOC_ENABLE_SPI_CLK\n",  __func__);
-#ifdef AP_CONTROL_CLK
-            gfspi_ioctl_clk_enable(gf_dev);
-#else
-            pr_debug("Doesn't support control clock.\n");
-#endif
-            break;
-        case GF_IOC_DISABLE_SPI_CLK:
-            pr_debug("%s GF_IOC_DISABLE_SPI_CLK\n", __func__);
-#ifdef AP_CONTROL_CLK
-            gfspi_ioctl_clk_disable(gf_dev);
-#else
-            pr_debug("Doesn't support control clock\n");
-#endif
             break;
         case GF_IOC_ENABLE_POWER:
             pr_debug("%s GF_IOC_ENABLE_POWER\n", __func__);
@@ -545,13 +515,11 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
         case GF_IOC_GET_FW_INFO:
             pr_debug("%s GF_IOC_GET_FW_INFO\n", __func__);
             break;
-
         case GF_IOC_REMOVE:
             irq_cleanup(gf_dev);
             gf_cleanup(gf_dev);
             pr_debug("%s GF_IOC_REMOVE\n", __func__);
             break;
-
         case GF_IOC_CHIP_INFO:
             pr_debug("%s GF_IOC_CHIP_INFO\n", __func__);
             if (copy_from_user(&info, (struct gf_ioc_chip_info *)arg, sizeof(struct gf_ioc_chip_info))) {
@@ -594,15 +562,7 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     return retval;
 }
 
-#ifdef CONFIG_COMPAT
-static long gf_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-    return gf_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
-}
-#endif /*CONFIG_COMPAT*/
-
-
-static int gf_open(struct inode *inode, struct file *filp)
+static inline int gf_open(struct inode *inode, struct file *filp)
 {
     struct gf_dev *gf_dev = &gf;
     int status = -ENXIO;
@@ -663,7 +623,7 @@ static int gf_fasync(int fd, struct file *filp, int mode)
 }
 #endif
 
-static int gf_release(struct inode *inode, struct file *filp)
+static inline int gf_release(struct inode *inode, struct file *filp)
 {
     struct gf_dev *gf_dev = &gf;
     int status = 0;
@@ -691,9 +651,6 @@ static const struct file_operations gf_fops = {
      * too, except for the locking.
      */
     .unlocked_ioctl = gf_ioctl,
-#ifdef CONFIG_COMPAT
-    .compat_ioctl = gf_compat_ioctl,
-#endif /*CONFIG_COMPAT*/
     .open = gf_open,
     .release = gf_release,
 #ifdef GF_FASYNC
@@ -702,7 +659,7 @@ static const struct file_operations gf_fops = {
 };
 
 #if IS_ENABLED(CONFIG_DRM_PANEL_NOTIFY_FINGERPRINT)
-static void
+static inline void
 fp_panel_notifier_callback(enum panel_event_notifier_tag tag,
 			   struct panel_event_notification *notification,
 			   void *client_data)
@@ -820,7 +777,7 @@ static struct notifier_block goodix_noti_block = {
     .notifier_call = goodix_fb_state_chg_callback,
 };
 
-static int gf_opticalfp_irq_handler(struct fp_underscreen_info *tp_info)
+static inline int gf_opticalfp_irq_handler(struct fp_underscreen_info *tp_info)
 {
     char msg = 0;
     fp_tpinfo = *tp_info;
