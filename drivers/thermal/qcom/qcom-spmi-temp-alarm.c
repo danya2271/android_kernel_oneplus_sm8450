@@ -607,7 +607,7 @@ static irqreturn_t qpnp_tm_isr(int irq, void *data)
 
 #ifdef OPLUS_FEATURE_CHG_BASIC
 	if (chip->need_check_ref_byp)
-		schedule_delayed_work(&chip->ref_byp_detect_work, 0);
+		queue_delayed_work(system_power_efficient_wq, &chip->ref_byp_detect_work, 0);
 #endif
 
 	return IRQ_HANDLED;
