@@ -8518,19 +8518,27 @@ struct uclamp_param {
 	char uclamp_min[3];
 	char uclamp_max[3];
 	u64  uclamp_latency_sensitive;
+	u64  cpu_shares;
 };
+
+#ifdef CONFIG_FAIR_GROUP_SCHED
+static int cpu_shares_write_u64(struct cgroup_subsys_state *css,
+								struct cftype *cftype, u64 shareval);
+#endif
 
 static void uclamp_set(struct cgroup_subsys_state *css)
 {
 	int i;
 
 	static struct uclamp_param tgts[] = {
-		{"top-app",             "20", "100", 1},  // 20-100%
-		{"foreground",          "0", "40",  0},  // 0-40%
-		{"background",          "0",  "20",  0},  // 0-20%
-		{"system-background",   "0",  "20",  0},  // 0-20%
-		{"restricted",          "0",  "20",  0},  // 0-20%
-		{"camera-daemon",       "40", "max", 1},  // 40-100%
+		{"top-app",             "10", "100", 1, 20480},  // 20-100%
+		{"rt",			"1", "max",  1, 40960},
+		{"nnapi-hal",		"0", "max",  1, 10240},
+		{"foreground",          "0", "40",  0, 10240},  // 0-40%
+		{"background",          "0",  "20",  0, 1024},  // 0-20%
+		{"system-background",   "0",  "20",  0, 1024},  // 0-20%
+		{"restricted",          "0",  "20",  0, 1024},  // 0-20%
+		{"camera-daemon",       "40", "max", 1, 40960},  // 40-100%
 	};
 
 	if (!css->cgroup->kn)
@@ -8547,8 +8555,20 @@ static void uclamp_set(struct cgroup_subsys_state *css)
 			cpu_uclamp_ls_write_u64(css, NULL,
 						tgt.uclamp_latency_sensitive);
 
-			pr_info("uclamp_assist: setting values for %s: uclamp_min=%s uclamp_max=%s uclamp_latency_sensitive=%d\n",
-				tgt.name, tgt.uclamp_min, tgt.uclamp_max,tgt.uclamp_latency_sensitive);
+#ifdef CONFIG_FAIR_GROUP_SCHED
+			cpu_shares_write_u64(css, NULL, tgt.cpu_shares);
+#endif
+
+#ifdef CONFIG_FAIR_GROUP_SCHED
+			pr_info("uclamp_assist: setting values for %s: uclamp_min=%s uclamp_max=%s"
+			"uclamp_latency_sensitive=%d cpu_shares=%d\n",
+		   tgt.name, tgt.uclamp_min, tgt.uclamp_max, tgt.uclamp_latency_sensitive, tgt.cpu_shares);
+#else
+			pr_info("uclamp_assist: setting values for %s: uclamp_min=%s uclamp_max=%s uclamp_latency_sensitive=%d\n"
+			tgt.name, tgt.uclamp_min, tgt.uclamp_max, tgt.uclamp_latency_sensitive);
+#endif
+
+
 			return;
 		}
 	}
