@@ -14,7 +14,7 @@ SCHED_FEAT(RUN_TO_PARITY, false)
  * wakeup-preemption), since its likely going to consume data we
  * touched, increases cache locality.
  */
-SCHED_FEAT(NEXT_BUDDY, true)
+SCHED_FEAT(NEXT_BUDDY, false)
 
 /*
  * Consider buddies to be cache hot, decreases the likeliness of a
