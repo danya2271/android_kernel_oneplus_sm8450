@@ -794,7 +794,7 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 		}
 
 		if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
-			strncpy(str_governor, "walt", sizeof(str_governor));
+			strncpy(str_governor, "schedhorizon", sizeof(str_governor));
 		}
 	} else {
 	ret = sscanf(buf, "%15s", str_governor);

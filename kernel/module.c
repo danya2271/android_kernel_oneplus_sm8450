@@ -4040,7 +4040,7 @@ static int load_integrated_module(const char *modname, const char __user *uargs)
 	snprintf(kmod, sizeof(kmod), "__initdone__kmod_%s__", modname);
 	init_done = (void *)kallsyms_lookup_name(kmod);
 	if (!init_done) {
-		pr_info("%s: module '%s' not found\n", __func__, modname);
+//		pr_info("%s: module '%s' not found\n", __func__, modname);
 		/* Don't return an error even if the module wasn't found */
 		return 0;
 	}

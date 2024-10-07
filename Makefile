@@ -1099,8 +1099,6 @@ else
 CC_FLAGS_LTO	+= -fvisibility=default
 endif
 
-KBUILD_LDFLAGS += -mllvm -import-instr-limit=35
-
 # Set O3 optimization level for LTO
 KBUILD_LDFLAGS		+= --plugin-opt=O3
 KBUILD_LDFLAGS      += --lto-O3

@@ -8138,7 +8138,6 @@ void oplus_chg_variables_reset(struct oplus_chg_chip *chip, bool in)
 	chip->parallel_error_flag &= ~(REASON_SOC_NOT_FULL);
 	chip->soc_not_full_report = false;
 	chip->voocphy_notify_ap_suspend = false;
-	chg_err("charger detect is %d\n", in);
 }
 
 static void oplus_chg_variables_init(struct oplus_chg_chip *chip)
@@ -11361,100 +11360,10 @@ static void oplus_chg_kpoc_power_off_check(struct oplus_chg_chip *chip)
 
 static void oplus_chg_print_log(struct oplus_chg_chip *chip)
 {
-	if (chip->vbatt_num == 1) {
-		charger_xlog_printk(CHG_LOG_CRTI,
-			"CHGR[ %d / %d / %d / %d / %d / %d ], "
-			"BAT[ %d / %d / %d / %d / %d / %d ], "
-			"GAUGE[ %d / %d / %d / %d / %d / %d / %d / %d / %d / %d / "
-				"%d / %d / %d / %d / %d / %d / %d / %d / %d / %d / %d / %d / %d ], "
-			"STATUS[ 0x%x / %d / %d / %d / %d / 0x%x / %d ], "
-			"OTHER[ %d / %d / %d / %d / %d / %d / %d / %d / %d / %d ], "
-			"VOOCPHY[ %d / %d / %d / %d / %d / 0x%0x / %d ]\n",
-			chip->charger_exist, chip->charger_type, chip->charger_volt, chip->prop_status, chip->boot_mode, chip->charger_subtype,
-			chip->batt_exist, chip->batt_full, chip->chging_on, chip->in_rechging, chip->charging_state, chip->total_time,
-			chip->temperature, chip->tbatt_temp, chip->batt_volt, chip->batt_volt_min, chip->icharging,
-			chip->ibus, chip->soc, chip->ui_soc, chip->soc_load, chip->batt_rm,
-			oplus_gauge_get_batt_fc(), oplus_gauge_get_batt_qm(), oplus_gauge_get_batt_pd(),
-			oplus_gauge_get_batt_rcu(), oplus_gauge_get_batt_rcf(), oplus_gauge_get_batt_fcu(),
-			oplus_gauge_get_batt_fcf(), oplus_gauge_get_batt_sou(), oplus_gauge_get_batt_do0(),
-			oplus_gauge_get_batt_doe(), oplus_gauge_get_batt_trm(), oplus_gauge_get_batt_pc(),
-			oplus_gauge_get_batt_qs(),
-			chip->vbatt_over, chip->chging_over_time, chip->vchg_status, chip->tbatt_status,
-			chip->stop_voter, chip->notify_code, chip->usb_status,
-			chip->otg_online, chip->otg_switch, chip->mmi_chg, chip->boot_reason, chip->boot_mode, chip->chargerid_volt,
-			chip->chargerid_volt_got, chip->shell_temp, chip->subboard_temp, oplus_is_vooc_project(),
-			oplus_vooc_get_fastchg_started(), oplus_vooc_get_fastchg_ing(), oplus_vooc_get_fastchg_dummy_started(),
-			oplus_vooc_get_fastchg_to_normal(), oplus_vooc_get_fastchg_to_warm(), oplus_vooc_get_fast_chg_type(),
-			oplus_voocphy_get_fastchg_commu_ing());
-	} else {
-		if (chip->prop_status != POWER_SUPPLY_STATUS_CHARGING) {
-			oplus_gauge_dump_register();
-		}
-		charger_xlog_printk(CHG_LOG_CRTI,
-			"CHGR[ %d / %d / %d / %d / %d / %d ], "
-			"BAT[ %d / %d / %d / %d / %d / %d ], "
-			"GAUGE[ %d / %d / %d / %d / %d / %d / %d / %d / %d / %d ], "
-			"STATUS[ 0x%x / %d / %d / %d / %d / 0x%x / %d ], "
-			"OTHER[ %d / %d / %d / %d / %d / %d / %d / %d / %d / %d ], "
-			"VOOCPHY[ %d / %d / %d / %d / %d / 0x%0x / %d ]\n",
-			chip->charger_exist, chip->charger_type, chip->charger_volt, chip->prop_status, chip->boot_mode, chip->charger_subtype,
-			chip->batt_exist, chip->batt_full, chip->chging_on, chip->in_rechging, chip->charging_state, chip->total_time,
-			chip->temperature, chip->tbatt_temp, chip->batt_volt, chip->batt_volt_min, chip->icharging,
-			chip->ibus, chip->soc, chip->ui_soc, chip->soc_load, chip->batt_rm,
-			chip->vbatt_over, chip->chging_over_time, chip->vchg_status, chip->tbatt_status,
-			chip->stop_voter, chip->notify_code, chip->usb_status,
-			chip->otg_online, chip->otg_switch, chip->mmi_chg, chip->boot_reason, chip->boot_mode, chip->chargerid_volt,
-			chip->chargerid_volt_got, chip->shell_temp, chip->subboard_temp, oplus_is_vooc_project(),
-			oplus_vooc_get_fastchg_started(), oplus_vooc_get_fastchg_ing(), oplus_vooc_get_fastchg_dummy_started(),
-			oplus_vooc_get_fastchg_to_normal(), oplus_vooc_get_fastchg_to_warm(), oplus_vooc_get_fast_chg_type(),
-			oplus_voocphy_get_fastchg_commu_ing());
-	}
-
-	if (oplus_chg_get_voocphy_support() == AP_SINGLE_CP_VOOCPHY ||
-	    oplus_chg_get_voocphy_support() == AP_DUAL_CP_VOOCPHY) {
-		if (chip->tbatt_temp <= -400) {
-			chip->gauge_iic_err = true;
-			oplus_chg_get_curr_time_ms(&chip->gauge_iic_err_time_record);
-		} else {
-			if (chip->gauge_iic_err == true) {
-				unsigned long curr_time = 0;
-				oplus_chg_get_curr_time_ms(&curr_time);
-				chip->gauge_iic_err_time_record = curr_time - chip->gauge_iic_err_time_record;
-				chip->gauge_iic_err = false;
-			}
-		}
-	}
-
-#ifdef CONFIG_OPLUS_CHARGER_MTK
-	if (chip->charger_type == POWER_SUPPLY_TYPE_USB_DCP) {
-		oplus_vooc_print_log();
-	}
-#endif
-	print_voocphy_log_buf();
-	if (chip->charger_type == POWER_SUPPLY_TYPE_USB_DCP) {
-		oplus_pps_print_log();
-		oplus_ufcs_print_log();
-	}
 }
 
 static int comm_info_dump_log_data(char *buffer, int size, void *dev_data)
 {
-	struct oplus_chg_chip *chip = dev_data;
-
-	if (!buffer || !chip)
-		return -ENOMEM;
-
-	snprintf(buffer, size, ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,"
-		"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,"
-		"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,"
-		"%d,%d,%d,%d",
-		chip->tbatt_temp, chip->shell_temp, chip->batt_volt, chip->batt_volt_min, chip->icharging,
-		chip->input_current_limit, chip->charging_current, chip->soc, chip->ui_soc, chip->charger_exist, chip->charger_type, chip->ibus,
-		chip->charger_volt, chip->smooth_soc, chip->led_on, chip->notify_code, chip->stop_chg, chip->mmi_chg,
-		chip->dischg_flag, chip->smart_charge_user, chip->limits.vfloat_sw_set, chip->otg_switch, chip->cool_down,
-		chip->bcc_cool_down, chip->normal_cool_down, chip->charger_subtype, chip->sw_full, chip->hw_full_by_sw, chip->subboard_temp,
-		chip->in_rechging, chip->prop_status, chip->charging_state, chip->pd_svooc, chip->ac_online);
-
 	return 0;
 }
 
