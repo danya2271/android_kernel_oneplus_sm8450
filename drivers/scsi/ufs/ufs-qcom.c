@@ -56,11 +56,7 @@
 /* Max number of log pages */
 #define UFS_QCOM_MAX_LOG_SZ	10
 #define ufs_qcom_log_str(host, fmt, ...)	\
-	do {	\
-		if (host->ufs_ipc_log_ctx && host->dbg_en)	\
-			ipc_log_string(host->ufs_ipc_log_ctx,	\
-					",%d,"fmt, current->cpu, ##__VA_ARGS__);\
-	} while (0)
+	do {} while (0)
 
 #define UFS_BOOT_DEVICE  0x1
 static u32 is_bootdevice_ufs = UFS_BOOT_DEVICE;
@@ -3466,10 +3462,6 @@ static int ufs_qcom_init(struct ufs_hba *hba)
 
 	ufs_qcom_qos_init(hba);
 	ufs_qcom_parse_irq_affinity(hba);
-	host->ufs_ipc_log_ctx = ipc_log_context_create(UFS_QCOM_MAX_LOG_SZ,
-							"ufs-qcom", 0);
-	if (!host->ufs_ipc_log_ctx)
-		dev_warn(dev, "IPC Log init - failed\n");
 
 	goto out;
 

@@ -27,53 +27,28 @@ extern unsigned int tp_debug;
 #endif
 
 #define TPD_INFO(a, arg...)  pr_err("[TP]"TPD_DEVICE ": " a, ##arg)
-#define TP_INFO(index, a, arg...)  pr_err("[TP""%x""]"TPD_DEVICE": " a, index, ##arg)
+#define TP_INFO(index, a, arg...)
 
 #define TPD_DEBUG(a, arg...)\
-	do{\
-		if (LEVEL_DEBUG == tp_debug)\
-		pr_err("[TP]"TPD_DEVICE ": " a, ##arg);\
-	}while(0)
+	do{ }while(0)
 
 #define TP_DEBUG(index, a, arg...)\
-			do{\
-				if (LEVEL_DEBUG == tp_debug)\
-					pr_err("[TP""%x""]"TPD_DEVICE": " a, index, ##arg);\
-			}while(0)
+			do{ }while(0)
 
 #define TPD_DETAIL(a, arg...)\
-	do{\
-		if (LEVEL_BASIC != tp_debug)\
-			pr_err("[TP]"TPD_DEVICE ": " a, ##arg);\
-	}while(0)
+	do{ }while(0)
 
 #define TP_DETAIL(index, a, arg...)\
-			do{\
-				if (LEVEL_BASIC != tp_debug)\
-					pr_err("[TP""%x""]"TPD_DEVICE": " a, index, ##arg);\
-			}while(0)
+			do{ }while(0)
 
 #define TPD_SPECIFIC_PRINT(count, a, arg...)\
-	do{\
-		if (count++ == TPD_PRINT_POINT_NUM || LEVEL_DEBUG == tp_debug) {\
-			TPD_INFO(TPD_DEVICE ": " a, ##arg);\
-			count = 0;\
-		}\
-	}while(0)
+	do{ }while(0)
 
 #define TP_SPECIFIC_PRINT(index, count, a, arg...)\
-			do{\
-				if (count++ == TPD_PRINT_POINT_NUM || LEVEL_DEBUG == tp_debug) {\
-					TPD_INFO(TPD_DEVICE"%x"": " a, index, ##arg);\
-					count = 0;\
-				}\
-			}while(0)
+			do{ }while(0)
 
 #define TPD_DEBUG_NTAG(a, arg...)\
-			do{\
-				if (tp_debug)\
-					printk(a, ##arg);\
-			}while(0)
+			do{ }while(0)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
 #define DECLARE_PROC_OPS(name, open_func, read_func, write_func, release_func) \

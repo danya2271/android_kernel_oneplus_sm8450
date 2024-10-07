@@ -8788,18 +8788,6 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 			wls_dev->fcc_steps[i].fcc_step[j].max_step = length/5;
 		}
 	}
-	for (i = 0; i < WLS_FAST_SOC_MAX; i++) {
-		for (j = 0; j < WLS_FAST_TEMP_MAX; j++) {
-			for (k = 0; k < wls_dev->fcc_steps[i].fcc_step[j].max_step; k++) {
-				chg_info("%d %d %d %d %d\n",
-					wls_dev->fcc_steps[i].fcc_step[j].fcc_step[k].low_threshold,
-					wls_dev->fcc_steps[i].fcc_step[j].fcc_step[k].high_threshold,
-					wls_dev->fcc_steps[i].fcc_step[j].fcc_step[k].curr_ma,
-					wls_dev->fcc_steps[i].fcc_step[j].fcc_step[k].vol_max_mv,
-					wls_dev->fcc_steps[i].fcc_step[j].fcc_step[k].need_wait);
-			}
-		}
-	}
 
 	rc = of_property_count_elems_of_size(node, "oplus,wls_epp_strategy", sizeof(u32));
 	if (rc < 0) {
@@ -8874,18 +8862,6 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 				wls_dev->bcc_steps[i].bcc_step[j].max_step = length/4;
 			}
 		}
-
-		for (i = 0; i < WLS_BCC_SOC_MAX; i++) {
-			for (j = 0; j < WLS_BCC_TEMP_MAX; j++) {
-				for (k = 0; k < wls_dev->bcc_steps[i].bcc_step[j].max_step; k++) {
-					chg_info("bcc_step: %d %d %d %d\n",
-						wls_dev->bcc_steps[i].bcc_step[j].bcc_step[k].max_batt_volt,
-						wls_dev->bcc_steps[i].bcc_step[j].bcc_step[k].max_curr,
-						wls_dev->bcc_steps[i].bcc_step[j].bcc_step[k].min_curr,
-						wls_dev->bcc_steps[i].bcc_step[j].bcc_step[k].exit);
-				}
-			}
-		}
 	}
 
 	rc = read_unsigned_data_from_node(node, "bcc_stop_curr_0_to_30",
@@ -8956,16 +8932,6 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 			(u32 *)dynamic_cfg->non_ffc_step[i], length);
 		wls_dev->non_ffc_step[i].max_step = length / 5;
 	}
-	for (i = 0; i < OPLUS_WLS_CHG_MODE_MAX; i++) {
-		for (j = 0; j < wls_dev->non_ffc_step[i].max_step; j++) {
-			chg_info("%d %d %d %d %d\n",
-				dynamic_cfg->non_ffc_step[i][j].low_threshold,
-				dynamic_cfg->non_ffc_step[i][j].high_threshold,
-				dynamic_cfg->non_ffc_step[i][j].curr_ma,
-				dynamic_cfg->non_ffc_step[i][j].vol_max_mv,
-				dynamic_cfg->non_ffc_step[i][j].need_wait);
-		}
-	}
 
 	/* cv */
 	for (i = 0; i < OPLUS_WLS_CHG_MODE_MAX; i++) {
@@ -8978,16 +8944,6 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 		rc = of_property_read_u32_array(node, strategy_cv[i],
 			(u32 *)dynamic_cfg->cv_step[i], length);
 		wls_dev->cv_step[i].max_step = length / 5;
-	}
-	for (i = 0; i < OPLUS_WLS_CHG_MODE_MAX; i++) {
-		for (j = 0; j < wls_dev->cv_step[i].max_step; j++) {
-			chg_info("%d %d %d %d %d\n",
-				dynamic_cfg->cv_step[i][j].low_threshold,
-				dynamic_cfg->cv_step[i][j].high_threshold,
-				dynamic_cfg->cv_step[i][j].curr_ma,
-				dynamic_cfg->cv_step[i][j].vol_max_mv,
-				dynamic_cfg->cv_step[i][j].need_wait);
-		}
 	}
 
 	/* cool down */
@@ -9077,18 +9033,6 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 				wls_dev->icl_max_ma[i] = dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][m];
 		}
 	}
-	for (i = 0; i < OPLUS_WLS_CHG_MODE_MAX; i++) {
-		chg_info("OPLUS_WLS_CHG_BATT_CL_LOW: %d %d %d %d %d %d %d %d %d\n",
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][0],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][1],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][2],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][3],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][4],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][5],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][6],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][7],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_LOW][i][8]);
-	}
 
 	rc = read_unsigned_data_from_node(node, "oplus,iclmax-batt-high-ma",
 		(u32 *)(&dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH]),
@@ -9107,18 +9051,7 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 				wls_dev->icl_max_ma[i] = dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][m];
 		}
 	}
-	for (i = 0; i < OPLUS_WLS_CHG_MODE_MAX; i++) {
-		chg_info("OPLUS_WLS_CHG_BATT_CL_HIGH: %d %d %d %d %d %d %d %d %d\n",
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][0],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][1],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][2],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][3],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][4],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][5],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][6],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][7],
-			dynamic_cfg->iclmax_ma[OPLUS_WLS_CHG_BATT_CL_HIGH][i][8]);
-	}
+
 
 	skin_step = &wls_dev->epp_plus_skin_step;
 	skin_step->skin_step = dynamic_cfg->epp_plus_skin_step;
@@ -9139,10 +9072,6 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 	} else {
 		skin_step->max_step = rc;
 	}
-	for (i = 0; i < skin_step->max_step; i++) {
-		chg_info("epp_plus-skin-step: %d %d %d\n", skin_step->skin_step[i].low_threshold,
-			skin_step->skin_step[i].high_threshold, skin_step->skin_step[i].curr_ma);
-	}
 
 	skin_step = &wls_dev->epp_skin_step;
 	skin_step->skin_step = dynamic_cfg->epp_skin_step;
@@ -9162,10 +9091,6 @@ static int oplus_chg_wls_parse_dt(struct oplus_chg_wls *wls_dev)
 		}
 	} else {
 		skin_step->max_step = rc;
-	}
-	for (i = 0; i < skin_step->max_step; i++) {
-		chg_info("epp-skin-step: %d %d %d\n", skin_step->skin_step[i].low_threshold,
-			skin_step->skin_step[i].high_threshold, skin_step->skin_step[i].curr_ma);
 	}
 
 	skin_step = &wls_dev->bpp_skin_step;

@@ -277,9 +277,6 @@ static int tfa98xx_spk_mute_ctrl_put(struct snd_kcontrol *kcontrol,
 			} else {
 				if(tfa_state_mark == 0) {
 					tfa_dev_set_state(tfa98xx->tfa, TFA_STATE_UNMUTE);
-				} else {
-					dev_info(&tfa98xx->i2c->dev, "%s: tfa98xx is mute, return\n",
-						__func__);
 				}
 			}
 			mutex_unlock(&tfa98xx->dsp_lock);
@@ -757,8 +754,6 @@ static enum tfa_error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_profil
 		start_time = ktime_get_boottime();
 	}
 
-	dev_info(&tfa98xx->i2c->dev, "tfa98xx_tfa_start enter\n");
-
 	err = tfa_dev_start(tfa98xx->tfa, next_profile, vstep);
 
 	if (trace_level & 8) {
@@ -808,14 +803,11 @@ static enum tfa_error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_profil
 static int tfa98xx_input_open(struct input_dev *dev)
 {
 	struct tfa98xx *tfa98xx = input_get_drvdata(dev);
-	dev_info(tfa98xx->component->dev, "opening device file\n");
 
 	/* note: open function is called only once by the framework.
 	 * No need to count number of open file instances.
 	 */
 	if (tfa98xx->dsp_fw_state != TFA98XX_DSP_FW_OK) {
-		dev_info(&tfa98xx->i2c->dev,
-			"DSP not loaded, cannot start tap-detection\n");
 		return -EIO;
 	}
 
@@ -2754,7 +2746,6 @@ static int tfa98xx_get_cal_ctl(struct snd_kcontrol *kcontrol,
 	mutex_lock(&tfa98xx_mutex);
 	list_for_each_entry(tfa98xx, &tfa98xx_device_list, list) {
 		mutex_lock(&tfa98xx->dsp_lock);
-		dev_info(tfa98xx->dev, "%s: get calibration\n", __func__);
 		ucontrol->value.integer.value[tfa98xx->tfa->dev_idx] = tfa_dev_mtp_get(tfa98xx->tfa, TFA_MTP_RE25_PRIM);
 		mutex_unlock(&tfa98xx->dsp_lock);
 	}
@@ -2830,7 +2821,6 @@ static int tfa98xx_get_cal_f0_ctl(struct snd_kcontrol *kcontrol,
 	list_for_each_entry(tfa98xx, &tfa98xx_device_list, list) {
 		mutex_lock(&tfa98xx->dsp_lock);
 		ucontrol->value.integer.value[tfa98xx->tfa->dev_idx] = tfa_dev_mtp_get(tfa98xx->tfa, TFA_MTP_F0);
-		dev_info(tfa98xx->dev, "%s: get f0 calibration value:%d\n", __func__, ucontrol->value.integer.value[tfa98xx->tfa->dev_idx]);
 		mutex_unlock(&tfa98xx->dsp_lock);
 	}
 	mutex_unlock(&tfa98xx_mutex);
@@ -3157,7 +3147,6 @@ static int tfa98xx_create_controls(struct tfa98xx *tfa98xx)
 	char *name;
 	struct tfa98xx_baseprofile *bprofile;
 
-	dev_info(tfa98xx->dev, "%s: enter\n", __func__);
 	/* Create the following controls:
 	 *  - enum control to select the active profile
 	 *  - one volume control for each profile hosting a vstep
@@ -3315,7 +3304,6 @@ static int tfa98xx_create_controls(struct tfa98xx *tfa98xx)
 	}
 	#endif /*OPLUS_ARCH_EXTENDS*/
 
-	dev_info(tfa98xx->dev, "%s: done\n", __func__);
 	if (!(tfa98xx->component->card)) {
 		dev_err(tfa98xx->dev, "%s: soundcard is null!", __func__);
 		devm_kfree(tfa98xx->component->dev, tfa98xx_controls);
@@ -3874,8 +3862,6 @@ static void tfa98xx_container_loaded(const struct firmware *cont, void *context)
 		return;
 	}
 
-	dev_info(tfa98xx->dev, "%s: loaded %s - size: %zu\n", __func__, fw_name, cont->size);
-
 	mutex_lock(&tfa98xx_mutex);
 	if (tfa98xx_container == NULL) {
 		container = kzalloc(cont->size, GFP_KERNEL);
@@ -3964,16 +3950,9 @@ static void tfa98xx_container_loaded(const struct firmware *cont, void *context)
 			if (strcmp(tfa_cont_profile_name(tfa98xx, i),
 							dflt_prof_name) == 0) {
 				tfa98xx->profile = i;
-				dev_info(tfa98xx->dev,
-					"changing default profile to %s (%d)\n",
-					dflt_prof_name, tfa98xx->profile);
 				break;
 			}
 		}
-		if (i >= nprof)
-			dev_info(tfa98xx->dev,
-				"Default profile override failed (%s profile not found)\n",
-				dflt_prof_name);
 	}
 
 	tfa98xx->dsp_fw_state = TFA98XX_DSP_FW_OK;
@@ -4123,8 +4102,6 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
 		return;
 	}
 
-	dev_info(&tfa98xx->i2c->dev, "tfa98xx_dsp_init enter\n");
-
 	mutex_lock(&tfa98xx->dsp_lock);
 
 	tfa98xx->dsp_init = TFA98XX_DSP_INIT_PENDING;
@@ -4171,9 +4148,6 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
 
 			/* Subsystem ready, tfa init complete */
 			tfa98xx->dsp_init = TFA98XX_DSP_INIT_DONE;
-			dev_info(&tfa98xx->i2c->dev,
-						"tfa_dev_start success (%d)\n",
-						tfa98xx->init_count);
 			/* cancel other pending init works */
 			cancel_delayed_work(&tfa98xx->init_work);
 			tfa98xx->init_count = 0;
@@ -4244,7 +4218,6 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
 
 				#ifdef OPLUS_FEATURE_SPEAKER_MUTE
 				if (speaker_mute_control == 1) {
-					dev_info(&tfa98xx->i2c->dev, "Speaker mute control on, muting...\n");
 					tfa_dev_set_state(tfa98xx->tfa, TFA_STATE_MUTE);
 				}
 				#endif /* OPLUS_FEATURE_SPEAKER_MUTE */
@@ -4707,8 +4680,6 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
 	struct snd_soc_component *component = dai->component;
 	struct tfa98xx *tfa98xx = snd_soc_component_get_drvdata(component);
 
-	dev_info(&tfa98xx->i2c->dev, "%s: state: %d\n", __func__, mute);
-
 	if (no_start) {
 		pr_info("no_start parameter set no tfa_dev_start or tfa_dev_stop, returning\n");
 		return 0;
@@ -4793,7 +4764,6 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
 			                   &tfa98xx->init_work, 0);
 		#else /* OPLUS_ARCH_EXTENDS */
 		if (tfa98xx->dsp_init != TFA98XX_DSP_INIT_PENDING) {
-			dev_info(&tfa98xx->i2c->dev, "tfa98xx->flags:0x%x\n", tfa98xx->flags);
 			if (tfa98xx->flags & TFA98XX_FLAG_CHIP_SELECTED) {
 				tfa98xx_dsp_init(tfa98xx);
 			}
@@ -4848,8 +4818,6 @@ static int tfa98xx_probe(struct snd_soc_component *component)
 {
 	struct tfa98xx *tfa98xx = snd_soc_component_get_drvdata(component);
 	int ret = 0;
-
-	dev_info(tfa98xx->dev, "%s: enter\n", __func__);
 
 	#ifdef OPLUS_ARCH_EXTENDS
     tfa98xx_whole_v6 = tfa98xx;
@@ -4908,9 +4876,6 @@ static int tfa98xx_probe(struct snd_soc_component *component)
 	snd_soc_add_component_controls(tfa98xx->component,
 				   tfa98xx_check_feedback, ARRAY_SIZE(tfa98xx_check_feedback));
 	#endif
-
-	dev_info(component->dev, "tfa98xx codec registered (%s) ret=%d",
-							tfa98xx->fw.name, ret);
 
 	return ret;
 }
@@ -5213,7 +5178,6 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c,
 
 				ret = of_property_read_u32(np, "tfa-vdd-current", &tfa98xx->optimum_uA);
 				if (ret) {
-					dev_info(&i2c->dev, "tfa current property not found. \n");
 					tfa98xx->optimum_uA = 200000;
 				}
 			} else {
