@@ -1321,6 +1321,8 @@ static void ufs_qcom_set_affinity_hint(struct ufs_hba *hba, bool prime)
 	unsigned int clear = 0;
 	int ret;
 	cpumask_t *affinity_mask;
+	if (IS_ENABLED(CONFIG_IRQ_SBALANCE))
+		return;
 
 	if (prime) {
 		set = IRQ_NO_BALANCING;
@@ -3092,6 +3094,7 @@ out_err:
 
 static void ufs_qcom_parse_irq_affinity(struct ufs_hba *hba)
 {
+#ifndef CONFIG_IRQ_SBALANCE
 	struct device *dev = hba->dev;
 	struct device_node *np = dev->of_node;
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
@@ -3116,6 +3119,7 @@ static void ufs_qcom_parse_irq_affinity(struct ufs_hba *hba)
 	//if (host->perf_mask.bits[0])
 	//	host->irq_affinity_support = true;
 	// Disable it by default
+#endif
 }
 
 static void ufs_qcom_parse_pm_level(struct ufs_hba *hba)
@@ -4812,6 +4816,7 @@ static ssize_t irq_affinity_support_store(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t count)
 {
+#ifndef CONFIG_IRQ_SBALANCE
 	struct ufs_hba *hba = dev_get_drvdata(dev);
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
 	bool value;
@@ -4841,15 +4846,22 @@ static ssize_t irq_affinity_support_store(struct device *dev,
 
 out:
 	return -EINVAL;
+#else
+	return 0;
+#endif
 }
 
 static ssize_t irq_affinity_support_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
+#ifndef CONFIG_IRQ_SBALANCE
 	struct ufs_hba *hba = dev_get_drvdata(dev);
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
 
 	return scnprintf(buf, PAGE_SIZE, "%d\n", !!host->irq_affinity_support);
+#else
+	return 0;
+#endif
 }
 
 static DEVICE_ATTR_RW(irq_affinity_support);

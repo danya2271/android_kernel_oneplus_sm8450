@@ -1016,7 +1016,7 @@ int cam_sensor_start(struct cam_sensor_ctrl_t *s_ctrl)
 	mutex_lock(&(s_ctrl->sensor_power_state_mutex));
 	if(s_ctrl->sensor_power_state == CAM_SENSOR_POWER_OFF)
 	{
-		s_ctrl->sensor_open_thread = kthread_run_perf_critical(cpu_lp_mask, sensor_start_thread, s_ctrl, s_ctrl->device_name);
+		s_ctrl->sensor_open_thread = kthread_run_perf_critical(cpu_prime_mask, sensor_start_thread, s_ctrl, s_ctrl->device_name);
 		if (!s_ctrl->sensor_open_thread)
 		{
 			CAM_ERR(CAM_SENSOR, "create sensor start thread failed");

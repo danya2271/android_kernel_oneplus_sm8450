@@ -1055,8 +1055,6 @@ static void gsi_handle_irq(void)
 
 		GSIDBG_LOW("type 0x%x\n", type);
 		index = gsi_ctx->gsi_isr_cache_index;
-		gsi_ctx->gsi_isr_cache[index].timestamp =
-			sched_clock();
 		gsi_ctx->gsi_isr_cache[index].qtimer =
 			__arch_counter_get_cntvct();
 		gsi_ctx->gsi_isr_cache[index].interrupt_type = type;

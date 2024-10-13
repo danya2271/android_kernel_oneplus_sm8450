@@ -581,7 +581,6 @@ static irqreturn_t bcl_handle_irq(int irq, void *data)
 	struct bcl_peripheral_data *perph_data =
 		(struct bcl_peripheral_data *)data;
 	unsigned int irq_status = 0;
-	unsigned long long start_ts = 0, end_ts = 0;
 	int ibat = 0, vbat = 0;
 	uint32_t bcl_lvl = 0;
 	struct bcl_device *bcl_perph;
@@ -613,16 +612,8 @@ static irqreturn_t bcl_handle_irq(int irq, void *data)
 			irq, bcl_int_names[perph_data->type],
 			irq_status, ibat, vbat,
 			bcl_perph->stats[bcl_lvl].counter + 1);
-
-		start_ts = sched_clock();
 		thermal_zone_device_update(perph_data->tz_dev,
 				THERMAL_TRIP_VIOLATED);
-		end_ts = sched_clock();
-		if (bcl_perph->stats[bcl_lvl].max_mitig_latency <
-							(end_ts - start_ts)) {
-			bcl_perph->stats[bcl_lvl].max_mitig_latency = end_ts - start_ts;
-			bcl_perph->stats[bcl_lvl].max_mitig_ts = start_ts;
-		}
 		if (perph_data->irq_enabled)
 			++bcl_perph->stats[bcl_lvl].self_cleared_counter;
 
