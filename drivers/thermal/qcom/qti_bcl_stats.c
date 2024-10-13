@@ -14,37 +14,10 @@ static struct dentry	*bcl_dev_parent;
 
 void bcl_update_clear_stats(struct bcl_lvl_stats *bcl_stat)
 {
-	uint32_t iter = 0;
-	unsigned long long last_duration;
-	struct bcl_data_history *hist_data;
-
-	if (!bcl_stat->trigger_state)
-		return;
-
-	iter = (bcl_stat->counter % BCL_HISTORY_COUNT);
-	hist_data = &bcl_stat->bcl_history[iter];
-	hist_data->clear_ts = sched_clock();
-	last_duration = DIV_ROUND_UP(
-			hist_data->clear_ts - hist_data->trigger_ts,
-			NSEC_PER_USEC);
-	bcl_stat->total_duration += last_duration;
-	if (last_duration > bcl_stat->max_duration)
-		bcl_stat->max_duration = last_duration;
-
-	bcl_stat->counter++;
-	bcl_stat->trigger_state = false;
 }
 
 void bcl_update_trigger_stats(struct bcl_lvl_stats *bcl_stat, int ibat, int vbat)
 {
-	uint32_t iter = 0;
-
-	iter = (bcl_stat->counter % BCL_HISTORY_COUNT);
-	bcl_stat->bcl_history[iter].clear_ts = 0x0;
-	bcl_stat->bcl_history[iter].trigger_ts = sched_clock();
-	bcl_stat->bcl_history[iter].ibat = ibat;
-	bcl_stat->bcl_history[iter].vbat = vbat;
-	bcl_stat->trigger_state = true;
 }
 
 static int bcl_lvl_show(struct seq_file *s, void *data)

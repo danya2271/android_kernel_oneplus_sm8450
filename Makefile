@@ -848,22 +848,6 @@ KBUILD_CFLAGS += -Os
 endif
 
 # Additional optimizations for better kernel speed
-KBUILD_CFLAGS +=  -fno-semantic-interposition -fno-signed-zeros  -ffinite-math-only -freciprocal-math -fcf-protection=none -fno-trapping-math -fno-math-errno -ffast-math -funroll-loops
-
-# Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=480
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=350
-KBUILD_CFLAGS  += -mllvm -inline-savings-multiplier=12
-KBUILD_CFLAGS  += -mllvm -inline-cold-callsite-threshold=55
-KBUILD_CFLAGS  += -mllvm -ignore-tti-inline-compatible
-KBUILD_CFLAGS  += -mllvm -inline-savings-profitable-multiplier=6
-KBUILD_CFLAGS  += -mllvm -inline-size-allowance=30
-KBUILD_CFLAGS  += -mllvm -inlinecold-threshold=130
-KBUILD_CFLAGS  += -mllvm -locally-hot-callsite-threshold=750
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=12
-KBUILD_CFLAGS  += -mllvm -inline-call-penalty=5
-KBUILD_CFLAGS  += -mllvm -hot-callsite-rel-freq=100
-KBUILD_CFLAGS  += -mllvm -cold-callsite-rel-freq=5
 KBUILD_CFLAGS  += -mllvm -inline-enable-cost-benefit-analysis
 
 KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined

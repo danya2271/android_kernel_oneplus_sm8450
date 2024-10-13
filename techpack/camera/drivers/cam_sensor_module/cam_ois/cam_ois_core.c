@@ -1240,7 +1240,7 @@ void cam_ois_shutdown(struct cam_ois_ctrl_t *o_ctrl)
 		mutex_lock(&(o_ctrl->ois_power_down_mutex));
 		if (o_ctrl->ois_power_state == CAM_OIS_POWER_ON && o_ctrl->ois_power_down_thread_state == CAM_OIS_POWER_DOWN_THREAD_STOPPED) {
 			o_ctrl->ois_power_down_thread_exit = false;
-			kthread_run_perf_critical(cpu_lp_mask, ois_power_down_thread, o_ctrl, "ois_power_down_thread");
+			kthread_run_perf_critical(cpu_prime_mask, ois_power_down_thread, o_ctrl, "ois_power_down_thread");
 			CAM_ERR(CAM_OIS, "ois type=%d,ois_power_down_thread created",o_ctrl->ois_type);
 		} else {
 			CAM_ERR(CAM_OIS, "ois type=%d,no need to create ois_power_down_thread, ois_power_state %d, ois_power_down_thread_state %d",o_ctrl->ois_type, o_ctrl->ois_power_state, o_ctrl->ois_power_down_thread_state);
@@ -1429,7 +1429,7 @@ int cam_ois_driver_cmd(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			mutex_lock(&(o_ctrl->ois_power_down_mutex));
 			if (o_ctrl->ois_power_state == CAM_OIS_POWER_ON && o_ctrl->ois_power_down_thread_state == CAM_OIS_POWER_DOWN_THREAD_STOPPED) {
 				o_ctrl->ois_power_down_thread_exit = false;
-				kthread_run_perf_critical(cpu_lp_mask, ois_power_down_thread, o_ctrl, "ois_power_down_thread");
+				kthread_run_perf_critical(cpu_prime_mask, ois_power_down_thread, o_ctrl, "ois_power_down_thread");
 				CAM_ERR(CAM_OIS, "ois type=%d,ois_power_down_thread created",o_ctrl->ois_type);
 			} else {
 				CAM_ERR(CAM_OIS, "ois type=%d,no need to create ois_power_down_thread, ois_power_state %d, ois_power_down_thread_state %d",o_ctrl->ois_type, o_ctrl->ois_power_state, o_ctrl->ois_power_down_thread_state);

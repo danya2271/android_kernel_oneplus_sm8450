@@ -1707,7 +1707,7 @@
 #endif
 
 #ifdef CONFIG_LITHIUM
-#define FEATURE_IRQ_AFFINITY (1)
+#define FEATURE_IRQ_AFFINITY (0)
 #endif
 
 #ifdef CONFIG_RHINE
@@ -1715,7 +1715,7 @@
 #endif
 
 #ifdef CONFIG_RHINE
-#define FEATURE_IRQ_AFFINITY (1)
+#define FEATURE_IRQ_AFFINITY (0)
 #endif
 
 #ifdef CONFIG_RHINE
@@ -1723,7 +1723,7 @@
 #endif
 
 #ifdef CONFIG_BERYLLIUM
-#define FEATURE_IRQ_AFFINITY (1)
+#define FEATURE_IRQ_AFFINITY (0)
 #endif
 
 #ifdef CONFIG_TX_MULTIQ_PER_AC
@@ -2620,7 +2620,7 @@
 #endif
 
 #ifdef CONFIG_HIF_CPU_PERF_AFFINE_MASK
-#define HIF_CPU_PERF_AFFINE_MASK (1)
+#define HIF_CPU_PERF_AFFINE_MASK (0)
 #endif
 
 #ifdef CONFIG_HIF_CPU_CLEAR_AFFINITY
