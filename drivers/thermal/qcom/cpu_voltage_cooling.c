@@ -114,7 +114,7 @@ static int fetch_opp_table(struct device *dev,
 			goto fetch_err_exit;
 		}
 		freq_table[idx].frequency = freq / 1000; //MHz
-		freq_table[idx].volt = dev_pm_opp_get_voltage(opp) / 1000; //mV
+		freq_table[idx].volt = (dev_pm_opp_get_voltage(opp) / 1000) - 60; //mV
 		pr_debug("%d: freq:%lu Mhz volt:%lu mv\n", idx,
 				freq_table[idx].frequency,
 				freq_table[idx].volt);
