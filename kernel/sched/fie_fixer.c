@@ -174,7 +174,7 @@ static void update_freq_scale(bool tick)
 	struct pmu_stat cur, prev = pmu->cur, *sfd = &pmu->sfd;
 	u64 freq, max_freq;
 
-	u64 max_frequencies[] ={1804800,1804800,1804800,1804800,2496000,2496000,2496000,2918400};
+	u64 max_frequencies[] ={1785200,1785200,1785200,1785200,2496000,2496000,2496000,2995400};
 
 	/* Check if enough time has passed to take a new sample */
 	cur.ns = get_time_ns();
