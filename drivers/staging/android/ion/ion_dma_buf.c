@@ -339,9 +339,6 @@ struct dma_buf *ion_dmabuf_alloc(struct ion_device *dev, size_t len,
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 	struct dma_buf *dmabuf;
 
-	pr_debug("%s: len %zu heap_id_mask %u flags %x\n", __func__,
-		 len, heap_id_mask, flags);
-
 	buffer = ion_buffer_alloc(dev, len, heap_id_mask, flags);
 	if (IS_ERR(buffer))
 		return ERR_CAST(buffer);

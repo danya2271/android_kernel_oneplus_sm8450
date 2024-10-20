@@ -131,17 +131,6 @@ struct ion_heap {
 	spinlock_t free_lock;
 	wait_queue_head_t waitqueue;
 	struct task_struct *task;
-
-	/* heap statistics */
-	u64 num_of_buffers;
-	u64 num_of_alloc_bytes;
-	u64 alloc_bytes_wm;
-
-	/* protect heap statistics */
-	spinlock_t stat_lock;
-
-	/* heap's debugfs root */
-	struct dentry *debugfs_dir;
 };
 
 #define ion_device_add_heap(heap) __ion_device_add_heap(heap, THIS_MODULE)
