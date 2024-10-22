@@ -1060,7 +1060,7 @@ fail:
 	rcu_read_unlock();
 	return -EPERM;
 }
-#ifdef CONFIG_SCHED_CASS
+
 static void
 walt_select_task_rq_fair(void *unused, struct task_struct *p, int prev_cpu,
 				int sd_flag, int wake_flags, int *target_cpu)
@@ -1079,7 +1079,7 @@ walt_select_task_rq_fair(void *unused, struct task_struct *p, int prev_cpu,
 	if (unlikely(*target_cpu < 0))
 		*target_cpu = prev_cpu;
 }
-#endif
+
 static inline struct task_struct *task_of(struct sched_entity *se)
 {
 	return container_of(se, struct task_struct, se);
@@ -1446,9 +1446,7 @@ static void walt_cfs_replace_next_task_fair(void *unused, struct rq *rq, struct 
 
 void walt_cfs_init(void)
 {
-#ifdef CONFIG_SCHED_CASS
 	register_trace_android_rvh_select_task_rq_fair(walt_select_task_rq_fair, NULL);
-#endif
 
 	register_trace_android_vh_binder_wakeup_ilocked(walt_binder_low_latency_set, NULL);
 	register_trace_binder_transaction_received(walt_binder_low_latency_clear, NULL);
