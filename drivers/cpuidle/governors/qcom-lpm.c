@@ -25,7 +25,7 @@
 #include <trace/events/ipi.h>
 #include <trace/events/power.h>
 #include <trace/hooks/cpuidle.h>
-#include "../../kernel/sched/sched.h"
+#include "../../../kernel/sched/walt/walt.h"
 
 #include "qcom-lpm.h"
 #define CREATE_TRACE_POINTS
