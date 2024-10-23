@@ -678,7 +678,7 @@ TRACE_EVENT(sched_ravg_window_change,
 TRACE_EVENT(waltgov_util_update,
 	    TP_PROTO(int cpu,
 		     unsigned long util, unsigned long avg_cap,
-		     unsigned long max_cap, unsigned long nl, unsigned long pl,
+		     unsigned long max_cap, unsigned long nl,
 		     unsigned int rtgb, unsigned int flags),
 	    TP_ARGS(cpu, util, avg_cap, max_cap, nl, pl, rtgb, flags),
 	    TP_STRUCT__entry(
