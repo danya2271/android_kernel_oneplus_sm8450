@@ -626,7 +626,7 @@ void walt_lb_tick(struct rq *rq)
 		walt_lb_check_for_rotation(rq);
 		goto out_unlock;
 	}
-
+#ifdef CONFIG_SCHED_CASS
 	rcu_read_lock();
 	new_cpu = walt_find_energy_efficient_cpu(p, prev_cpu, 0, 1);
 	rcu_read_unlock();
@@ -658,7 +658,7 @@ void walt_lb_tick(struct rq *rq)
 		clear_reserved(new_cpu);
 	else
 		wake_up_if_idle(new_cpu);
-
+#endif
 	return;
 
 out_unlock:
