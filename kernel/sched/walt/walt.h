@@ -980,11 +980,6 @@ extern int in_sched_bug;
 
 #define WALT_PANIC(condition)				\
 ({							\
-	if (unlikely(!!(condition)) && !in_sched_bug) {	\
-		in_sched_bug = 1;			\
-		walt_dump();				\
-		BUG_ON(condition);			\
-	}						\
 })
 
 #define WALT_PANIC_SENTINEL 0x4544DEAD
@@ -995,12 +990,6 @@ extern int in_sched_bug;
  */
 #define WALT_BUG(p, format, args...)					\
 ({									\
-	if (unlikely(sysctl_panic_on_walt_bug == WALT_PANIC_SENTINEL)) {\
-		printk_deferred("WALT-BUG " format, args);		\
-		if (p)							\
-			walt_task_dump(p);				\
-		WALT_PANIC(1);						\
-	}								\
 })
 
 #endif /* _WALT_H */
