@@ -784,9 +784,8 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	char str_governor[16];
 	int ret;
 
-	if (task_is_booster(current)) {
 		if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
-			strncpy(str_governor, "schedhorizon", sizeof(str_governor));
+			strncpy(str_governor, "walt", sizeof(str_governor));
 		}
 
 		if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
@@ -796,11 +795,6 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 		if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
 			strncpy(str_governor, "schedhorizon", sizeof(str_governor));
 		}
-	} else {
-	ret = sscanf(buf, "%15s", str_governor);
-	if (ret != 1)
-		return -EINVAL;
-	}
 
 	if (cpufreq_driver->setpolicy) {
 		unsigned int new_pol;
