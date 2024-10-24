@@ -199,7 +199,7 @@ static void waltgov_deferred_update(struct waltgov_policy *wg_policy, u64 time,
 	walt_irq_work_queue(&wg_policy->irq_work);
 }
 
-#define TARGET_LOAD 80
+#define TARGET_LOAD 95
 static inline unsigned long walt_map_util_freq(unsigned long util,
 					struct waltgov_policy *wg_policy,
 					unsigned long cap, int cpu)
