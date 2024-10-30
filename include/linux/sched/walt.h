@@ -12,7 +12,7 @@
 
 #if IS_ENABLED(CONFIG_SCHED_WALT)
 
-#define MAX_CPUS_PER_CLUSTER 6
+#define MAX_CPUS_PER_CLUSTER 4
 #define MAX_CLUSTERS 3
 
 struct core_ctl_notif_data {
