@@ -354,7 +354,7 @@ static int setup_gx_arc_votes(struct adreno_device *adreno_dev,
 
 	/* GMU power levels are in ascending order */
 	for (index = 1, i = pwr->num_pwrlevels - 1; i >= 0; i--, index++) {
-		u32 cx_vlvl = pwr->pwrlevels[i].cx_level;
+		u32 cx_vlvl = 1;
 
 		vlvl_tbl[index] = pwr->pwrlevels[i].voltage_level;
 		table->gx_votes[index].freq = pwr->pwrlevels[i].gpu_freq / 1000;
