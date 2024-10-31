@@ -169,7 +169,6 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	 * unboosting, set policy->min to the absolute min freq for the CPU.
 	 */
 	if (test_bit(INPUT_BOOST, &b->state)) {
-		sleep_disabled = true;
 		policy->min = get_input_boost_freq(policy);
 	} else {
 		sleep_disabled = false;
