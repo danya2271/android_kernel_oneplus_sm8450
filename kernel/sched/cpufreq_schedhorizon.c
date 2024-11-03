@@ -18,11 +18,11 @@
 static unsigned int default_efficient_freq_lp[] = {0};
 static u64 default_up_delay_lp[] = {0};
 
-static unsigned int default_efficient_freq_hp[] = {1555200};
-static u64 default_up_delay_hp[] = {30 * NSEC_PER_MSEC};
+static unsigned int default_efficient_freq_hp[] = {1555200, 2227400};
+static u64 default_up_delay_hp[] = {30 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
 
-static unsigned int default_efficient_freq_pr[] = {2054400};
-static u64 default_up_delay_pr[] = {15 * NSEC_PER_MSEC};
+static unsigned int default_efficient_freq_pr[] = {2054400, 2630200};
+static u64 default_up_delay_pr[] = {15 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
 
 struct sugov_tunables {
 	struct gov_attr_set	attr_set;
@@ -824,7 +824,7 @@ static int sugov_init(struct cpufreq_policy *policy)
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
-		tunables->up_rate_limit_us = 7700;
+		tunables->up_rate_limit_us = 1000;
 		tunables->down_rate_limit_us = 500;
 	}
 

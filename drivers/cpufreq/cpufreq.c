@@ -783,10 +783,15 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 {
 	char str_governor[16];
 	int ret;
-
+#ifdef CONFIG_SCHED_WALT
 		if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
 			strncpy(str_governor, "walt", sizeof(str_governor));
 		}
+#else
+		if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
+			strncpy(str_governor, "schedhorizon", sizeof(str_governor));
+		}
+#endif
 
 		if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
 			strncpy(str_governor, "schedhorizon", sizeof(str_governor));
