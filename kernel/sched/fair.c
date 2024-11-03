@@ -7124,7 +7124,7 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 		unsigned long cpu_util, util_cfs = cpu_util_next(cpu, p, dst_cpu);
 		struct task_struct *tsk = cpu == dst_cpu ? p : NULL;
 		unsigned long min, max;
-
+#ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL
 		/*
 		 * Busy time computation: utilization clamping is not
 		 * required since the ratio (sum_util / cpu_capacity)
@@ -7141,6 +7141,24 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 		 * FREQUENCY_UTIL's utilization can be max OPP.
 		 */
 		cpu_util = schedutil_cpu_util(cpu, util_cfs, &min, &max);
+#elif CONFIG_CPU_FREQ_GOV_SCHEDHORIZON
+		/*
+		 * Busy time computation: utilization clamping is not
+		 * required since the ratio (sum_util / cpu_capacity)
+		 * is already enough to scale the EM reported power
+		 * consumption at the (eventually clamped) cpu_capacity.
+		 */
+		sum_util += schedhorizon_cpu_util(cpu, util_cfs, NULL, NULL);
+
+		/*
+		 * Performance domain frequency: utilization clamping
+		 * must be considered since it affects the selection
+		 * of the performance domain frequency.
+		 * NOTE: in case RT tasks are running, by default the
+		 * FREQUENCY_UTIL's utilization can be max OPP.
+		 */
+		cpu_util = schedhorizon_cpu_util(cpu, util_cfs, &min, &max);
+#endif
 
 		/* Task's uclamp can modify min and max value */
 		if (tsk && uclamp_is_used()) {

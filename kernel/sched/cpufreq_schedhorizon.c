@@ -396,12 +396,24 @@ unsigned long schedhorizon_cpu_util(int cpu, unsigned long util_cfs,
 }
 EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
+static __always_inline
+unsigned long apply_dvfs_headroom2(int cpu, unsigned long util, unsigned long max_cap)
+{
+	unsigned long headroom;
+	if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
+		headroom = util + (util >> 1);
+	} else {
+		headroom = util + (util >> 3);
+	}
+	return headroom;
+}
+
 unsigned long sugov_effective_cpu_perf(int cpu, unsigned long actual,
 				 unsigned long min,
 				 unsigned long max)
 {
 	/* Add dvfs headroom to actual utilization */
-	actual = apply_dvfs_headroom(actual, cpu);
+	actual = apply_dvfs_headroom2(cpu, actual, max);
 	/* Actually we don't need to target the max performance */
 	if (actual < max)
 		max = actual;
@@ -418,7 +430,7 @@ static void sugov_get_util(struct sugov_cpu *sg_cpu, unsigned long boost)
 	struct rq *rq = cpu_rq(sg_cpu->cpu);
 	unsigned long min, max, util = cpu_util_cfs(rq);
 
-	util = schedutil_cpu_util(sg_cpu->cpu, util, &min, &max);
+	util = schedhorizon_cpu_util(sg_cpu->cpu, util, &min, &max);
 	util = max(util, boost);
 	sg_cpu->bw_min = min;
 	sg_cpu->util = sugov_effective_cpu_perf(sg_cpu->cpu, util, min, max);
