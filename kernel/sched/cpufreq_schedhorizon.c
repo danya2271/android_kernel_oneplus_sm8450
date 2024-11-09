@@ -256,7 +256,7 @@ static void sugov_deferred_update(struct sugov_policy *sg_policy, u64 time,
  * next_freq (as calculated above) is returned, subject to policy min/max and
  * cpufreq driver limitations.
  */
-static unsigned int get_next_freq(struct sugov_policy *sg_policy,
+static unsigned int get_next_freq(struct sugov_policy *sg_policy, u64 time,
 				  unsigned long util, unsigned long max)
 {
 	struct cpufreq_policy *policy = sg_policy->policy;
@@ -279,6 +279,8 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
 		freq = next_freq;
 	else
 		freq = map_util_freq(util, freq, max);
+
+	do_freq_limit(sg_policy, &freq, time);
 
 	if (freq == sg_policy->cached_raw_freq && !sg_policy->need_freq_update)
 		return sg_policy->next_freq;
@@ -588,7 +590,7 @@ static void sugov_update_single(struct update_util_data *hook, u64 time,
 	boost = sugov_iowait_apply(sg_cpu, time, max_cap);
 	sugov_get_util(sg_cpu, boost);
 
-	next_f = get_next_freq(sg_policy, sg_cpu->util, max_cap);
+	next_f = get_next_freq(sg_policy, time, sg_cpu->util, max_cap);
 	/*
 	 * This code runs under rq->lock for the target CPU, so it won't run
 	 * concurrently on two different CPUs for the same target and it is not
@@ -622,7 +624,7 @@ static unsigned int sugov_next_freq_shared(struct sugov_cpu *sg_cpu, u64 time)
 		util = max(j_sg_cpu->util, util);
 	}
 
-	return get_next_freq(sg_policy, util, max_cap);
+	return get_next_freq(sg_policy, time, util, max_cap);
 }
 
 static void
