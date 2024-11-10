@@ -856,11 +856,6 @@ RB_DECLARE_CALLBACKS(static, min_vruntime_cb, struct sched_entity,
  */
 static void __enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
 {
-	struct rb_node **link = &cfs_rq->tasks_timeline.rb_root.rb_node;
-	struct rb_node *parent = NULL;
-	struct sched_entity *entry;
-	bool leftmost = true;
-
 	avg_vruntime_add(cfs_rq, se);
 	trace_android_rvh_enqueue_entity(cfs_rq, se);
 	se->min_vruntime = se->vruntime;
@@ -1044,8 +1039,9 @@ static void update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
 
 #include "pelt.h"
 #ifdef CONFIG_SMP
-
+#ifndef CONFIG_SCHED_CASS
 static int select_idle_sibling(struct task_struct *p, int prev_cpu, int cpu);
+#endif
 static unsigned long task_h_load(struct task_struct *p);
 static unsigned long capacity_of(int cpu);
 
@@ -6322,7 +6318,7 @@ static unsigned long capacity_of(int cpu)
 {
 	return cpu_rq(cpu)->cpu_capacity;
 }
-
+#ifndef CONFIG_SCHED_CASS
 static void record_wakee(struct task_struct *p)
 {
 	/*
@@ -6468,6 +6464,7 @@ static int wake_affine(struct sched_domain *sd, struct task_struct *p,
 	schedstat_inc(p->se.statistics.nr_wakeups_affine);
 	return target;
 }
+#endif
 
 static struct sched_group *
 find_idlest_group(struct sched_domain *sd, struct task_struct *p, int this_cpu);
@@ -6635,7 +6632,7 @@ void __update_idle_core(struct rq *rq)
 unlock:
 	rcu_read_unlock();
 }
-
+#ifndef CONFIG_SCHED_CASS
 /*
  * Scan the entire LLC domain for idle cores; this dynamically switches off if
  * there are no idle cores left in the system; tracked through
@@ -6698,7 +6695,7 @@ static int select_idle_smt(struct task_struct *p, struct sched_domain *sd, int t
 
 	return -1;
 }
-
+#endif
 #else /* CONFIG_SCHED_SMT */
 
 static inline int select_idle_core(struct task_struct *p, struct sched_domain *sd, int target)
@@ -6712,7 +6709,7 @@ static inline int select_idle_smt(struct task_struct *p, struct sched_domain *sd
 }
 
 #endif /* CONFIG_SCHED_SMT */
-
+#ifndef CONFIG_SCHED_CASS
 /*
  * Scan the LLC domain for idle CPUs; this is dynamically regulated by
  * comparing the average scan cost (tracked in sd->avg_scan_cost) against the
@@ -6801,7 +6798,7 @@ select_idle_capacity(struct task_struct *p, struct sched_domain *sd, int target)
 
 	return best_cpu;
 }
-
+#endif
 static inline bool asym_fits_cpu(unsigned long util,
 				 unsigned long util_min,
 				 unsigned long util_max,
@@ -6812,7 +6809,7 @@ static inline bool asym_fits_cpu(unsigned long util,
 
 	return true;
 }
-
+#ifndef CONFIG_SCHED_CASS
 /*
  * Try and locate an idle core/thread in the LLC cache domain.
  */
@@ -6915,7 +6912,7 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
 
 	return target;
 }
-
+#endif
 /**
  * Amount of capacity of a CPU that is (estimated to be) used by CFS tasks
  * @cpu: the CPU to get the utilization of
@@ -7056,7 +7053,7 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
 	 */
 	return min_t(unsigned long, util, capacity_orig_of(cpu));
 }
-
+#ifndef CONFIG_SCHED_CASS
 /*
  * Predicts what cpu_util(@cpu) would return if @p was migrated (and enqueued)
  * to @dst_cpu.
@@ -7399,7 +7396,6 @@ fail:
 
 	return -1;
 }
-
 /*
  * select_task_rq_fair: Select target runqueue for the waking task in domains
  * that have the 'sd_flag' flag set. In practice, this is SD_BALANCE_WAKE,
@@ -7479,6 +7475,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 
 	return new_cpu;
 }
+#endif
 
 static void detach_entity_cfs_rq(struct sched_entity *se);
 
@@ -7550,7 +7547,6 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	struct task_struct *curr = rq->curr;
 	struct sched_entity *se = &curr->se, *pse = &p->se;
 	struct cfs_rq *cfs_rq = task_cfs_rq(curr);
-	bool preempt = false, nopreempt = false;
 	int cse_is_idle, pse_is_idle;
 
 	if (unlikely(se == pse))
@@ -7623,7 +7619,7 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 preempt:
 	resched_curr(rq);
 }
-
+#ifndef CONFIG_SCHED_CASS
 #ifdef CONFIG_SMP
 static struct task_struct *pick_task_fair(struct rq *rq)
 {
@@ -7656,7 +7652,7 @@ again:
 	return task_of(se);
 }
 #endif
-
+#endif
 struct task_struct *
 pick_next_task_fair(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 {
@@ -11885,13 +11881,6 @@ static unsigned int get_rr_interval_fair(struct rq *rq, struct task_struct *task
 
 #ifdef CONFIG_SCHED_CASS
 #include "cass.c"
-
-/* Use CASS. A dummy wrapper ensures the replaced function is still "used". */
-static inline void *select_task_rq_fair_dummy(void)
-{
-	return (void *)select_task_rq_fair;
-}
-#define select_task_rq_fair cass_select_task_rq_fair
 #endif /* CONFIG_SCHED_CASS */
 
 /*
@@ -11912,7 +11901,11 @@ const struct sched_class fair_sched_class
 
 #ifdef CONFIG_SMP
 	.balance		= balance_fair,
+#ifdef CONFIG_SCHED_CASS
+	.select_task_rq		= cass_select_task_rq_fair,
+#else
 	.select_task_rq		= select_task_rq_fair,
+#endif
 	.migrate_task_rq	= migrate_task_rq_fair,
 
 	.rq_online		= rq_online_fair,

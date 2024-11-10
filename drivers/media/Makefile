@@ -2,7 +2,11 @@
 #
 # Makefile for the kernel multimedia device drivers.
 #
-
+# Inlining optimization
+KBUILD_CFLAGS  += -mllvm -inline-threshold=225
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=325
+KBUILD_CFLAGS  += -mllvm -inline-instr-cost=60
+KBUILD_CFLAGS  += -Oz
 #
 # I2C drivers should come before other drivers, otherwise they'll fail
 # when compiled as builtin drivers

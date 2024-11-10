@@ -1499,7 +1499,7 @@ task_may_not_preempt(struct task_struct *task, int cpu)
 }
 EXPORT_SYMBOL_GPL(task_may_not_preempt);
 #endif /* CONFIG_RT_SOFTINT_OPTIMIZATION */
-
+#ifndef CONFIG_SCHED_CASS
 static int
 select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags)
 {
@@ -1601,7 +1601,7 @@ out_unlock:
 out:
 	return cpu;
 }
-
+#endif
 static void check_preempt_equal_prio(struct rq *rq, struct task_struct *p)
 {
 	/*
@@ -2567,7 +2567,11 @@ const struct sched_class rt_sched_class
 
 #ifdef CONFIG_SMP
 	.balance		= balance_rt,
+#ifdef CONFIG_SCHED_CASS
+	.select_task_rq		= cass_select_task_rq_rt,
+#else
 	.select_task_rq		= select_task_rq_rt,
+#endif
 	.set_cpus_allowed       = set_cpus_allowed_common,
 	.rq_online              = rq_online_rt,
 	.rq_offline             = rq_offline_rt,

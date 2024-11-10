@@ -110,29 +110,6 @@ static void dyn_fsync_force_flush(void)
 
 }
 
-static void dyn_fsync_suspend(struct power_suspend *p)
-{
-	mutex_lock(&fsync_mutex);
-	if (dyn_fsync_active) {
-		power_suspend_active = true;
-		dyn_fsync_force_flush();
-	}
-	mutex_unlock(&fsync_mutex);
-}
-
-static void dyn_fsync_resume(struct power_suspend *p)
-{
-	mutex_lock(&fsync_mutex);
-	power_suspend_active = false;
-	mutex_unlock(&fsync_mutex);
-}
-
-static struct power_suspend dyn_fsync_power_suspend_handler = 
-	{
-		.suspend = dyn_fsync_suspend,
-		.resume = dyn_fsync_resume,
-	};
-
 static int dyn_fsync_panic_event(struct notifier_block *this,
 		unsigned long event, void *ptr)
 {
