@@ -522,6 +522,7 @@ static int mdiobus_create_device(struct mii_bus *bus,
  */
 int __mdiobus_register(struct mii_bus *bus, struct module *owner)
 {
+#ifdef CONFIG_MDIO
 	struct mdio_device *mdiodev;
 	int i, err;
 	struct gpio_desc *gpiod;
@@ -612,11 +613,15 @@ error_reset_gpiod:
 
 	device_del(&bus->dev);
 	return err;
+#else
+	return 0;
+#endif
 }
 EXPORT_SYMBOL(__mdiobus_register);
 
 void mdiobus_unregister(struct mii_bus *bus)
 {
+#ifdef CONFIG_MDIO
 	struct mdio_device *mdiodev;
 	int i;
 
@@ -641,6 +646,7 @@ void mdiobus_unregister(struct mii_bus *bus)
 		gpiod_set_value_cansleep(bus->reset_gpiod, 1);
 
 	device_del(&bus->dev);
+#endif
 }
 EXPORT_SYMBOL(mdiobus_unregister);
 

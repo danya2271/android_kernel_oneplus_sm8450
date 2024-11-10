@@ -48,7 +48,7 @@ static DEFINE_PER_CPU(struct cpu_pmu, cpu_pmu_evs) = {
 
 static atomic_long_t last_run_jiffies = ATOMIC_INIT(0);
 static DECLARE_SWAIT_QUEUE_HEAD(memperfd_waitq);
-static DEFINE_PER_CPU_READ_MOSTLY(struct cpufreq_policy, cached_pol);
+//static DEFINE_PER_CPU_READ_MOSTLY(struct cpufreq_policy, cached_pol);
 static unsigned int dsu_scale_factor __read_mostly __maybe_unused;
 static bool in_reboot __read_mostly;
 static int cpuhp_state;
