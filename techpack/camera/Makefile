@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=225
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=325
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=60
+KBUILD_CFLAGS  += -mllvm -inline-threshold=1
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=1
+KBUILD_CFLAGS  += -mllvm -inline-instr-cost=1
 KBUILD_CFLAGS  += -Oz
 
 # Include Architecture configurations

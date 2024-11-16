@@ -304,7 +304,7 @@ extern int kptr_restrict;
 #ifndef pr_fmt
 #define pr_fmt(fmt) fmt
 #endif
-
+#ifdef CONFIG_DEBUG
 /**
  * pr_emerg - Print an emergency-level message
  * @fmt: format string
@@ -365,6 +365,14 @@ extern int kptr_restrict;
  */
 #define pr_notice(fmt, ...) \
 	printk(KERN_NOTICE pr_fmt(fmt), ##__VA_ARGS__)
+#else
+#define pr_emerg(fmt, ...) do {} while(0)
+#define pr_alert(fmt, ...) do {} while(0)
+#define pr_crit(fmt, ...) do {} while(0)
+#define pr_err(fmt, ...) do {} while(0)
+#define pr_warn(fmt, ...) do {} while(0)
+#define pr_notice(fmt, ...) do {} while(0)
+#endif
 /**
  * pr_info - Print an info-level message
  * @fmt: format string
@@ -375,7 +383,7 @@ extern int kptr_restrict;
  */
 #define pr_info(fmt, ...) \
 	printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
-
+	
 /**
  * pr_cont - Continues a previous log message in the same line.
  * @fmt: format string
