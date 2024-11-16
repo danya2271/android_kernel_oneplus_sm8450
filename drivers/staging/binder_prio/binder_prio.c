@@ -14,6 +14,9 @@ static const char *task_name[] = {
 	"s.nexuslauncher",  // com.google.android.apps.nexuslauncher
 	"surfaceflinger",
 	"egram.messenger",  // org.telegram.messenger
+	"om.oplus.camera",
+	"r@2.7-service_64",
+	"a.GoogleCameraEnh"
 };
 
 static int to_userspace_prio(int policy, int kernel_priority) {

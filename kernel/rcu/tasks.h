@@ -134,7 +134,7 @@ static void set_tasks_gp_state(struct rcu_tasks *rtp, int newstate)
 	rtp->gp_state = newstate;
 	rtp->gp_jiffies = jiffies;
 }
-
+#ifdef CONFIG_DEBUG
 #ifndef CONFIG_TINY_RCU
 /* Return state name. */
 static const char *tasks_gp_state_getname(struct rcu_tasks *rtp)
@@ -147,7 +147,7 @@ static const char *tasks_gp_state_getname(struct rcu_tasks *rtp)
 	return rcu_tasks_gp_state_names[j];
 }
 #endif /* #ifndef CONFIG_TINY_RCU */
-
+#endif
 // Enqueue a callback for the specified flavor of Tasks RCU.
 static void call_rcu_tasks_generic(struct rcu_head *rhp, rcu_callback_t func,
 				   struct rcu_tasks *rtp)
@@ -280,6 +280,7 @@ static void __init rcu_tasks_bootup_oddness(void)
 /* Dump out rcutorture-relevant state common to all RCU-tasks flavors. */
 static void show_rcu_tasks_generic_gp_kthread(struct rcu_tasks *rtp, char *s)
 {
+#ifdef CONFIG_DEBUG
 	pr_info("%s: %s(%d) since %lu g:%lu i:%lu/%lu %c%c %s\n",
 		rtp->kname,
 		tasks_gp_state_getname(rtp), data_race(rtp->gp_state),
@@ -289,6 +290,7 @@ static void show_rcu_tasks_generic_gp_kthread(struct rcu_tasks *rtp, char *s)
 		".k"[!!data_race(rtp->kthread_ptr)],
 		".C"[!!data_race(rtp->cbs_head)],
 		s);
+#endif
 }
 #endif /* #ifndef CONFIG_TINY_RCU */
 

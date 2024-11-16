@@ -865,7 +865,7 @@ KBUILD_CFLAGS  += -mllvm -hot-callsite-rel-freq=100
 KBUILD_CFLAGS  += -mllvm -cold-callsite-rel-freq=5
 KBUILD_CFLAGS  += -mllvm -inline-enable-cost-benefit-analysis
 
-KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined
+KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined -Wno-unneeded-internal-declaration
 
 #Enable MLGO
 ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 180000; echo $$?),0)

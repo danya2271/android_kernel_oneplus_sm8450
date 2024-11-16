@@ -2577,6 +2577,7 @@ EXPORT_SYMBOL_GPL(rcu_bind_current_to_nocb);
  */
 static void show_rcu_nocb_gp_state(struct rcu_data *rdp)
 {
+#ifdef CONFIG_DEBUG
 	struct rcu_node *rnp = rdp->mynode;
 
 	pr_info("nocb GP %d %c%c%c%c%c%c %c[%c%c] %c%c:%ld rnp %d:%d %lu\n",
@@ -2594,11 +2595,13 @@ static void show_rcu_nocb_gp_state(struct rcu_data *rdp)
 		".G"[!!rdp->nocb_gp_gp],
 		(long)rdp->nocb_gp_seq,
 		rnp->grplo, rnp->grphi, READ_ONCE(rdp->nocb_gp_loops));
+#endif
 }
 
 /* Dump out nocb kthread state for the specified rcu_data structure. */
 static void show_rcu_nocb_state(struct rcu_data *rdp)
 {
+#ifdef CONFIG_DEBUG
 	struct rcu_segcblist *rsclp = &rdp->cblist;
 	bool waslocked;
 	bool wastimer;
@@ -2641,6 +2644,7 @@ static void show_rcu_nocb_state(struct rcu_data *rdp)
 		"tT"[wastimer],
 		"sS"[!!rdp->nocb_gp_sleep],
 		".W"[wassleep]);
+#endif
 }
 
 #else /* #ifdef CONFIG_RCU_NOCB_CPU */
