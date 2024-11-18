@@ -73,15 +73,15 @@
  */
 static void
 drm_atomic_helper_plane_changed(struct drm_atomic_state *state,
-				struct drm_plane_state *old_plane_state,
-				struct drm_plane_state *plane_state,
-				struct drm_plane *plane)
+								struct drm_plane_state *old_plane_state,
+								struct drm_plane_state *plane_state,
+								struct drm_plane *plane)
 {
 	struct drm_crtc_state *crtc_state;
 
 	if (old_plane_state->crtc) {
 		crtc_state = drm_atomic_get_new_crtc_state(state,
-							   old_plane_state->crtc);
+												   old_plane_state->crtc);
 
 		if (WARN_ON(!crtc_state))
 			return;
@@ -100,7 +100,7 @@ drm_atomic_helper_plane_changed(struct drm_atomic_state *state,
 }
 
 static int handle_conflicting_encoders(struct drm_atomic_state *state,
-				       bool disable_conflicting_encoders)
+									   bool disable_conflicting_encoders)
 {
 	struct drm_connector_state *new_conn_state;
 	struct drm_connector *connector;
@@ -131,8 +131,8 @@ static int handle_conflicting_encoders(struct drm_atomic_state *state,
 		if (new_encoder) {
 			if (encoder_mask & drm_encoder_mask(new_encoder)) {
 				DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] on [CONNECTOR:%d:%s] already assigned\n",
-					new_encoder->base.id, new_encoder->name,
-					connector->base.id, connector->name);
+								 new_encoder->base.id, new_encoder->name,
+					 connector->base.id, connector->name);
 
 				return -EINVAL;
 			}
@@ -168,10 +168,10 @@ static int handle_conflicting_encoders(struct drm_atomic_state *state,
 
 		if (!disable_conflicting_encoders) {
 			DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] in use on [CRTC:%d:%s] by [CONNECTOR:%d:%s]\n",
-					 encoder->base.id, encoder->name,
-					 connector->state->crtc->base.id,
-					 connector->state->crtc->name,
-					 connector->base.id, connector->name);
+							 encoder->base.id, encoder->name,
+					connector->state->crtc->base.id,
+					connector->state->crtc->name,
+					connector->base.id, connector->name);
 			ret = -EINVAL;
 			goto out;
 		}
@@ -183,9 +183,9 @@ static int handle_conflicting_encoders(struct drm_atomic_state *state,
 		}
 
 		DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] in use on [CRTC:%d:%s], disabling [CONNECTOR:%d:%s]\n",
-				 encoder->base.id, encoder->name,
-				 new_conn_state->crtc->base.id, new_conn_state->crtc->name,
-				 connector->base.id, connector->name);
+						 encoder->base.id, encoder->name,
+				   new_conn_state->crtc->base.id, new_conn_state->crtc->name,
+				   connector->base.id, connector->name);
 
 		crtc_state = drm_atomic_get_new_crtc_state(state, new_conn_state->crtc);
 
@@ -195,14 +195,14 @@ static int handle_conflicting_encoders(struct drm_atomic_state *state,
 
 		if (!crtc_state->connector_mask) {
 			ret = drm_atomic_set_mode_prop_for_crtc(crtc_state,
-								NULL);
+													NULL);
 			if (ret < 0)
 				goto out;
 
 			crtc_state->active = false;
 		}
 	}
-out:
+	out:
 	drm_connector_list_iter_end(&conn_iter);
 
 	return ret;
@@ -210,8 +210,8 @@ out:
 
 static void
 set_best_encoder(struct drm_atomic_state *state,
-		 struct drm_connector_state *conn_state,
-		 struct drm_encoder *encoder)
+				 struct drm_connector_state *conn_state,
+				 struct drm_encoder *encoder)
 {
 	struct drm_crtc_state *crtc_state;
 	struct drm_crtc *crtc;
@@ -231,7 +231,7 @@ set_best_encoder(struct drm_atomic_state *state,
 			crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
 
 			crtc_state->encoder_mask &=
-				~drm_encoder_mask(conn_state->best_encoder);
+			~drm_encoder_mask(conn_state->best_encoder);
 		}
 	}
 
@@ -242,7 +242,7 @@ set_best_encoder(struct drm_atomic_state *state,
 			crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
 
 			crtc_state->encoder_mask |=
-				drm_encoder_mask(encoder);
+			drm_encoder_mask(encoder);
 		}
 	}
 
@@ -251,7 +251,7 @@ set_best_encoder(struct drm_atomic_state *state,
 
 static void
 steal_encoder(struct drm_atomic_state *state,
-	      struct drm_encoder *encoder)
+			  struct drm_encoder *encoder)
 {
 	struct drm_crtc_state *crtc_state;
 	struct drm_connector *connector;
@@ -267,8 +267,8 @@ steal_encoder(struct drm_atomic_state *state,
 		encoder_crtc = old_connector_state->crtc;
 
 		DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] in use on [CRTC:%d:%s], stealing it\n",
-				 encoder->base.id, encoder->name,
-				 encoder_crtc->base.id, encoder_crtc->name);
+						 encoder->base.id, encoder->name,
+				   encoder_crtc->base.id, encoder_crtc->name);
 
 		set_best_encoder(state, new_connector_state, NULL);
 
@@ -281,17 +281,17 @@ steal_encoder(struct drm_atomic_state *state,
 
 static int
 update_connector_routing(struct drm_atomic_state *state,
-			 struct drm_connector *connector,
-			 struct drm_connector_state *old_connector_state,
-			 struct drm_connector_state *new_connector_state)
+						 struct drm_connector *connector,
+						 struct drm_connector_state *old_connector_state,
+						 struct drm_connector_state *new_connector_state)
 {
 	const struct drm_connector_helper_funcs *funcs;
 	struct drm_encoder *new_encoder;
 	struct drm_crtc_state *crtc_state;
 
 	DRM_DEBUG_ATOMIC("Updating routing for [CONNECTOR:%d:%s]\n",
-			 connector->base.id,
-			 connector->name);
+					 connector->base.id,
+				  connector->name);
 
 	if (old_connector_state->crtc != new_connector_state->crtc) {
 		if (old_connector_state->crtc) {
@@ -307,8 +307,8 @@ update_connector_routing(struct drm_atomic_state *state,
 
 	if (!new_connector_state->crtc) {
 		DRM_DEBUG_ATOMIC("Disabling [CONNECTOR:%d:%s]\n",
-				connector->base.id,
-				connector->name);
+						 connector->base.id,
+				   connector->name);
 
 		set_best_encoder(state, new_connector_state, NULL);
 
@@ -316,7 +316,7 @@ update_connector_routing(struct drm_atomic_state *state,
 	}
 
 	crtc_state = drm_atomic_get_new_crtc_state(state,
-						   new_connector_state->crtc);
+											   new_connector_state->crtc);
 	/*
 	 * For compatibility with legacy users, we want to make sure that
 	 * we allow DPMS On->Off modesets on unregistered connectors. Modesets
@@ -336,35 +336,35 @@ update_connector_routing(struct drm_atomic_state *state,
 	 * drm_atomic_helper_resume() to fail.
 	 */
 	if (!state->duplicated && drm_connector_is_unregistered(connector) &&
-	    crtc_state->active) {
+		crtc_state->active) {
 		DRM_DEBUG_ATOMIC("[CONNECTOR:%d:%s] is not registered\n",
-				 connector->base.id, connector->name);
+						 connector->base.id, connector->name);
 		return -EINVAL;
-	}
+		}
 
-	funcs = connector->helper_private;
+		funcs = connector->helper_private;
 
 	if (funcs->atomic_best_encoder)
 		new_encoder = funcs->atomic_best_encoder(connector,
-							 new_connector_state);
-	else if (funcs->best_encoder)
-		new_encoder = funcs->best_encoder(connector);
+												 new_connector_state);
+		else if (funcs->best_encoder)
+			new_encoder = funcs->best_encoder(connector);
 	else
 		new_encoder = drm_connector_get_single_encoder(connector);
 
 	if (!new_encoder) {
 		DRM_DEBUG_ATOMIC("No suitable encoder found for [CONNECTOR:%d:%s]\n",
-				 connector->base.id,
-				 connector->name);
+						 connector->base.id,
+				   connector->name);
 		return -EINVAL;
 	}
 
 	if (!drm_encoder_crtc_ok(new_encoder, new_connector_state->crtc)) {
 		DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] incompatible with [CRTC:%d:%s]\n",
-				 new_encoder->base.id,
-				 new_encoder->name,
-				 new_connector_state->crtc->base.id,
-				 new_connector_state->crtc->name);
+						 new_encoder->base.id,
+				   new_encoder->name,
+				   new_connector_state->crtc->base.id,
+				   new_connector_state->crtc->name);
 		return -EINVAL;
 	}
 
@@ -372,12 +372,12 @@ update_connector_routing(struct drm_atomic_state *state,
 		set_best_encoder(state, new_connector_state, new_encoder);
 
 		DRM_DEBUG_ATOMIC("[CONNECTOR:%d:%s] keeps [ENCODER:%d:%s], now on [CRTC:%d:%s]\n",
-				 connector->base.id,
-				 connector->name,
-				 new_encoder->base.id,
-				 new_encoder->name,
-				 new_connector_state->crtc->base.id,
-				 new_connector_state->crtc->name);
+						 connector->base.id,
+				   connector->name,
+				   new_encoder->base.id,
+				   new_encoder->name,
+				   new_connector_state->crtc->base.id,
+				   new_connector_state->crtc->name);
 
 		return 0;
 	}
@@ -389,12 +389,12 @@ update_connector_routing(struct drm_atomic_state *state,
 	crtc_state->connectors_changed = true;
 
 	DRM_DEBUG_ATOMIC("[CONNECTOR:%d:%s] using [ENCODER:%d:%s] on [CRTC:%d:%s]\n",
-			 connector->base.id,
-			 connector->name,
-			 new_encoder->base.id,
-			 new_encoder->name,
-			 new_connector_state->crtc->base.id,
-			 new_connector_state->crtc->name);
+					 connector->base.id,
+				  connector->name,
+				  new_encoder->base.id,
+				  new_encoder->name,
+				  new_connector_state->crtc->base.id,
+				  new_connector_state->crtc->name);
 
 	return 0;
 }
@@ -411,7 +411,7 @@ mode_fixup(struct drm_atomic_state *state)
 
 	for_each_new_crtc_in_state(state, crtc, new_crtc_state, i) {
 		if (!new_crtc_state->mode_changed &&
-		    !new_crtc_state->connectors_changed)
+			!new_crtc_state->connectors_changed)
 			continue;
 
 		drm_mode_copy(&new_crtc_state->adjusted_mode, &new_crtc_state->mode);
@@ -428,7 +428,7 @@ mode_fixup(struct drm_atomic_state *state)
 			continue;
 
 		new_crtc_state =
-			drm_atomic_get_new_crtc_state(state, new_conn_state->crtc);
+		drm_atomic_get_new_crtc_state(state, new_conn_state->crtc);
 
 		/*
 		 * Each encoder has at most one connector (since we always steal
@@ -439,8 +439,8 @@ mode_fixup(struct drm_atomic_state *state)
 
 		bridge = drm_bridge_chain_get_first_bridge(encoder);
 		ret = drm_atomic_bridge_chain_check(bridge,
-						    new_crtc_state,
-						    new_conn_state);
+											new_crtc_state,
+									  new_conn_state);
 		if (ret) {
 			DRM_DEBUG_ATOMIC("Bridge atomic check failed\n");
 			return ret;
@@ -448,18 +448,18 @@ mode_fixup(struct drm_atomic_state *state)
 
 		if (funcs && funcs->atomic_check) {
 			ret = funcs->atomic_check(encoder, new_crtc_state,
-						  new_conn_state);
+									  new_conn_state);
 			if (ret) {
 				DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] check failed\n",
-						 encoder->base.id, encoder->name);
+								 encoder->base.id, encoder->name);
 				return ret;
 			}
 		} else if (funcs && funcs->mode_fixup) {
 			ret = funcs->mode_fixup(encoder, &new_crtc_state->mode,
-						&new_crtc_state->adjusted_mode);
+									&new_crtc_state->adjusted_mode);
 			if (!ret) {
 				DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] fixup failed\n",
-						 encoder->base.id, encoder->name);
+								 encoder->base.id, encoder->name);
 				return -EINVAL;
 			}
 		}
@@ -472,7 +472,7 @@ mode_fixup(struct drm_atomic_state *state)
 			continue;
 
 		if (!new_crtc_state->mode_changed &&
-		    !new_crtc_state->connectors_changed)
+			!new_crtc_state->connectors_changed)
 			continue;
 
 		funcs = crtc->helper_private;
@@ -480,10 +480,10 @@ mode_fixup(struct drm_atomic_state *state)
 			continue;
 
 		ret = funcs->mode_fixup(crtc, &new_crtc_state->mode,
-					&new_crtc_state->adjusted_mode);
+								&new_crtc_state->adjusted_mode);
 		if (!ret) {
 			DRM_DEBUG_ATOMIC("[CRTC:%d:%s] fixup failed\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 			return -EINVAL;
 		}
 	}
@@ -492,9 +492,9 @@ mode_fixup(struct drm_atomic_state *state)
 }
 
 static enum drm_mode_status mode_valid_path(struct drm_connector *connector,
-					    struct drm_encoder *encoder,
-					    struct drm_crtc *crtc,
-					    const struct drm_display_mode *mode)
+											struct drm_encoder *encoder,
+											struct drm_crtc *crtc,
+											const struct drm_display_mode *mode)
 {
 	struct drm_bridge *bridge;
 	enum drm_mode_status ret;
@@ -502,13 +502,13 @@ static enum drm_mode_status mode_valid_path(struct drm_connector *connector,
 	ret = drm_encoder_mode_valid(encoder, mode);
 	if (ret != MODE_OK) {
 		DRM_DEBUG_ATOMIC("[ENCODER:%d:%s] mode_valid() failed\n",
-				encoder->base.id, encoder->name);
+						 encoder->base.id, encoder->name);
 		return ret;
 	}
 
 	bridge = drm_bridge_chain_get_first_bridge(encoder);
 	ret = drm_bridge_chain_mode_valid(bridge, &connector->display_info,
-					  mode);
+									  mode);
 	if (ret != MODE_OK) {
 		DRM_DEBUG_ATOMIC("[BRIDGE] mode_valid() failed\n");
 		return ret;
@@ -517,7 +517,7 @@ static enum drm_mode_status mode_valid_path(struct drm_connector *connector,
 	ret = drm_crtc_mode_valid(crtc, mode);
 	if (ret != MODE_OK) {
 		DRM_DEBUG_ATOMIC("[CRTC:%d:%s] mode_valid() failed\n",
-				crtc->base.id, crtc->name);
+						 crtc->base.id, crtc->name);
 		return ret;
 	}
 
@@ -603,7 +603,7 @@ mode_valid(struct drm_atomic_state *state)
  */
 int
 drm_atomic_helper_check_modeset(struct drm_device *dev,
-				struct drm_atomic_state *state)
+								struct drm_atomic_state *state)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
@@ -614,19 +614,19 @@ drm_atomic_helper_check_modeset(struct drm_device *dev,
 
 	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) {
 		bool has_connectors =
-			!!new_crtc_state->connector_mask;
+		!!new_crtc_state->connector_mask;
 
 		WARN_ON(!drm_modeset_is_locked(&crtc->mutex));
 
 		if (!drm_mode_equal(&old_crtc_state->mode, &new_crtc_state->mode)) {
 			DRM_DEBUG_ATOMIC("[CRTC:%d:%s] mode changed\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 			new_crtc_state->mode_changed = true;
 		}
 
 		if (old_crtc_state->enable != new_crtc_state->enable) {
 			DRM_DEBUG_ATOMIC("[CRTC:%d:%s] enable changed\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 
 			/*
 			 * For clarity this assignment is done here, but
@@ -642,13 +642,13 @@ drm_atomic_helper_check_modeset(struct drm_device *dev,
 
 		if (old_crtc_state->active != new_crtc_state->active) {
 			DRM_DEBUG_ATOMIC("[CRTC:%d:%s] active changed\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 			new_crtc_state->active_changed = true;
 		}
 
 		if (new_crtc_state->enable != has_connectors) {
 			DRM_DEBUG_ATOMIC("[CRTC:%d:%s] enabled/connectors mismatch\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 
 			return -EINVAL;
 		}
@@ -674,19 +674,19 @@ drm_atomic_helper_check_modeset(struct drm_device *dev,
 		 * connector properties need to be updated.
 		 */
 		ret = update_connector_routing(state, connector,
-					       old_connector_state,
-					       new_connector_state);
+									   old_connector_state,
+								 new_connector_state);
 		if (ret)
 			return ret;
 		if (old_connector_state->crtc) {
 			new_crtc_state = drm_atomic_get_new_crtc_state(state,
-								       old_connector_state->crtc);
+														   old_connector_state->crtc);
 			if (old_connector_state->link_status !=
-			    new_connector_state->link_status)
+				new_connector_state->link_status)
 				new_crtc_state->connectors_changed = true;
 
 			if (old_connector_state->max_requested_bpc !=
-			    new_connector_state->max_requested_bpc)
+				new_connector_state->max_requested_bpc)
 				new_crtc_state->connectors_changed = true;
 		}
 
@@ -709,9 +709,9 @@ drm_atomic_helper_check_modeset(struct drm_device *dev,
 			continue;
 
 		DRM_DEBUG_ATOMIC("[CRTC:%d:%s] needs all connectors, enable: %c, active: %c\n",
-				 crtc->base.id, crtc->name,
-				 new_crtc_state->enable ? 'y' : 'n',
-				 new_crtc_state->active ? 'y' : 'n');
+						 crtc->base.id, crtc->name,
+				   new_crtc_state->enable ? 'y' : 'n',
+				   new_crtc_state->active ? 'y' : 'n');
 
 		ret = drm_atomic_add_affected_connectors(state, crtc);
 		if (ret != 0)
@@ -743,22 +743,22 @@ drm_atomic_helper_check_modeset(struct drm_device *dev,
 	 * the state.
 	 */
 	for_each_oldnew_connector_in_state(state, connector,
-					   old_connector_state,
-					   new_connector_state, i) {
+		old_connector_state,
+		new_connector_state, i) {
 		struct drm_encoder *encoder;
 
-		encoder = old_connector_state->best_encoder;
-		ret = drm_atomic_add_encoder_bridges(state, encoder);
-		if (ret)
-			return ret;
+	encoder = old_connector_state->best_encoder;
+	ret = drm_atomic_add_encoder_bridges(state, encoder);
+	if (ret)
+		return ret;
 
 		encoder = new_connector_state->best_encoder;
-		ret = drm_atomic_add_encoder_bridges(state, encoder);
-		if (ret)
-			return ret;
-	}
+	ret = drm_atomic_add_encoder_bridges(state, encoder);
+	if (ret)
+		return ret;
+		}
 
-	ret = mode_valid(state);
+		ret = mode_valid(state);
 	if (ret)
 		return ret;
 
@@ -788,11 +788,11 @@ EXPORT_SYMBOL(drm_atomic_helper_check_modeset);
  * Zero if update appears valid, error code on failure
  */
 int drm_atomic_helper_check_plane_state(struct drm_plane_state *plane_state,
-					const struct drm_crtc_state *crtc_state,
-					int min_scale,
-					int max_scale,
-					bool can_position,
-					bool can_update_disabled)
+										const struct drm_crtc_state *crtc_state,
+										int min_scale,
+										int max_scale,
+										bool can_position,
+										bool can_update_disabled)
 {
 	struct drm_framebuffer *fb = plane_state->fb;
 	struct drm_rect *src = &plane_state->src;
@@ -880,7 +880,7 @@ EXPORT_SYMBOL(drm_atomic_helper_check_plane_state);
  */
 int
 drm_atomic_helper_check_planes(struct drm_device *dev,
-			       struct drm_atomic_state *state)
+							   struct drm_atomic_state *state)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *new_crtc_state;
@@ -905,7 +905,7 @@ drm_atomic_helper_check_planes(struct drm_device *dev,
 		ret = funcs->atomic_check(plane, new_plane_state);
 		if (ret) {
 			DRM_DEBUG_ATOMIC("[PLANE:%d:%s] atomic driver check failed\n",
-					 plane->base.id, plane->name);
+							 plane->base.id, plane->name);
 			return ret;
 		}
 	}
@@ -921,7 +921,7 @@ drm_atomic_helper_check_planes(struct drm_device *dev,
 		ret = funcs->atomic_check(crtc, new_crtc_state);
 		if (ret) {
 			DRM_DEBUG_ATOMIC("[CRTC:%d:%s] atomic driver check failed\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 			return ret;
 		}
 	}
@@ -957,7 +957,7 @@ EXPORT_SYMBOL(drm_atomic_helper_check_planes);
  * Zero for success or -errno
  */
 int drm_atomic_helper_check(struct drm_device *dev,
-			    struct drm_atomic_state *state)
+							struct drm_atomic_state *state)
 {
 	int ret;
 
@@ -986,7 +986,7 @@ EXPORT_SYMBOL(drm_atomic_helper_check);
 
 static bool
 crtc_needs_disable(struct drm_crtc_state *old_state,
-		   struct drm_crtc_state *new_state)
+				   struct drm_crtc_state *new_state)
 {
 	/*
 	 * No new_state means the CRTC is off, so the only criteria is whether
@@ -1001,7 +1001,7 @@ crtc_needs_disable(struct drm_crtc_state *old_state,
 	 * bridge tracks self-refresh status via CRTC state.
 	 */
 	if (old_state->self_refresh_active &&
-	    old_state->crtc != new_state->crtc)
+		old_state->crtc != new_state->crtc)
 		return true;
 
 	/*
@@ -1011,8 +1011,8 @@ crtc_needs_disable(struct drm_crtc_state *old_state,
 	 * disabled.
 	 */
 	return old_state->active ||
-	       (old_state->self_refresh_active && !new_state->enable) ||
-	       new_state->self_refresh_active;
+	(old_state->self_refresh_active && !new_state->enable) ||
+	new_state->self_refresh_active;
 }
 
 static void
@@ -1038,13 +1038,13 @@ disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 
 		if (new_conn_state->crtc)
 			new_crtc_state = drm_atomic_get_new_crtc_state(
-						old_state,
-						new_conn_state->crtc);
-		else
-			new_crtc_state = NULL;
+				old_state,
+				new_conn_state->crtc);
+			else
+				new_crtc_state = NULL;
 
 		if (!crtc_needs_disable(old_crtc_state, new_crtc_state) ||
-		    !drm_atomic_crtc_needs_modeset(old_conn_state->crtc->state))
+			!drm_atomic_crtc_needs_modeset(old_conn_state->crtc->state))
 			continue;
 
 		encoder = old_conn_state->best_encoder;
@@ -1058,7 +1058,7 @@ disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		funcs = encoder->helper_private;
 
 		DRM_DEBUG_ATOMIC("disabling [ENCODER:%d:%s]\n",
-				 encoder->base.id, encoder->name);
+						 encoder->base.id, encoder->name);
 
 		/*
 		 * Each encoder has at most one connector (since we always steal
@@ -1096,7 +1096,7 @@ disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		funcs = crtc->helper_private;
 
 		DRM_DEBUG_ATOMIC("disabling [CRTC:%d:%s]\n",
-				 crtc->base.id, crtc->name);
+						 crtc->base.id, crtc->name);
 
 
 		/* Right function depends upon target state. */
@@ -1119,12 +1119,12 @@ disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		 */
 		if (new_crtc_state->self_refresh_active)
 			WARN_ONCE(ret != 0,
-				  "driver disabled vblank in self-refresh\n");
-		else
-			WARN_ONCE(ret != -EINVAL,
-				  "driver forgot to call drm_crtc_vblank_off()\n");
-		if (ret == 0)
-			drm_crtc_vblank_put(crtc);
+					  "driver disabled vblank in self-refresh\n");
+			else
+				WARN_ONCE(ret != -EINVAL,
+						  "driver forgot to call drm_crtc_vblank_off()\n");
+				if (ret == 0)
+					drm_crtc_vblank_put(crtc);
 	}
 }
 
@@ -1147,7 +1147,7 @@ disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
  */
 void
 drm_atomic_helper_update_legacy_modeset_state(struct drm_device *dev,
-					      struct drm_atomic_state *old_state)
+											  struct drm_atomic_state *old_state)
 {
 	struct drm_connector *connector;
 	struct drm_connector_state *old_conn_state, *new_conn_state;
@@ -1166,14 +1166,14 @@ drm_atomic_helper_update_legacy_modeset_state(struct drm_device *dev,
 
 		crtc = new_conn_state->crtc;
 		if ((!crtc && old_conn_state->crtc) ||
-		    (crtc && drm_atomic_crtc_needs_modeset(crtc->state))) {
+			(crtc && drm_atomic_crtc_needs_modeset(crtc->state))) {
 			int mode = DRM_MODE_DPMS_OFF;
 
-			if (crtc && crtc->state->active)
-				mode = DRM_MODE_DPMS_ON;
+		if (crtc && crtc->state->active)
+			mode = DRM_MODE_DPMS_ON;
 
 			connector->dpms = mode;
-		}
+			}
 	}
 
 	/* set new links */
@@ -1197,7 +1197,7 @@ drm_atomic_helper_update_legacy_modeset_state(struct drm_device *dev,
 		crtc->enabled = new_crtc_state->enable;
 
 		new_plane_state =
-			drm_atomic_get_new_plane_state(old_state, primary);
+		drm_atomic_get_new_plane_state(old_state, primary);
 
 		if (new_plane_state && new_plane_state->crtc == crtc) {
 			crtc->x = new_plane_state->src_x >> 16;
@@ -1223,7 +1223,7 @@ void drm_atomic_helper_calc_timestamping_constants(struct drm_atomic_state *stat
 	for_each_new_crtc_in_state(state, crtc, new_crtc_state, i) {
 		if (new_crtc_state->enable)
 			drm_calc_timestamping_constants(crtc,
-							&new_crtc_state->adjusted_mode);
+											&new_crtc_state->adjusted_mode);
 	}
 }
 EXPORT_SYMBOL(drm_atomic_helper_calc_timestamping_constants);
@@ -1247,7 +1247,7 @@ crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 
 		if (new_crtc_state->enable && funcs->mode_set_nofb) {
 			DRM_DEBUG_ATOMIC("modeset on [CRTC:%d:%s]\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 
 			funcs->mode_set_nofb(crtc);
 		}
@@ -1272,7 +1272,7 @@ crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 			continue;
 
 		DRM_DEBUG_ATOMIC("modeset on [ENCODER:%d:%s]\n",
-				 encoder->base.id, encoder->name);
+						 encoder->base.id, encoder->name);
 
 		/*
 		 * Each encoder has at most one connector (since we always steal
@@ -1280,7 +1280,7 @@ crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 		 */
 		if (funcs && funcs->atomic_mode_set) {
 			funcs->atomic_mode_set(encoder, new_crtc_state,
-					       new_conn_state);
+								   new_conn_state);
 		} else if (funcs && funcs->mode_set) {
 			funcs->mode_set(encoder, mode, adjusted_mode);
 		}
@@ -1305,7 +1305,7 @@ crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
  * PM since planes updates then only happen when the CRTC is actually enabled.
  */
 void drm_atomic_helper_commit_modeset_disables(struct drm_device *dev,
-					       struct drm_atomic_state *old_state)
+											   struct drm_atomic_state *old_state)
 {
 	disable_outputs(dev, old_state);
 
@@ -1317,7 +1317,7 @@ void drm_atomic_helper_commit_modeset_disables(struct drm_device *dev,
 EXPORT_SYMBOL(drm_atomic_helper_commit_modeset_disables);
 
 static void drm_atomic_helper_commit_writebacks(struct drm_device *dev,
-						struct drm_atomic_state *old_state)
+												struct drm_atomic_state *old_state)
 {
 	struct drm_connector *connector;
 	struct drm_connector_state *new_conn_state;
@@ -1352,7 +1352,7 @@ static void drm_atomic_helper_commit_writebacks(struct drm_device *dev,
  * PM since planes updates then only happen when the CRTC is actually enabled.
  */
 void drm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
-					      struct drm_atomic_state *old_state)
+											  struct drm_atomic_state *old_state)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state;
@@ -1375,7 +1375,7 @@ void drm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 
 		if (new_crtc_state->enable) {
 			DRM_DEBUG_ATOMIC("enabling [CRTC:%d:%s]\n",
-					 crtc->base.id, crtc->name);
+							 crtc->base.id, crtc->name);
 			if (funcs->atomic_enable)
 				funcs->atomic_enable(crtc, old_crtc_state);
 			else if (funcs->commit)
@@ -1392,14 +1392,14 @@ void drm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 			continue;
 
 		if (!new_conn_state->crtc->state->active ||
-		    !drm_atomic_crtc_needs_modeset(new_conn_state->crtc->state))
+			!drm_atomic_crtc_needs_modeset(new_conn_state->crtc->state))
 			continue;
 
 		encoder = new_conn_state->best_encoder;
 		funcs = encoder->helper_private;
 
 		DRM_DEBUG_ATOMIC("enabling [ENCODER:%d:%s]\n",
-				 encoder->base.id, encoder->name);
+						 encoder->base.id, encoder->name);
 
 		/*
 		 * Each encoder has at most one connector (since we always steal
@@ -1446,8 +1446,8 @@ EXPORT_SYMBOL(drm_atomic_helper_commit_modeset_enables);
  * Returns zero if success or < 0 if dma_fence_wait() fails.
  */
 int drm_atomic_helper_wait_for_fences(struct drm_device *dev,
-				      struct drm_atomic_state *state,
-				      bool pre_swap)
+									  struct drm_atomic_state *state,
+									  bool pre_swap)
 {
 	struct drm_plane *plane;
 	struct drm_plane_state *new_plane_state;
@@ -1493,17 +1493,17 @@ EXPORT_SYMBOL(drm_atomic_helper_wait_for_fences);
  */
 void
 drm_atomic_helper_wait_for_vblanks(struct drm_device *dev,
-		struct drm_atomic_state *old_state)
+								   struct drm_atomic_state *old_state)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
 	int i, ret;
 	unsigned crtc_mask = 0;
 
-	 /*
-	  * Legacy cursor ioctls are completely unsynced, and userspace
-	  * relies on that (by doing tons of cursor updates).
-	  */
+	/*
+	 * Legacy cursor ioctls are completely unsynced, and userspace
+	 * relies on that (by doing tons of cursor updates).
+	 */
 	if (old_state->legacy_cursor_update)
 		return;
 
@@ -1524,12 +1524,12 @@ drm_atomic_helper_wait_for_vblanks(struct drm_device *dev,
 			continue;
 
 		ret = wait_event_timeout(dev->vblank[i].queue,
-				old_state->crtcs[i].last_vblank_count !=
-					drm_crtc_vblank_count(crtc),
-				msecs_to_jiffies(100));
+								 old_state->crtcs[i].last_vblank_count !=
+								 drm_crtc_vblank_count(crtc),
+								 msecs_to_jiffies(100));
 
 		WARN(!ret, "[CRTC:%d:%s] vblank wait timed out\n",
-		     crtc->base.id, crtc->name);
+			 crtc->base.id, crtc->name);
 
 		drm_crtc_vblank_put(crtc);
 	}
@@ -1552,7 +1552,7 @@ EXPORT_SYMBOL(drm_atomic_helper_wait_for_vblanks);
  * initialized using drm_atomic_helper_setup_commit().
  */
 void drm_atomic_helper_wait_for_flip_done(struct drm_device *dev,
-					  struct drm_atomic_state *old_state)
+										  struct drm_atomic_state *old_state)
 {
 	struct drm_crtc *crtc;
 	int i;
@@ -1566,10 +1566,10 @@ void drm_atomic_helper_wait_for_flip_done(struct drm_device *dev,
 		if (!crtc || !commit)
 			continue;
 
-		ret = wait_for_completion_timeout(&commit->flip_done, 10 * HZ);
+		ret = wait_for_common(&commit->flip_done, 10 * HZ, TASK_IDLE);
 		if (ret == 0)
 			DRM_ERROR("[CRTC:%d:%s] flip_done timed out\n",
-				  crtc->base.id, crtc->name);
+					  crtc->base.id, crtc->name);
 	}
 
 	if (old_state->fake_commit)
@@ -1629,7 +1629,7 @@ void drm_atomic_helper_commit_tail_rpm(struct drm_atomic_state *old_state)
 	drm_atomic_helper_commit_modeset_enables(dev, old_state);
 
 	drm_atomic_helper_commit_planes(dev, old_state,
-					DRM_PLANE_COMMIT_ACTIVE_ONLY);
+									DRM_PLANE_COMMIT_ACTIVE_ONLY);
 
 	drm_atomic_helper_fake_vblank(old_state);
 
@@ -1686,10 +1686,10 @@ static void commit_tail(struct drm_atomic_state *old_state)
 	commit_time_ms = ktime_ms_delta(ktime_get(), start);
 	if (commit_time_ms > 0)
 		drm_self_refresh_helper_update_avg_times(old_state,
-						 (unsigned long)commit_time_ms,
-						 new_self_refresh_mask);
+												 (unsigned long)commit_time_ms,
+												 new_self_refresh_mask);
 
-	drm_atomic_helper_commit_cleanup_done(old_state);
+		drm_atomic_helper_commit_cleanup_done(old_state);
 
 	drm_atomic_state_put(old_state);
 }
@@ -1697,8 +1697,8 @@ static void commit_tail(struct drm_atomic_state *old_state)
 static void commit_work(struct work_struct *work)
 {
 	struct drm_atomic_state *state = container_of(work,
-						      struct drm_atomic_state,
-						      commit_work);
+												  struct drm_atomic_state,
+											   commit_work);
 	commit_tail(state);
 }
 
@@ -1716,7 +1716,7 @@ static void commit_work(struct work_struct *work)
  * fails the commit should be treated like a normal synchronous commit.
  */
 int drm_atomic_helper_async_check(struct drm_device *dev,
-				   struct drm_atomic_state *state)
+								  struct drm_atomic_state *state)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *crtc_state;
@@ -1739,7 +1739,7 @@ int drm_atomic_helper_async_check(struct drm_device *dev,
 		return -EINVAL;
 
 	if (!new_plane_state->crtc ||
-	    old_plane_state->crtc != new_plane_state->crtc)
+		old_plane_state->crtc != new_plane_state->crtc)
 		return -EINVAL;
 
 	funcs = plane->helper_private;
@@ -1755,7 +1755,7 @@ int drm_atomic_helper_async_check(struct drm_device *dev,
 	 * overridden by a previous synchronous update's state.
 	 */
 	if (old_plane_state->commit &&
-	    !try_wait_for_completion(&old_plane_state->commit->hw_done))
+		!try_wait_for_completion(&old_plane_state->commit->hw_done))
 		return -EBUSY;
 
 	return funcs->atomic_async_check(plane, new_plane_state);
@@ -1776,7 +1776,7 @@ EXPORT_SYMBOL(drm_atomic_helper_async_check);
  * TODO: Implement full swap instead of doing in-place changes.
  */
 void drm_atomic_helper_async_commit(struct drm_device *dev,
-				    struct drm_atomic_state *state)
+									struct drm_atomic_state *state)
 {
 	struct drm_plane *plane;
 	struct drm_plane_state *plane_state;
@@ -1829,8 +1829,8 @@ EXPORT_SYMBOL(drm_atomic_helper_async_commit);
  * Zero for success or -errno.
  */
 int drm_atomic_helper_commit(struct drm_device *dev,
-			     struct drm_atomic_state *state,
-			     bool nonblock)
+							 struct drm_atomic_state *state,
+							 bool nonblock)
 {
 	int ret;
 
@@ -1899,7 +1899,7 @@ int drm_atomic_helper_commit(struct drm_device *dev,
 
 	return 0;
 
-err:
+	err:
 	drm_atomic_helper_cleanup_planes(dev, state);
 	return ret;
 }
@@ -1992,12 +1992,12 @@ static int stall_checks(struct drm_crtc *crtc, bool nonblock)
 	 * stalling on 2nd previous commit means triple-buffer won't ever stall.
 	 */
 	ret = wait_for_completion_interruptible_timeout(&stall_commit->cleanup_done,
-							10*HZ);
+													10*HZ);
 	if (ret == 0)
 		DRM_ERROR("[CRTC:%d:%s] cleanup_done timed out\n",
-			  crtc->base.id, crtc->name);
+				  crtc->base.id, crtc->name);
 
-	drm_crtc_commit_put(stall_commit);
+		drm_crtc_commit_put(stall_commit);
 
 	return ret < 0 ? ret : 0;
 }
@@ -2005,8 +2005,8 @@ static int stall_checks(struct drm_crtc *crtc, bool nonblock)
 static void release_crtc_commit(struct completion *completion)
 {
 	struct drm_crtc_commit *commit = container_of(completion,
-						      typeof(*commit),
-						      flip_done);
+												  typeof(*commit),
+												  flip_done);
 
 	drm_crtc_commit_put(commit);
 }
@@ -2087,7 +2087,7 @@ crtc_or_fake_commit(struct drm_atomic_state *state, struct drm_crtc *crtc)
  * -ENOMEM on allocation failures and -EINTR when a signal is pending.
  */
 int drm_atomic_helper_setup_commit(struct drm_atomic_state *state,
-				   bool nonblock)
+								   bool nonblock)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
@@ -2127,7 +2127,7 @@ int drm_atomic_helper_setup_commit(struct drm_atomic_state *state,
 
 		if (!new_crtc_state->event) {
 			commit->event = kzalloc(sizeof(*commit->event),
-						GFP_KERNEL);
+									GFP_KERNEL);
 			if (!commit->event)
 				return -ENOMEM;
 
@@ -2148,7 +2148,7 @@ int drm_atomic_helper_setup_commit(struct drm_atomic_state *state,
 		/* Userspace is not allowed to get ahead of the previous
 		 * commit with nonblocking ones. */
 		if (nonblock && old_conn_state->commit &&
-		    !try_wait_for_completion(&old_conn_state->commit->flip_done))
+			!try_wait_for_completion(&old_conn_state->commit->flip_done))
 			return -EBUSY;
 
 		/* Always track connectors explicitly for e.g. link retraining. */
@@ -2163,7 +2163,7 @@ int drm_atomic_helper_setup_commit(struct drm_atomic_state *state,
 		/* Userspace is not allowed to get ahead of the previous
 		 * commit with nonblocking ones. */
 		if (nonblock && old_plane_state->commit &&
-		    !try_wait_for_completion(&old_plane_state->commit->flip_done))
+			!try_wait_for_completion(&old_plane_state->commit->flip_done))
 			return -EBUSY;
 
 		/* Always track planes explicitly for async pageflip support. */
@@ -2208,19 +2208,17 @@ void drm_atomic_helper_wait_for_dependencies(struct drm_atomic_state *old_state)
 		if (!commit)
 			continue;
 
-		ret = wait_for_completion_timeout(&commit->hw_done,
-						  10*HZ);
+		ret = wait_for_common(&commit->hw_done, 10 * HZ, TASK_IDLE);
 		if (ret == 0)
 			DRM_ERROR("[CRTC:%d:%s] hw_done timed out\n",
-				  crtc->base.id, crtc->name);
+					  crtc->base.id, crtc->name);
 
-		/* Currently no support for overwriting flips, hence
-		 * stall for previous one to execute completely. */
-		ret = wait_for_completion_timeout(&commit->flip_done,
-						  10*HZ);
+			/* Currently no support for overwriting flips, hence
+			 * stall for previous one to execute completely. */
+			ret = wait_for_common(&commit->flip_done, 10 * HZ, TASK_IDLE);
 		if (ret == 0)
 			DRM_ERROR("[CRTC:%d:%s] flip_done timed out\n",
-				  crtc->base.id, crtc->name);
+					  crtc->base.id, crtc->name);
 	}
 
 	for_each_old_connector_in_state(old_state, conn, old_conn_state, i) {
@@ -2232,14 +2230,14 @@ void drm_atomic_helper_wait_for_dependencies(struct drm_atomic_state *old_state)
 		ret = wait_for_common(&commit->hw_done, 10 * HZ, TASK_IDLE);
 		if (ret == 0)
 			DRM_ERROR("[CONNECTOR:%d:%s] hw_done timed out\n",
-				  conn->base.id, conn->name);
+					  conn->base.id, conn->name);
 
-		/* Currently no support for overwriting flips, hence
-		 * stall for previous one to execute completely. */
-		ret = wait_for_common(&commit->flip_done, 10 * HZ, TASK_IDLE);
+			/* Currently no support for overwriting flips, hence
+			 * stall for previous one to execute completely. */
+			ret = wait_for_common(&commit->flip_done, 10 * HZ, TASK_IDLE);
 		if (ret == 0)
 			DRM_ERROR("[CONNECTOR:%d:%s] flip_done timed out\n",
-				  conn->base.id, conn->name);
+					  conn->base.id, conn->name);
 	}
 
 	for_each_old_plane_in_state(old_state, plane, old_plane_state, i) {
@@ -2251,14 +2249,14 @@ void drm_atomic_helper_wait_for_dependencies(struct drm_atomic_state *old_state)
 		ret = wait_for_common(&commit->hw_done, 10 * HZ, TASK_IDLE);
 		if (ret == 0)
 			DRM_ERROR("[PLANE:%d:%s] hw_done timed out\n",
-				  plane->base.id, plane->name);
+					  plane->base.id, plane->name);
 
-		/* Currently no support for overwriting flips, hence
-		 * stall for previous one to execute completely. */
-		ret = wait_for_common(&commit->flip_done, 10 * HZ, TASK_IDLE);
+			/* Currently no support for overwriting flips, hence
+			 * stall for previous one to execute completely. */
+			ret = wait_for_common(&commit->flip_done, 10 * HZ, TASK_IDLE);
 		if (ret == 0)
 			DRM_ERROR("[PLANE:%d:%s] flip_done timed out\n",
-				  plane->base.id, plane->name);
+					  plane->base.id, plane->name);
 	}
 }
 EXPORT_SYMBOL(drm_atomic_helper_wait_for_dependencies);
@@ -2296,7 +2294,7 @@ void drm_atomic_helper_fake_vblank(struct drm_atomic_state *old_state)
 		spin_lock_irqsave(&old_state->dev->event_lock, flags);
 		if (new_crtc_state->event) {
 			drm_crtc_send_vblank_event(crtc,
-						   new_crtc_state->event);
+									   new_crtc_state->event);
 			new_crtc_state->event = NULL;
 		}
 		spin_unlock_irqrestore(&old_state->dev->event_lock, flags);
@@ -2405,7 +2403,7 @@ EXPORT_SYMBOL(drm_atomic_helper_commit_cleanup_done);
  * 0 on success, negative error code on failure.
  */
 int drm_atomic_helper_prepare_planes(struct drm_device *dev,
-				     struct drm_atomic_state *state)
+									 struct drm_atomic_state *state)
 {
 	struct drm_connector *connector;
 	struct drm_connector_state *new_conn_state;
@@ -2436,7 +2434,7 @@ int drm_atomic_helper_prepare_planes(struct drm_device *dev,
 
 	return 0;
 
-fail:
+	fail:
 	for_each_new_plane_in_state(state, plane, new_plane_state, j) {
 		const struct drm_plane_helper_funcs *funcs;
 
@@ -2500,8 +2498,8 @@ static bool plane_crtc_active(const struct drm_plane_state *state)
  * This should not be copied blindly by drivers.
  */
 void drm_atomic_helper_commit_planes(struct drm_device *dev,
-				     struct drm_atomic_state *old_state,
-				     uint32_t flags)
+									 struct drm_atomic_state *old_state,
+									 uint32_t flags)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
@@ -2535,7 +2533,7 @@ void drm_atomic_helper_commit_planes(struct drm_device *dev,
 			continue;
 
 		disabling = drm_atomic_plane_disabling(old_plane_state,
-						       new_plane_state);
+											   new_plane_state);
 
 		if (active_only) {
 			/*
@@ -2560,7 +2558,7 @@ void drm_atomic_helper_commit_planes(struct drm_device *dev,
 			crtc_state = old_plane_state->crtc->state;
 
 			if (drm_atomic_crtc_needs_modeset(crtc_state) &&
-			    no_disable)
+				no_disable)
 				continue;
 
 			funcs->atomic_disable(plane, old_plane_state);
@@ -2609,7 +2607,7 @@ drm_atomic_helper_commit_planes_on_crtc(struct drm_crtc_state *old_crtc_state)
 	struct drm_crtc *crtc = old_crtc_state->crtc;
 	struct drm_atomic_state *old_state = old_crtc_state->state;
 	struct drm_crtc_state *new_crtc_state =
-		drm_atomic_get_new_crtc_state(old_state, crtc);
+	drm_atomic_get_new_crtc_state(old_state, crtc);
 	struct drm_plane *plane;
 	unsigned plane_mask;
 
@@ -2622,9 +2620,9 @@ drm_atomic_helper_commit_planes_on_crtc(struct drm_crtc_state *old_crtc_state)
 
 	drm_for_each_plane_mask(plane, crtc->dev, plane_mask) {
 		struct drm_plane_state *old_plane_state =
-			drm_atomic_get_old_plane_state(old_state, plane);
+		drm_atomic_get_old_plane_state(old_state, plane);
 		struct drm_plane_state *new_plane_state =
-			drm_atomic_get_new_plane_state(old_state, plane);
+		drm_atomic_get_new_plane_state(old_state, plane);
 		const struct drm_plane_helper_funcs *plane_funcs;
 
 		plane_funcs = plane->helper_private;
@@ -2633,13 +2631,13 @@ drm_atomic_helper_commit_planes_on_crtc(struct drm_crtc_state *old_crtc_state)
 			continue;
 
 		WARN_ON(new_plane_state->crtc &&
-			new_plane_state->crtc != crtc);
+		new_plane_state->crtc != crtc);
 
 		if (drm_atomic_plane_disabling(old_plane_state, new_plane_state) &&
-		    plane_funcs->atomic_disable)
+			plane_funcs->atomic_disable)
 			plane_funcs->atomic_disable(plane, old_plane_state);
 		else if (new_plane_state->crtc ||
-			 drm_atomic_plane_disabling(old_plane_state, new_plane_state))
+			drm_atomic_plane_disabling(old_plane_state, new_plane_state))
 			plane_funcs->atomic_update(plane, old_plane_state);
 	}
 
@@ -2666,11 +2664,11 @@ EXPORT_SYMBOL(drm_atomic_helper_commit_planes_on_crtc);
  */
 void
 drm_atomic_helper_disable_planes_on_crtc(struct drm_crtc_state *old_crtc_state,
-					 bool atomic)
+										 bool atomic)
 {
 	struct drm_crtc *crtc = old_crtc_state->crtc;
 	const struct drm_crtc_helper_funcs *crtc_funcs =
-		crtc->helper_private;
+	crtc->helper_private;
 	struct drm_plane *plane;
 
 	if (atomic && crtc_funcs && crtc_funcs->atomic_begin)
@@ -2678,7 +2676,7 @@ drm_atomic_helper_disable_planes_on_crtc(struct drm_crtc_state *old_crtc_state,
 
 	drm_atomic_crtc_state_for_each_plane(plane, old_crtc_state) {
 		const struct drm_plane_helper_funcs *plane_funcs =
-			plane->helper_private;
+		plane->helper_private;
 
 		if (!plane_funcs)
 			continue;
@@ -2706,7 +2704,7 @@ EXPORT_SYMBOL(drm_atomic_helper_disable_planes_on_crtc);
  * fails at any point after calling drm_atomic_helper_prepare_planes().
  */
 void drm_atomic_helper_cleanup_planes(struct drm_device *dev,
-				      struct drm_atomic_state *old_state)
+									  struct drm_atomic_state *old_state)
 {
 	struct drm_plane *plane;
 	struct drm_plane_state *old_plane_state, *new_plane_state;
@@ -2769,7 +2767,7 @@ EXPORT_SYMBOL(drm_atomic_helper_cleanup_planes);
  * waiting for the previous commits has been interrupted.
  */
 int drm_atomic_helper_swap_state(struct drm_atomic_state *state,
-				  bool stall)
+								 bool stall)
 {
 	int i, ret;
 	struct drm_connector *connector;
@@ -2848,7 +2846,7 @@ int drm_atomic_helper_swap_state(struct drm_atomic_state *state,
 		if (new_crtc_state->commit) {
 			spin_lock(&crtc->commit_lock);
 			list_add(&new_crtc_state->commit->commit_entry,
-				 &crtc->commit_list);
+					 &crtc->commit_list);
 			spin_unlock(&crtc->commit_lock);
 
 			new_crtc_state->commit->event = NULL;
@@ -2900,13 +2898,13 @@ EXPORT_SYMBOL(drm_atomic_helper_swap_state);
  * Zero on success, error code on failure
  */
 int drm_atomic_helper_update_plane(struct drm_plane *plane,
-				   struct drm_crtc *crtc,
-				   struct drm_framebuffer *fb,
-				   int crtc_x, int crtc_y,
-				   unsigned int crtc_w, unsigned int crtc_h,
-				   uint32_t src_x, uint32_t src_y,
-				   uint32_t src_w, uint32_t src_h,
-				   struct drm_modeset_acquire_ctx *ctx)
+								   struct drm_crtc *crtc,
+								   struct drm_framebuffer *fb,
+								   int crtc_x, int crtc_y,
+								   unsigned int crtc_w, unsigned int crtc_h,
+								   uint32_t src_x, uint32_t src_y,
+								   uint32_t src_w, uint32_t src_h,
+								   struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_atomic_state *state;
 	struct drm_plane_state *plane_state;
@@ -2940,7 +2938,7 @@ int drm_atomic_helper_update_plane(struct drm_plane *plane,
 		state->legacy_cursor_update = true;
 
 	ret = drm_atomic_commit(state);
-fail:
+	fail:
 	drm_atomic_state_put(state);
 	return ret;
 }
@@ -2957,7 +2955,7 @@ EXPORT_SYMBOL(drm_atomic_helper_update_plane);
  * Zero on success, error code on failure
  */
 int drm_atomic_helper_disable_plane(struct drm_plane *plane,
-				    struct drm_modeset_acquire_ctx *ctx)
+									struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_atomic_state *state;
 	struct drm_plane_state *plane_state;
@@ -2982,7 +2980,7 @@ int drm_atomic_helper_disable_plane(struct drm_plane *plane,
 		goto fail;
 
 	ret = drm_atomic_commit(state);
-fail:
+	fail:
 	drm_atomic_state_put(state);
 	return ret;
 }
@@ -3005,7 +3003,7 @@ EXPORT_SYMBOL(drm_atomic_helper_disable_plane);
  * Returns 0 on success, negative errno numbers on failure.
  */
 int drm_atomic_helper_set_config(struct drm_mode_set *set,
-				 struct drm_modeset_acquire_ctx *ctx)
+								 struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_atomic_state *state;
 	struct drm_crtc *crtc = set->crtc;
@@ -3026,7 +3024,7 @@ int drm_atomic_helper_set_config(struct drm_mode_set *set,
 
 	ret = drm_atomic_commit(state);
 
-fail:
+	fail:
 	drm_atomic_state_put(state);
 	return ret;
 }
@@ -3056,7 +3054,7 @@ EXPORT_SYMBOL(drm_atomic_helper_set_config);
  * drm_atomic_helper_shutdown().
  */
 int drm_atomic_helper_disable_all(struct drm_device *dev,
-				  struct drm_modeset_acquire_ctx *ctx)
+								  struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_atomic_state *state;
 	struct drm_connector_state *conn_state;
@@ -3110,7 +3108,7 @@ int drm_atomic_helper_disable_all(struct drm_device *dev,
 	}
 
 	ret = drm_atomic_commit(state);
-free:
+	free:
 	drm_atomic_state_put(state);
 	return ret;
 }
@@ -3168,7 +3166,7 @@ EXPORT_SYMBOL(drm_atomic_helper_shutdown);
  */
 struct drm_atomic_state *
 drm_atomic_helper_duplicate_state(struct drm_device *dev,
-				  struct drm_modeset_acquire_ctx *ctx)
+								  struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_atomic_state *state;
 	struct drm_connector *conn;
@@ -3220,7 +3218,7 @@ drm_atomic_helper_duplicate_state(struct drm_device *dev,
 	/* clear the acquire context so that it isn't accidentally reused */
 	state->acquire_ctx = NULL;
 
-free:
+	free:
 	if (err < 0) {
 		drm_atomic_state_put(state);
 		state = ERR_PTR(err);
@@ -3277,7 +3275,7 @@ struct drm_atomic_state *drm_atomic_helper_suspend(struct drm_device *dev)
 		goto unlock;
 	}
 
-unlock:
+	unlock:
 	DRM_MODESET_LOCK_ALL_END(dev, ctx, err);
 	if (err)
 		return ERR_PTR(err);
@@ -3302,7 +3300,7 @@ EXPORT_SYMBOL(drm_atomic_helper_suspend);
  * drm_atomic_helper_suspend()
  */
 int drm_atomic_helper_commit_duplicated_state(struct drm_atomic_state *state,
-					      struct drm_modeset_acquire_ctx *ctx)
+											  struct drm_modeset_acquire_ctx *ctx)
 {
 	int i, ret;
 	struct drm_plane *plane;
@@ -3348,7 +3346,7 @@ EXPORT_SYMBOL(drm_atomic_helper_commit_duplicated_state);
  * drm_atomic_helper_suspend()
  */
 int drm_atomic_helper_resume(struct drm_device *dev,
-			     struct drm_atomic_state *state)
+							 struct drm_atomic_state *state)
 {
 	struct drm_modeset_acquire_ctx ctx;
 	int err;
@@ -3367,10 +3365,10 @@ int drm_atomic_helper_resume(struct drm_device *dev,
 EXPORT_SYMBOL(drm_atomic_helper_resume);
 
 static int page_flip_common(struct drm_atomic_state *state,
-			    struct drm_crtc *crtc,
-			    struct drm_framebuffer *fb,
-			    struct drm_pending_vblank_event *event,
-			    uint32_t flags)
+							struct drm_crtc *crtc,
+							struct drm_framebuffer *fb,
+							struct drm_pending_vblank_event *event,
+							uint32_t flags)
 {
 	struct drm_plane *plane = crtc->primary;
 	struct drm_plane_state *plane_state;
@@ -3397,7 +3395,7 @@ static int page_flip_common(struct drm_atomic_state *state,
 	state->allow_modeset = false;
 	if (!crtc_state->active) {
 		DRM_DEBUG_ATOMIC("[CRTC:%d:%s] disabled, rejecting legacy flip\n",
-				 crtc->base.id, crtc->name);
+						 crtc->base.id, crtc->name);
 		return -EINVAL;
 	}
 
@@ -3422,10 +3420,10 @@ static int page_flip_common(struct drm_atomic_state *state,
  * drm_atomic_helper_page_flip_target()
  */
 int drm_atomic_helper_page_flip(struct drm_crtc *crtc,
-				struct drm_framebuffer *fb,
-				struct drm_pending_vblank_event *event,
-				uint32_t flags,
-				struct drm_modeset_acquire_ctx *ctx)
+								struct drm_framebuffer *fb,
+								struct drm_pending_vblank_event *event,
+								uint32_t flags,
+								struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_plane *plane = crtc->primary;
 	struct drm_atomic_state *state;
@@ -3442,7 +3440,7 @@ int drm_atomic_helper_page_flip(struct drm_crtc *crtc,
 		goto fail;
 
 	ret = drm_atomic_nonblocking_commit(state);
-fail:
+	fail:
 	drm_atomic_state_put(state);
 	return ret;
 }
@@ -3465,11 +3463,11 @@ EXPORT_SYMBOL(drm_atomic_helper_page_flip);
  * Returns 0 on success, negative errno numbers on failure.
  */
 int drm_atomic_helper_page_flip_target(struct drm_crtc *crtc,
-				       struct drm_framebuffer *fb,
-				       struct drm_pending_vblank_event *event,
-				       uint32_t flags,
-				       uint32_t target,
-				       struct drm_modeset_acquire_ctx *ctx)
+									   struct drm_framebuffer *fb,
+									   struct drm_pending_vblank_event *event,
+									   uint32_t flags,
+									   uint32_t target,
+									   struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_plane *plane = crtc->primary;
 	struct drm_atomic_state *state;
@@ -3494,7 +3492,7 @@ int drm_atomic_helper_page_flip_target(struct drm_crtc *crtc,
 	crtc_state->target_vblank = target;
 
 	ret = drm_atomic_nonblocking_commit(state);
-fail:
+	fail:
 	drm_atomic_state_put(state);
 	return ret;
 }
@@ -3515,9 +3513,9 @@ EXPORT_SYMBOL(drm_atomic_helper_page_flip_target);
  * how the atomic color management and gamma tables work.
  */
 int drm_atomic_helper_legacy_gamma_set(struct drm_crtc *crtc,
-				       u16 *red, u16 *green, u16 *blue,
-				       uint32_t size,
-				       struct drm_modeset_acquire_ctx *ctx)
+									   u16 *red, u16 *green, u16 *blue,
+									   uint32_t size,
+									   struct drm_modeset_acquire_ctx *ctx)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_atomic_state *state;
@@ -3532,8 +3530,8 @@ int drm_atomic_helper_legacy_gamma_set(struct drm_crtc *crtc,
 		return -ENOMEM;
 
 	blob = drm_property_create_blob(dev,
-					sizeof(struct drm_color_lut) * size,
-					NULL);
+									sizeof(struct drm_color_lut) * size,
+									NULL);
 	if (IS_ERR(blob)) {
 		ret = PTR_ERR(blob);
 		blob = NULL;
@@ -3563,7 +3561,7 @@ int drm_atomic_helper_legacy_gamma_set(struct drm_crtc *crtc,
 
 	ret = drm_atomic_commit(state);
 
-fail:
+	fail:
 	drm_atomic_state_put(state);
 	drm_property_blob_put(blob);
 	return ret;
@@ -3591,11 +3589,11 @@ EXPORT_SYMBOL(drm_atomic_helper_legacy_gamma_set);
  */
 u32 *
 drm_atomic_helper_bridge_propagate_bus_fmt(struct drm_bridge *bridge,
-					struct drm_bridge_state *bridge_state,
-					struct drm_crtc_state *crtc_state,
-					struct drm_connector_state *conn_state,
-					u32 output_fmt,
-					unsigned int *num_input_fmts)
+										   struct drm_bridge_state *bridge_state,
+										   struct drm_crtc_state *crtc_state,
+										   struct drm_connector_state *conn_state,
+										   u32 output_fmt,
+										   unsigned int *num_input_fmts)
 {
 	u32 *input_fmts;
 
