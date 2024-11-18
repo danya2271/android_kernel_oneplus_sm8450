@@ -5,7 +5,6 @@ config QCOM_KGSL
 	depends on QCOM_QFPROM
 	select QCOM_MDT_LOADER
 	select INTERVAL_TREE
-	select TRACE_GPU_MEM
 	help
 	  3D graphics driver for the Adreno family of GPUs from QTI.
 	  Required to use hardware accelerated OpenGL, compute and Vulkan
@@ -103,7 +102,7 @@ config QCOM_KGSL_IOCOHERENCY_DEFAULT
 config QCOM_KGSL_IDLE_TIMEOUT
 	int
 	depends on QCOM_KGSL
-	default 80
+	default 58
 	help
 	  GPU idle timeout for Adreno GPU. This value decides after how
 	  long the GPU will go into slumber. A higher value will mean that
@@ -155,6 +154,15 @@ config QCOM_KGSL_PROCESS_RECLAIM
 	  process. Based on this kgsl can unpin given number of pages from
 	  background processes and make them available to the shrinker.
 
+config QCOM_KGSL_HIBERNATION
+	bool "Enable Hibernation support in KGSL"
+	depends on QCOM_KGSL && HIBERNATION
+	help
+	  Say 'Y' to enable hibernation support in kgsl.
+	  If enabled, kgsl will register necessary power manager callbacks to
+	  support hibernation. Also, driver will handle secure memory during
+	  hibernation entry and exit.
+
 config DRM_PANEL_NOTIFY
 	tristate "CONFIG_DRM_PANEL_NOTIFY"
 	help
@@ -173,12 +181,3 @@ config OPLUS_FEATURE_KGSL_BUS_NOLIMIT
 	depends on QCOM_KGSL
 	help
 	  When enabled, oplus gpu vote bus freq based last vote value and without any limit in opp table.
-
-config QCOM_KGSL_HIBERNATION
-	bool "Enable Hibernation support in KGSL"
-	depends on QCOM_KGSL && HIBERNATION
-	help
-	  Say 'Y' to enable hibernation support in kgsl.
-	  If enabled, kgsl will register necessary power manager callbacks to
-	  support hibernation. Also, driver will handle secure memory during
-	  hibernation entry and exit.

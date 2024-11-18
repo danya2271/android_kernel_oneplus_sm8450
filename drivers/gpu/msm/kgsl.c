@@ -292,7 +292,6 @@ static struct kgsl_mem_entry *kgsl_mem_entry_create(void)
 
 static void add_dmabuf_list(struct kgsl_dma_buf_meta *metadata)
 {
-	struct kgsl_device *device = dev_get_drvdata(metadata->attach->dev);
 	struct dmabuf_list_entry *dle;
 	struct page *page;
 
@@ -324,15 +323,12 @@ static void add_dmabuf_list(struct kgsl_dma_buf_meta *metadata)
 		list_add(&dle->node, &kgsl_dmabuf_list);
 		metadata->dle = dle;
 		list_add(&metadata->node, &dle->dmabuf_list);
-		kgsl_trace_gpu_mem_total(device,
-				 metadata->entry->memdesc.size);
 	}
 	spin_unlock(&kgsl_dmabuf_lock);
 }
 
 static void remove_dmabuf_list(struct kgsl_dma_buf_meta *metadata)
 {
-	struct kgsl_device *device = dev_get_drvdata(metadata->attach->dev);
 	struct dmabuf_list_entry *dle = metadata->dle;
 
 	if (!dle)
@@ -343,8 +339,6 @@ static void remove_dmabuf_list(struct kgsl_dma_buf_meta *metadata)
 	if (list_empty(&dle->dmabuf_list)) {
 		list_del(&dle->node);
 		kfree(dle);
-		kgsl_trace_gpu_mem_total(device,
-				-(metadata->entry->memdesc.size));
 	}
 	spin_unlock(&kgsl_dmabuf_lock);
 }

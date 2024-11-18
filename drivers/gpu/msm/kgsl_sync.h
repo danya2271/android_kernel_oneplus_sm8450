@@ -11,7 +11,7 @@
 /**
  * struct kgsl_sync_timeline - A sync timeline associated with a kgsl context
  * @kref: Refcount to keep the struct alive until all its fences are signaled,
- *	  and as long as the context exists
+	  and as long as the context exists
  * @name: String to describe this timeline
  * @fence_context: Used by the fence driver to identify fences belonging to
  *		   this context
@@ -80,8 +80,8 @@ struct kgsl_syncsource;
 
 #if defined(CONFIG_SYNC_FILE)
 int kgsl_add_fence_event(struct kgsl_device *device,
-						 u32 context_id, u32 timestamp, void __user *data, int len,
-						 struct kgsl_device_private *owner);
+	u32 context_id, u32 timestamp, void __user *data, int len,
+	struct kgsl_device_private *owner);
 
 int kgsl_sync_timeline_create(struct kgsl_context *context);
 
@@ -90,30 +90,30 @@ void kgsl_sync_timeline_detach(struct kgsl_sync_timeline *ktimeline);
 void kgsl_sync_timeline_put(struct kgsl_sync_timeline *ktimeline);
 
 struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
-													  bool (*func)(void *priv), void *priv);
+					bool (*func)(void *priv), void *priv);
 
 void kgsl_sync_fence_async_cancel(struct kgsl_sync_fence_cb *kcb);
 
 long kgsl_ioctl_syncsource_create(struct kgsl_device_private *dev_priv,
-								  unsigned int cmd, void *data);
+					unsigned int cmd, void *data);
 long kgsl_ioctl_syncsource_destroy(struct kgsl_device_private *dev_priv,
-								   unsigned int cmd, void *data);
+					unsigned int cmd, void *data);
 long kgsl_ioctl_syncsource_create_fence(struct kgsl_device_private *dev_priv,
-										unsigned int cmd, void *data);
+					unsigned int cmd, void *data);
 long kgsl_ioctl_syncsource_signal_fence(struct kgsl_device_private *dev_priv,
-										unsigned int cmd, void *data);
+					unsigned int cmd, void *data);
 
 void kgsl_syncsource_put(struct kgsl_syncsource *syncsource);
 
 void kgsl_syncsource_process_release_syncsources(
-	struct kgsl_process_private *private);
+		struct kgsl_process_private *private);
 
 bool is_kgsl_fence(struct dma_fence *f);
 
 #else
 static inline int kgsl_add_fence_event(struct kgsl_device *device,
-									   u32 context_id, u32 timestamp, void __user *data, int len,
-									   struct kgsl_device_private *owner)
+	u32 context_id, u32 timestamp, void __user *data, int len,
+	struct kgsl_device_private *owner)
 {
 	return -EINVAL;
 }
@@ -135,13 +135,13 @@ static inline void kgsl_sync_timeline_put(struct kgsl_sync_timeline *ktimeline)
 
 #ifdef CONFIG_QCOM_KGSL_DEBUG
 static inline struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
-																	bool (*func)(void *priv), void *priv)
+					bool (*func)(void *priv), void *priv)
 {
 	return NULL;
 }
 #else
 static inline struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
-																	bool (*func)(void *priv), void *priv)
+					bool (*func)(void *priv), void *priv)
 {
 	return NULL;
 }
@@ -154,28 +154,28 @@ kgsl_sync_fence_async_cancel(struct kgsl_sync_fence_cb *kcb)
 
 static inline long
 kgsl_ioctl_syncsource_create(struct kgsl_device_private *dev_priv,
-							 unsigned int cmd, void *data)
+					unsigned int cmd, void *data)
 {
 	return -ENOIOCTLCMD;
 }
 
 static inline long
 kgsl_ioctl_syncsource_destroy(struct kgsl_device_private *dev_priv,
-							  unsigned int cmd, void *data)
+					unsigned int cmd, void *data)
 {
 	return -ENOIOCTLCMD;
 }
 
 static inline long
 kgsl_ioctl_syncsource_create_fence(struct kgsl_device_private *dev_priv,
-								   unsigned int cmd, void *data)
+					unsigned int cmd, void *data)
 {
 	return -ENOIOCTLCMD;
 }
 
 static inline long
 kgsl_ioctl_syncsource_signal_fence(struct kgsl_device_private *dev_priv,
-								   unsigned int cmd, void *data)
+					unsigned int cmd, void *data)
 {
 	return -ENOIOCTLCMD;
 }
@@ -186,7 +186,7 @@ static inline void kgsl_syncsource_put(struct kgsl_syncsource *syncsource)
 }
 
 static inline void kgsl_syncsource_process_release_syncsources(
-	struct kgsl_process_private *private)
+		struct kgsl_process_private *private)
 {
 
 }

@@ -437,6 +437,7 @@ bool is_kgsl_fence(struct dma_fence *f)
 	return false;
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 static void kgsl_count_hw_fences(struct kgsl_drawobj_sync_event *event, struct dma_fence *fence)
 {
 	/*
@@ -474,6 +475,7 @@ static void kgsl_get_fence_info(struct dma_fence *fence, void *priv)
 	for (i = 0; i < num_fences; i++)
 		kgsl_count_hw_fences(event, fences[i]);
 }
+#endif
 
 struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
 	bool (*func)(void *priv), void *priv)
