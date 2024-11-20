@@ -320,7 +320,7 @@ extern int offline_and_remove_memory(int nid, u64 start, u64 size);
 
 #else
 static inline void try_offline_node(int nid) {}
-
+static inline int remove_memory_subsection(int nid, u64 start, u64 size) {return 0;}
 static inline int offline_pages(unsigned long start_pfn, unsigned long nr_pages)
 {
 	return -EINVAL;
@@ -363,6 +363,8 @@ extern struct page *sparse_decode_mem_map(unsigned long coded_mem_map,
 					  unsigned long pnum);
 extern struct zone *zone_for_pfn_range(int online_type, int nid,
 		unsigned long start_pfn, unsigned long nr_pages);
+#else
+static inline int add_memory_subsection(int nid, u64 start, u64 size) {return 0;}
 #endif /* CONFIG_MEMORY_HOTPLUG */
 
 #endif /* __LINUX_MEMORY_HOTPLUG_H */
