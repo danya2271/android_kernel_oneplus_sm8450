@@ -704,6 +704,9 @@ static inline int sde_hw_ctl_trigger_flush_v1(struct sde_hw_ctl *ctx)
 
 	SDE_REG_WRITE(&ctx->hw, CTL_FLUSH, ctx->flush.pending_flush_mask);
 
+	/* ensure all register writes are written without re-ordering*/
+	wmb();
+
 	return 0;
 }
 
@@ -934,7 +937,7 @@ static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
 	u32 count = 0;
 	u32 mask = 0;
 	bool staged;
-	u32 mixercfg[CTL_NUM_EXT];
+	u32 mixercfg[CTL_NUM_EXT] = { 0 };
 	struct sde_hw_blk_reg_map *c;
 	const struct ctl_sspp_stage_reg_map *sspp_cfg;
 

@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_dsi_support.c
 ** Description : display driver private management
 ** Version : 1.1
-** Date : 2020/09/06
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**   LiPing-M         2020/09/06        1.1           Build this moudle
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 #include "oplus_dsi_support.h"
 #include <soc/oplus/system/boot_mode.h>
@@ -23,17 +20,16 @@
 #endif /* OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT */
 
 static enum oplus_display_support_list  oplus_display_vendor =
-	OPLUS_DISPLAY_UNKNOW;
+		OPLUS_DISPLAY_UNKNOW;
 static enum oplus_display_power_status oplus_display_status =
-	OPLUS_DISPLAY_POWER_OFF;
+		OPLUS_DISPLAY_POWER_OFF;
 static BLOCKING_NOTIFIER_HEAD(oplus_display_notifier_list);
 /* add for dual panel */
 static struct dsi_display *current_display = NULL;
 
 int oplus_display_register_client(struct notifier_block *nb)
 {
-	return blocking_notifier_chain_register(&oplus_display_notifier_list,
-						nb);
+	return blocking_notifier_chain_register(&oplus_display_notifier_list, nb);
 }
 EXPORT_SYMBOL(oplus_display_register_client);
 
@@ -47,8 +43,7 @@ EXPORT_SYMBOL(oplus_display_unregister_client);
 
 static int oplus_display_notifier_call_chain(unsigned long val, void *v)
 {
-	return blocking_notifier_call_chain(&oplus_display_notifier_list, val,
-					    v);
+	return blocking_notifier_call_chain(&oplus_display_notifier_list, val, v);
 }
 
 bool is_oplus_correct_display(enum oplus_display_support_list lcd_name)
@@ -69,29 +64,6 @@ bool is_silence_reboot(void)
 }
 EXPORT_SYMBOL(is_silence_reboot);
 
-int set_oplus_display_vendor(const char *display_name)
-{
-	if (display_name == NULL) {
-		return -1;
-	}
-
-	if (!strcmp(display_name,
-			"qcom,mdss_dsi_oplus19065_samsung_1440_3168_dsc_cmd")) {
-		oplus_display_vendor = OPLUS_SAMSUNG_ANA6706_DISPLAY_FHD_DSC_CMD_PANEL;
-		//register_device_proc("lcd", "ANA6706", "samsung1024");
-
-	} else if (!strcmp(display_name, "qcom,mdss_dsi_samsung_oneplus_dsc_cmd")) {
-		oplus_display_vendor = OPLUS_SAMSUNG_ONEPLUS_DISPLAY_FHD_DSC_CMD_PANEL;
-		//register_device_proc("lcd", "oneplus", "samsung1024");
-
-	} else {
-		oplus_display_vendor = OPLUS_DISPLAY_UNKNOW;
-		pr_err("%s panel vendor info set failed!", __func__);
-	}
-
-	return 0;
-}
-
 void notifier_oplus_display_early_status(enum oplus_display_power_status
 					power_status)
 {
@@ -104,7 +76,7 @@ void notifier_oplus_display_early_status(enum oplus_display_power_status
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_ON;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EARLY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	case OPLUS_DISPLAY_POWER_DOZE:
@@ -112,7 +84,7 @@ void notifier_oplus_display_early_status(enum oplus_display_power_status
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_DOZE;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EARLY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	case OPLUS_DISPLAY_POWER_DOZE_SUSPEND:
@@ -120,7 +92,7 @@ void notifier_oplus_display_early_status(enum oplus_display_power_status
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_DOZE_SUSPEND;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EARLY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	case OPLUS_DISPLAY_POWER_OFF:
@@ -128,7 +100,7 @@ void notifier_oplus_display_early_status(enum oplus_display_power_status
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_OFF;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EARLY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	default:
@@ -147,7 +119,7 @@ void notifier_oplus_display_status(enum oplus_display_power_status power_status)
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_ON;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	case OPLUS_DISPLAY_POWER_DOZE:
@@ -155,7 +127,7 @@ void notifier_oplus_display_status(enum oplus_display_power_status power_status)
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_DOZE;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	case OPLUS_DISPLAY_POWER_DOZE_SUSPEND:
@@ -163,7 +135,7 @@ void notifier_oplus_display_status(enum oplus_display_power_status power_status)
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_DOZE_SUSPEND;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	case OPLUS_DISPLAY_POWER_OFF:
@@ -171,7 +143,7 @@ void notifier_oplus_display_status(enum oplus_display_power_status power_status)
 		oplus_notifier_data.data = &blank;
 		oplus_notifier_data.status = OPLUS_DISPLAY_POWER_OFF;
 		oplus_display_notifier_call_chain(OPLUS_DISPLAY_EVENT_BLANK,
-						 &oplus_notifier_data);
+				&oplus_notifier_data);
 		break;
 
 	default:

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/iopoll.h>
@@ -9,6 +9,9 @@
 #include "sde_hw_catalog.h"
 #include "sde_hw_intf.h"
 #include "sde_dbg.h"
+#if defined(CONFIG_PXLW_IRIS)
+#include "dsi_iris_api.h"
+#endif
 
 #define INTF_TIMING_ENGINE_EN           0x000
 #define INTF_CONFIG                     0x004
@@ -65,6 +68,8 @@
 #define INTF_VSYNC_TIMESTAMP_CTRL       0x210
 #define INTF_VSYNC_TIMESTAMP0           0x214
 #define INTF_VSYNC_TIMESTAMP1           0x218
+#define INTF_MDP_VSYNC_TIMESTAMP0       0x21C
+#define INTF_MDP_VSYNC_TIMESTAMP1       0x220
 #define INTF_WD_TIMER_0_CTL             0x230
 #define INTF_WD_TIMER_0_CTL2            0x234
 #define INTF_WD_TIMER_0_LOAD_VALUE      0x238
@@ -225,9 +230,18 @@ static u64 sde_hw_intf_get_vsync_timestamp(struct sde_hw_intf *ctx)
 	struct sde_hw_blk_reg_map *c = &ctx->hw;
 	u32 timestamp_lo, timestamp_hi;
 	u64 timestamp = 0;
+	u32 reg_ts_0, reg_ts_1;
 
-	timestamp_hi = SDE_REG_READ(c, INTF_VSYNC_TIMESTAMP1);
-	timestamp_lo = SDE_REG_READ(c, INTF_VSYNC_TIMESTAMP0);
+	if (ctx->cap->features & BIT(SDE_INTF_MDP_VSYNC_TS)) {
+		reg_ts_0 = INTF_MDP_VSYNC_TIMESTAMP0;
+		reg_ts_1 = INTF_MDP_VSYNC_TIMESTAMP1;
+	} else {
+		reg_ts_0 = INTF_VSYNC_TIMESTAMP0;
+		reg_ts_1 = INTF_VSYNC_TIMESTAMP1;
+	}
+
+	timestamp_hi = SDE_REG_READ(c, reg_ts_1);
+	timestamp_lo = SDE_REG_READ(c, reg_ts_0);
 	timestamp = timestamp_hi;
 	timestamp = (timestamp << 32) | timestamp_lo;
 
@@ -250,7 +264,7 @@ static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 	u32 panel_format;
 	u32 intf_cfg, intf_cfg2 = 0;
 	u32 display_data_hctl = 0, active_data_hctl = 0;
-	u32 data_width;
+	u32 data_width, pack_pattern;
 	bool dp_intf = false;
 
 	/* read interface_cfg */
@@ -364,17 +378,19 @@ static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 		(vsync_polarity << 1) | /* VSYNC Polarity */
 		(hsync_polarity << 0);  /* HSYNC Polarity */
 
+	pack_pattern = p->fsc_mode ? 0x12 : 0x21;
+
 	if (!SDE_FORMAT_IS_YUV(fmt))
 		panel_format = (fmt->bits[C0_G_Y] |
 				(fmt->bits[C1_B_Cb] << 2) |
 				(fmt->bits[C2_R_Cr] << 4) |
-				(0x21 << 8));
+				(pack_pattern << 8));
 	else
 		/* Interface treats all the pixel data in RGB888 format */
 		panel_format = (COLOR_8BIT |
 				(COLOR_8BIT << 2) |
 				(COLOR_8BIT << 4) |
-				(0x21 << 8));
+				(pack_pattern << 8));
 
 	if (p->wide_bus_en)
 		intf_cfg2 |= BIT(0);
@@ -418,7 +434,8 @@ static void sde_hw_intf_enable_timing_engine(
 	/* Note: Display interface select is handled in top block hw layer */
 	SDE_REG_WRITE(c, INTF_TIMING_ENGINE_EN, enable != 0);
 
-	if (enable && (intf->cap->features & BIT(SDE_INTF_VSYNC_TIMESTAMP)))
+	if (enable && (intf->cap->features & (BIT(SDE_INTF_PANEL_VSYNC_TS)
+			| BIT(SDE_INTF_MDP_VSYNC_TS))))
 		SDE_REG_WRITE(c, INTF_VSYNC_TIMESTAMP_CTRL, BIT(0));
 }
 
@@ -637,8 +654,6 @@ static int sde_hw_intf_setup_te_config(struct sde_hw_intf *intf,
 	 * less than 2^16 vsync clk cycles.
 	 */
 	spin_lock(&tearcheck_spinlock);
-	SDE_REG_WRITE(c, INTF_TEAR_SYNC_WRCOUNT,
-			(te->start_pos + te->sync_threshold_start + 1));
 
 	SDE_REG_WRITE(c, INTF_TEAR_SYNC_CONFIG_VSYNC, cfg);
 	wmb(); /* disable vsync counter before updating single buffer registers */
@@ -652,7 +667,10 @@ static int sde_hw_intf_setup_te_config(struct sde_hw_intf *intf,
 			 te->sync_threshold_start));
 	cfg |= BIT(19); /* VSYNC_COUNTER_EN */
 	SDE_REG_WRITE(c, INTF_TEAR_SYNC_CONFIG_VSYNC, cfg);
+	wmb(); /* ensure vsync_counter_en is written */
 
+	SDE_REG_WRITE(c, INTF_TEAR_SYNC_WRCOUNT,
+			(te->start_pos + te->sync_threshold_start + 1));
 	spin_unlock(&tearcheck_spinlock);
 
 	return 0;
@@ -724,7 +742,8 @@ static int sde_hw_intf_enable_te(struct sde_hw_intf *intf, bool enable)
 	c = &intf->hw;
 	SDE_REG_WRITE(c, INTF_TEAR_TEAR_CHECK_EN, enable);
 
-	if (enable && (intf->cap->features & BIT(SDE_INTF_VSYNC_TIMESTAMP)))
+	if (enable && (intf->cap->features & (BIT(SDE_INTF_PANEL_VSYNC_TS)
+			| BIT(SDE_INTF_MDP_VSYNC_TS))))
 		SDE_REG_WRITE(c, INTF_VSYNC_TIMESTAMP_CTRL, BIT(0));
 
 	return 0;
@@ -816,6 +835,21 @@ static int sde_hw_intf_v1_check_and_reset_tearcheck(struct sde_hw_intf *intf,
 	return 0;
 }
 
+static void sde_hw_intf_override_tear_rd_ptr_val(struct sde_hw_intf *intf,
+		u32 adjusted_rd_ptr_val)
+{
+	struct sde_hw_blk_reg_map *c;
+
+	if (!intf || !adjusted_rd_ptr_val)
+		return;
+
+	c = &intf->hw;
+
+	SDE_REG_WRITE(c, INTF_TEAR_SYNC_WRCOUNT, (adjusted_rd_ptr_val & 0xFFFF));
+	/* ensure rd_ptr_val is written */
+	wmb();
+}
+
 static void sde_hw_intf_vsync_sel(struct sde_hw_intf *intf,
 		u32 vsync_source)
 {
@@ -847,6 +881,12 @@ static void sde_hw_intf_enable_compressed_input(struct sde_hw_intf *intf,
 	c = &intf->hw;
 	intf_cfg2 = SDE_REG_READ(c, INTF_CONFIG2);
 
+#if defined(CONFIG_PXLW_IRIS)
+	if (iris_is_chip_supported()) {
+	/* fixed for dynamic switching from dsc panel timing into raw timing */
+		intf_cfg2 &= ~BIT(12);
+	}
+#endif
 	_check_and_set_comp_bit(intf, dsc_4hs_merge, compression_en,
 			&intf_cfg2);
 
@@ -914,12 +954,14 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 		ops->vsync_sel = sde_hw_intf_vsync_sel;
 		ops->check_and_reset_tearcheck =
 			sde_hw_intf_v1_check_and_reset_tearcheck;
+		ops->override_tear_rd_ptr_val =
+			sde_hw_intf_override_tear_rd_ptr_val;
 	}
 
 	if (cap & BIT(SDE_INTF_RESET_COUNTER))
 		ops->reset_counter = sde_hw_intf_reset_counter;
 
-	if (cap & BIT(SDE_INTF_VSYNC_TIMESTAMP))
+	if (cap & (BIT(SDE_INTF_PANEL_VSYNC_TS) | BIT(SDE_INTF_MDP_VSYNC_TS)))
 		ops->get_vsync_timestamp = sde_hw_intf_get_vsync_timestamp;
 }
 

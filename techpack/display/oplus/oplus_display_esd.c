@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2021,  oplus Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_display_esd.c
 ** Description : oplus esd feature
-** Version : 1.0
-** Date : 2021/11/26
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**  Six.Xu         2021/11/26        1.0           Build this moudle
+** Version : 2.0
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 
 #include "oplus_display_esd.h"
@@ -45,15 +42,6 @@ int oplus_panel_parse_esd_reg_read_configs(struct dsi_panel *panel)
 		DSI_ERR("Failed to read ESD match modes, set default modes=0x%08X\n",
 				esd_config->status_match_modes);
 	}
-
-	/*
-	 * oplus,esd-debug-enabled is a flag, used to control printing
-	 * esd log.
-	 */
-	esd_config->esd_debug_enabled = utils->read_bool(utils->data,
-			"oplus,esd-debug-enabled");
-	DSI_INFO("oplus,esd-debug-enabled=%d\n",
-			esd_config->esd_debug_enabled);
 
 	return rc;
 }
@@ -108,14 +96,13 @@ bool oplus_display_validate_reg_read(struct dsi_panel *panel)
 					tmp++;
 				}
 
-				if (config->esd_debug_enabled)
-					DSI_ERR("[DEBUG]ESD check at index/group:[%d/%d] exp:[0x%02X] ret:[0x%02X] mode:[%u] matched:[%d]\n",
-							data_offset + data_index,
-							group_index,
-							config->status_value[value_offset],
-							config->return_buf[data_offset + data_index],
-							mode,
-							matched);
+				LCD_DEBUG_COMMON("[DEBUG]ESD check at index/group:[%d/%d] exp:[0x%02X] ret:[0x%02X] mode:[%u] matched:[%d]\n",
+						data_offset + data_index,
+						group_index,
+						config->status_value[value_offset],
+						config->return_buf[data_offset + data_index],
+						mode,
+						matched);
 			}
 
 			if (tmp == lenp[cmd_index])
@@ -126,12 +113,11 @@ bool oplus_display_validate_reg_read(struct dsi_panel *panel)
 
 		group_matched = (group_matched || group_mode0_matched) && group_mode1_matched;
 
-		if (config->esd_debug_enabled)
-			DSI_ERR("[DEBUG]ESD check matching: group:[%d] mode0/mode1/matched:[%d/%d/%d]\n",
-					group_index,
-					group_mode0_matched,
-					group_mode1_matched,
-					group_matched);
+		LCD_DEBUG_COMMON("[DEBUG]ESD check matching: group:[%d] mode0/mode1/matched:[%d/%d/%d]\n",
+				group_index,
+				group_mode0_matched,
+				group_mode1_matched,
+				group_matched);
 
 		group_offset += len;
 	}
@@ -139,17 +125,11 @@ bool oplus_display_validate_reg_read(struct dsi_panel *panel)
 	if (group_matched)
 		return true;
 
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
 	cnt += scnprintf(payload + cnt, sizeof(payload) - cnt, "DisplayDriverID@@408$$");
 	cnt += scnprintf(payload + cnt, sizeof(payload) - cnt, "ESD:");
 	for (i = 0; i < len; ++i)
 		cnt += scnprintf(payload + cnt, sizeof(payload) - cnt, " [0x%02X]", config->return_buf[i]);
 	DSI_MM_ERR("ESD check failed:%s\n", payload);
-#else /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
-	for (i = 0; i < len; ++i)
-		cnt += scnprintf(payload + cnt, sizeof(payload) - cnt, " [0x%02X]", config->return_buf[i]);
-	DSI_ERR("ESD check failed:%s\n", payload);
-#endif /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
 
 	return false;
 }

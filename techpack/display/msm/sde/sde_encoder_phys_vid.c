@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -106,6 +106,7 @@ static void drm_mode_to_intf_timing_params(
 	timing->hsync_skew = mode->hskew;
 	timing->v_front_porch_fixed = vid_enc->base.vfp_cached;
 	timing->vrefresh = drm_mode_vrefresh(mode);
+	timing->fsc_mode = fsc_mode;
 
 	if (vid_enc->base.comp_type != MSM_DISPLAY_COMPRESSION_NONE) {
 		timing->compression_en = true;
@@ -1153,8 +1154,9 @@ static int sde_encoder_phys_vid_poll_for_active_region(struct sde_encoder_phys *
 	vid_enc = to_sde_encoder_phys_vid(phys_enc);
 	timing = &vid_enc->timing_params;
 
-	/* if programmable fetch is not enabled return early */
-	if (!programmable_fetch_get_num_lines(vid_enc, timing))
+	/* if programmable fetch is not enabled return early or if it is not a DSI interface*/
+	if (!programmable_fetch_get_num_lines(vid_enc, timing) ||
+			phys_enc->hw_intf->cap->type != INTF_DSI)
 		return 0;
 
 	poll_time_us = DIV_ROUND_UP(1000000, timing->vrefresh) / MAX_POLL_CNT;
@@ -1164,7 +1166,7 @@ static int sde_encoder_phys_vid_poll_for_active_region(struct sde_encoder_phys *
 		usleep_range(poll_time_us, poll_time_us + 5);
 		line_cnt = phys_enc->hw_intf->ops.get_line_count(phys_enc->hw_intf);
 		trial++;
-	} while ((trial < MAX_POLL_CNT) || (line_cnt < v_inactive));
+	} while ((trial < MAX_POLL_CNT) && (line_cnt < v_inactive));
 
 	return (trial >= MAX_POLL_CNT) ? -ETIMEDOUT : 0;
 }

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -104,6 +104,13 @@ struct sde_hw_sharp_cfg {
 	u32 edge_thr;
 	u32 smooth_thr;
 	u32 noise_thr;
+};
+
+enum sde_sspp_color_component {
+	SDE_COMP_NONE = 0,
+	SDE_COMP_R,
+	SDE_COMP_G,
+	SDE_COMP_B,
 };
 
 struct sde_hw_pixel_ext {
@@ -304,11 +311,13 @@ struct sde_hw_sspp_ops {
 	 * @blend_enabled: flag indicating blend enabled or disabled on plane
 	 * @flags: Extra flags for format config
 	 * @index: rectangle index in multirect
+	 * @comp_color: component color for unpack
 	 */
 	void (*setup_format)(struct sde_hw_pipe *ctx,
 			const struct sde_format *fmt,
 			bool blend_enabled, u32 flags,
-			enum sde_sspp_multirect_index index);
+			enum sde_sspp_multirect_index index,
+			u32 comp_color);
 
 	/**
 	 * setup_rects - setup pipe ROI rectangles
@@ -361,6 +370,17 @@ struct sde_hw_sspp_ops {
 	 */
 	void (*setup_csc)(struct sde_hw_pipe *ctx, struct sde_csc_cfg *data);
 
+#if defined(PXLW_IRIS_DUAL)
+	/**
+	 * setup_csc_v2 - setup color space conversion version 2
+	 * @ctx: Pointer to pipe context
+	 * @fmt: Pointer to sde_format structure
+	 * @data: Pointer to config structure
+	 */
+	void (*setup_csc_v2)(struct sde_hw_pipe *ctx,
+					const struct sde_format *fmt,
+					struct sde_csc_cfg *data);
+#endif
 	/**
 	 * setup_solidfill - enable/disable colorfill
 	 * @ctx: Pointer to pipe context

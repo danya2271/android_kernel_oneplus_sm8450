@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_display_panel_power.c
 ** Description : oplus display panel power control
 ** Version : 1.0
-** Date : 2020/06/13
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**  Li.Sheng       2020/06/13        1.0           Build this moudle
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 #include "oplus_display_panel_power.h"
 
@@ -67,7 +64,7 @@ int dsi_panel_parse_panel_power_cfg(struct dsi_panel *panel)
 	if (!strcmp(panel->type, "primary")) {
 		panel_vol = &panel_vol_bak[PANEL_VOLTAGE_ID_VDDI].voltage_id;
 		rc = utils->read_u32_array(utils->data, "qcom,panel_voltage_vddi",
-					   panel_vol, PANEL_VOLTAGE_VALUE_COUNT);
+				panel_vol, PANEL_VOLTAGE_VALUE_COUNT);
 
 		if (rc) {
 			pr_err("[%s] failed to parse panel_voltage vddi\n", panel->name);
@@ -75,7 +72,7 @@ int dsi_panel_parse_panel_power_cfg(struct dsi_panel *panel)
 		}
 
 		rc = utils->read_string(utils->data, "qcom,panel_voltage_vddi_name",
-					&name_vddi);
+				&name_vddi);
 
 		if (rc) {
 			pr_err("[%s] failed to parse vddi name\n", panel->name);
@@ -88,7 +85,7 @@ int dsi_panel_parse_panel_power_cfg(struct dsi_panel *panel)
 
 		panel_vol = &panel_vol_bak[PANEL_VOLTAGE_ID_VDDR].voltage_id;
 		rc = utils->read_u32_array(utils->data, "qcom,panel_voltage_vddr",
-					   panel_vol, PANEL_VOLTAGE_VALUE_COUNT);
+				panel_vol, PANEL_VOLTAGE_VALUE_COUNT);
 
 		if (rc) {
 			pr_err("[%s] failed to parse panel_voltage vddr\n", panel->name);
@@ -96,7 +93,7 @@ int dsi_panel_parse_panel_power_cfg(struct dsi_panel *panel)
 		}
 
 		rc = utils->read_string(utils->data, "qcom,panel_voltage_vddr_name",
-					&name_vddr);
+				&name_vddr);
 
 		if (rc) {
 			pr_err("[%s] failed to parse vddr name\n", panel->name);
@@ -109,9 +106,9 @@ int dsi_panel_parse_panel_power_cfg(struct dsi_panel *panel)
 		/* add for debug */
 		for (i = 0; i < PANEL_VOLTAGE_ID_MAX; i++) {
 			pr_err("[%s] panel_voltage[%d] = %d,%d,%d,%d,%s\n", __func__, i,
-			       panel_vol_bak[i].voltage_id,
-			       panel_vol_bak[i].voltage_min, panel_vol_bak[i].voltage_current,
-			       panel_vol_bak[i].voltage_max, panel_vol_bak[i].pwr_name);
+					panel_vol_bak[i].voltage_id,
+					panel_vol_bak[i].voltage_min, panel_vol_bak[i].voltage_current,
+					panel_vol_bak[i].voltage_max, panel_vol_bak[i].pwr_name);
 		}
 	}
 
@@ -204,9 +201,9 @@ int oplus_display_panel_set_pwr(void *data)
 	}
 
 	pr_err("debug for %s, id = %d value = %d\n",
-		__func__, panel_vol_id, panel_vol_value);
+			__func__, panel_vol_id, panel_vol_value);
 	if (panel_vol_value < panel_vol_bak[panel_vol_id].voltage_min ||
-		panel_vol_id > panel_vol_bak[panel_vol_id].voltage_max)
+			panel_vol_value > panel_vol_bak[panel_vol_id].voltage_max)
 		return -EINVAL;
 
 	if (!display) {

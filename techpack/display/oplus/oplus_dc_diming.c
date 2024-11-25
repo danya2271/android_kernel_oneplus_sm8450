@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2020,  oplus Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_dc_diming.c
 ** Description : oplus dc_diming feature
 ** Version : 1.0
-** Date : 2020/04/15
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**   Qianxu         2020/04/15        1.0           Build this moudle
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 
 #include "oplus_display_private_api.h"
@@ -192,7 +189,8 @@ int sde_connector_update_backlight(struct drm_connector *connector, bool post)
 	}
 
 	if ((!strcmp(dsi_display->panel->oplus_priv.vendor_name, "S6E3HC3")) ||
-		(!strcmp(dsi_display->panel->oplus_priv.vendor_name, "AMB670YF01"))) {
+			(!strcmp(dsi_display->panel->oplus_priv.vendor_name, "S6E3HC4")) ||
+			(!strcmp(dsi_display->panel->oplus_priv.vendor_name, "AMB670YF01"))) {
 		return 0;
 	}
 
@@ -419,7 +417,8 @@ oplus_dsi_update_seed_backlight(struct dsi_panel *panel, int brightness,
 			type != DSI_CMD_SEED_MODE3 &&
 			type != DSI_CMD_SEED_MODE4 &&
 			type != DSI_CMD_SEED_OFF) {
-		return NULL;
+			rc = -ENOMEM;
+		return ERR_PTR(rc);
 	}
 
 	if (type == DSI_CMD_SEED_OFF) {
@@ -525,6 +524,10 @@ int oplus_display_panel_get_dim_dc_alpha(void *buf)
 {
 	int ret = 0;
 	unsigned int *temp_dim_alpha = buf;
+	struct dsi_display *display = get_main_display();
+
+	if(display == NULL)
+		return 0;
 
 	if (get_oplus_display_power_status() != OPLUS_DISPLAY_POWER_ON) {
 		ret = 0;
@@ -533,10 +536,16 @@ int oplus_display_panel_get_dim_dc_alpha(void *buf)
 	if (oplus_dc2_alpha != 0) {
 		ret = oplus_dc2_alpha;
 
-	} else if (oplus_underbrightness_alpha != 0) {
-		ret = oplus_underbrightness_alpha;
+	}
+        else if (oplus_underbrightness_alpha != 0) {
+                if ((!strcmp(display->panel->oplus_priv.vendor_name, "BF092_AB241")))
+                        ret = 0;
+                else
+                        ret = oplus_underbrightness_alpha;
 
 	} else if (oplus_dimlayer_bl_enable_v3_real) {
+		ret = 1;
+	} else if ((dc_apollo_enable) && (display->panel->bl_config.bl_dc_real < JENNIE_DC_THRESHOLD)) {
 		ret = 1;
 	}
 
@@ -556,7 +565,8 @@ int oplus_display_panel_set_dimlayer_enable(void *data)
 		return -EINVAL;
 	}
 
-	if (!strcmp(display->panel->name, "samsung S6E3HC3 dsc cmd mode panel 21631")) {
+	if (!strcmp(display->panel->name, "samsung S6E3HC3 dsc cmd mode panel 21631")
+		|| !strcmp(display->panel->name, "BOE AB241 NT37701A")) {
 		dc_apollo_enable = *dimlayer_enable;
 		pr_info("DC BKL %s\n", *dimlayer_enable?"ON":"OFF");
 		return 0;

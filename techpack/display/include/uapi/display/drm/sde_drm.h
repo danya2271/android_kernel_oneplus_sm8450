@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -117,6 +117,14 @@ extern "C" {
 #define SDE_SYSCACHE_LLCC_DISP		0
 #define SDE_SYSCACHE_LLCC_DISP_LEFT	1
 #define SDE_SYSCACHE_LLCC_DISP_RIGHT	2
+
+/**
+ * buffer modes for "buffer_mode" plane property
+ * @SDE_INDEPENDENT_BUFFER_MODE:Plane buffers are independent.
+ * @SDE_SINGLE_BUFFER_MODE:	All planes are on same buffer, same input fence.
+ */
+#define SDE_INDEPENDENT_BUFFER_MODE	0
+#define SDE_SINGLE_BUFFER_MODE		1
 
 /**
  * Bit masks for "src_config" property
@@ -388,7 +396,7 @@ struct sde_drm_scaler_v2 {
 };
 
 /* Number of dest scalers supported */
-#define SDE_MAX_DS_COUNT 2
+#define SDE_MAX_DS_COUNT 4
 
 /*
  * Destination scaler flag config

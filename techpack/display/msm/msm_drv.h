@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -51,7 +51,7 @@
 #include <drm/drm_bridge.h>
 
 #include "sde_power_handle.h"
-#if defined(OPLUS_FEATURE_PXLW_IRIS5) || defined(OPLUS_FEATURE_PXLW_SOFT_IRIS)
+#if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
 #include <drm/msm_drm_iris.h>
 #endif
 #define GET_MAJOR_REV(rev)		((rev) >> 28)
@@ -140,6 +140,7 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_FP16_IGC,
 	PLANE_PROP_FP16_UNMULT,
 	PLANE_PROP_UBWC_STATS_ROI,
+	PLANE_PROP_BG_ALPHA,
 
 	/* enum/bitmask properties */
 	PLANE_PROP_BLEND_OP,
@@ -147,6 +148,8 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_FB_TRANSLATION_MODE,
 	PLANE_PROP_MULTIRECT_MODE,
 	PLANE_PROP_SYS_CACHE_TYPE,
+	PLANE_PROP_BUFFER_MODE,
+	PLANE_PROP_COLOR_COMPONENT,
 
 	/* total # of properties */
 	PLANE_PROP_COUNT
@@ -179,9 +182,9 @@ enum msm_mdp_crtc_property {
 	CRTC_PROP_ROI_V1,
 	CRTC_PROP_SECURITY_LEVEL,
 	CRTC_PROP_DEST_SCALER,
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	CRTC_PROP_CUSTOM,
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 	CRTC_PROP_CAPTURE_OUTPUT,
 
 	CRTC_PROP_IDLE_PC_STATE,
@@ -236,18 +239,24 @@ enum msm_mdp_conn_property {
 	CONNECTOR_PROP_SET_PANEL_MODE,
 	CONNECTOR_PROP_AVR_STEP,
 	CONNECTOR_PROP_DSC_MODE,
+	CONNECTOR_PROP_WB_FSC_MODE,
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	CONNECTOR_PROP_QSYNC_MIN_FPS,
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 #ifdef OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT
 	CONNECTOR_PROP_HBM_ENABLE,
 #endif /* OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT */
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	// Prop to store sync panel backlight level
 	CONNECTOR_PROP_SYNC_BACKLIGHT_LEVEL,
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_FEATURE_DISPLAY */
+
+#if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
+	CONNECTOR_PROP_PANEL_LEVEL,
+	CONNECTOR_PROP_IRIS_SET_METADATA,
+#endif
 
 	/* total # of properties */
 	CONNECTOR_PROP_COUNT
@@ -342,6 +351,16 @@ enum msm_display_dsc_mode {
 };
 
 /**
+ * enum msm_wb_fsc_mode - wb fsc mode
+ * @MSM_WB_FSC_MODE_DISABLED: fsc disabled
+ * @MSM_WB_FSC_MODE_DISABLED: fsc enabled
+ */
+enum msm_wb_dump_mode {
+	MSM_WB_FSC_MODE_DISABLED,
+	MSM_WB_FSC_MODE_ENABLED,
+};
+
+/**
  * struct msm_display_mode - wrapper for drm_display_mode
  * @base: drm_display_mode attached to this msm_mode
  * @private_flags: integer holding private driver mode flags
@@ -429,6 +448,7 @@ struct msm_roi_caps {
  * @pclk_per_line:           Compressed width.
  * @slice_last_group_size:   Size of last group in pixels.
  * @slice_per_pkt:           Number of slices per packet.
+ * @dsc_pic_width_slice:     Number of DSC picture width slice.
  * @num_active_ss_per_enc:   Number of active soft slices per encoder.
  * @source_color_space:      Source color space of DSC encoder
  * @chroma_format:           Chroma_format of DSC encoder.
@@ -454,6 +474,7 @@ struct msm_display_dsc_info {
 	int pclk_per_line;
 	int slice_last_group_size;
 	int slice_per_pkt;
+	int dsc_pic_width_slice;
 	int num_active_ss_per_enc;
 	int source_color_space;
 	int chroma_format;
@@ -790,7 +811,7 @@ struct msm_mode_info {
 	bool wide_bus_en;
 	u32 panel_mode_caps;
 	u32 mdp_transfer_time_us;
-	u32 allowed_mode_switches;
+	u64 allowed_mode_switches;
 	bool disable_rsc_solver;
 	struct msm_dyn_clk_list dyn_clk_list;
 	u32 qsync_min_fps;
@@ -872,6 +893,8 @@ struct msm_display_info {
 
 	uint32_t dsc_count;
 	uint32_t lm_count;
+
+	unsigned int idle_delayms;
 };
 
 #define MSM_MAX_ROI	4
@@ -903,9 +926,9 @@ struct msm_display_kickoff_params {
 struct msm_display_conn_params {
 	uint32_t qsync_mode;
 	bool qsync_update;
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	uint32_t qsync_dynamic_min_fps;
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 };
 
 /**
@@ -994,9 +1017,9 @@ struct msm_drm_private {
 	struct msm_drm_thread disp_thread[MAX_CRTCS];
 	struct msm_drm_thread event_thread[MAX_CRTCS];
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	struct msm_drm_thread adfr_thread[MAX_CRTCS];
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 	struct task_struct *pp_event_thread;
 	struct kthread_worker pp_event_worker;
@@ -1057,9 +1080,9 @@ struct msm_drm_private {
 	struct mutex vm_client_lock;
 	struct list_head vm_client_list;
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	struct mutex dspp_lock;
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_FEATURE_DISPLAY */
 };
 
 /* get struct msm_kms * from drm_device * */

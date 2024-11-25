@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -53,6 +53,7 @@
 #define SDE_HW_VER_820	SDE_HW_VER(8, 2, 0) /* diwali */
 #define SDE_HW_VER_830	SDE_HW_VER(8, 3, 0) /* parrot */
 #define SDE_HW_VER_850	SDE_HW_VER(8, 5, 0) /* cape */
+#define SDE_HW_VER_860	SDE_HW_VER(8, 6, 0) /* ravelin */
 #define SDE_HW_VER_910	SDE_HW_VER(9, 1, 0) /* neo */
 
 /* Avoid using below IS_XXX macros outside catalog, use feature bit instead */
@@ -83,6 +84,7 @@
 #define IS_DIWALI_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_820)
 #define IS_PARROT_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_830)
 #define IS_CAPE_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_850)
+#define IS_RAVELIN_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_860)
 #define IS_NEO_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_910)
 
 #define SDE_HW_BLK_NAME_LEN	16
@@ -541,7 +543,8 @@ enum {
  * @SDE_INTF_WD_TIMER          INTF block has WD Timer support
  * @SDE_INTF_STATUS             INTF block has INTF_STATUS register
  * @SDE_INTF_RESET_COUNTER      INTF block has frame/line counter reset support
- * @SDE_INTF_VSYNC_TIMESTAMP    INTF block has vsync timestamp logged
+ * @SDE_INTF_PANEL_VSYNC_TS     INTF block has panel vsync timestamp logged
+ * @SDE_INTF_MDP_VSYNC_TS       INTF block has mdp vsync timestamp logged
  * @SDE_INTF_AVR_STATUS         INTF block has AVR_STATUS field in AVR_CONTROL register
  * @SDE_INTF_MAX
  */
@@ -552,7 +555,8 @@ enum {
 	SDE_INTF_WD_TIMER,
 	SDE_INTF_STATUS,
 	SDE_INTF_RESET_COUNTER,
-	SDE_INTF_VSYNC_TIMESTAMP,
+	SDE_INTF_PANEL_VSYNC_TS,
+	SDE_INTF_MDP_VSYNC_TS,
 	SDE_INTF_AVR_STATUS,
 	SDE_INTF_MAX
 };
@@ -1024,12 +1028,10 @@ static const char *sde_clk_ctrl_type_s[SDE_CLK_CTRL_MAX] = {
 /* struct sde_clk_ctrl_reg : Clock control register
  * @reg_off:           register offset
  * @bit_off:           bit offset
- * @val:               current bit value
  */
 struct sde_clk_ctrl_reg {
 	u32 reg_off;
 	u32 bit_off;
-	int val;
 };
 
 /* struct sde_mdp_cfg : MDP TOP-BLK instance info
@@ -1574,6 +1576,7 @@ struct sde_perf_cfg {
 
  * @min_display_width   minimum display width support.
  * @min_display_height  minimum display height support.
+ * @in_rot_maxheight    max pre rotated height for inline rotation.
  * @csc_type           csc or csc_10bit support.
  * @smart_dma_rev      Supported version of SmartDMA feature.
  * @ctl_rev            supported version of control path.
@@ -1669,6 +1672,7 @@ struct sde_mdss_cfg {
 	u32 max_display_height;
 	u32 min_display_width;
 	u32 min_display_height;
+	u32 in_rot_maxheight;
 
 	u32 csc_type;
 	u32 smart_dma_rev;

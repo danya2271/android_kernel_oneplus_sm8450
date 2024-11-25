@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -112,6 +113,9 @@ enum sde_plane_sclcheck_state {
  * @cdp_cfg:	CDP configuration
  * @cont_splash_populated: State was populated as part of cont. splash
  * @ubwc_stats_roi: cached roi for ubwc stats
+ * @csc_cfg: Decoded user configuration for csc
+ * @csc_usr_ptr: Points to csc_cfg if valid user config available
+ * @csc_ptr: Points to sde_csc_cfg structure to use for current
  */
 struct sde_plane_state {
 	struct drm_plane_state base;
@@ -147,6 +151,10 @@ struct sde_plane_state {
 	bool cont_splash_populated;
 
 	struct sde_drm_ubwc_stats_roi ubwc_stats_roi;
+
+	struct sde_csc_cfg csc_cfg;
+	struct sde_csc_cfg *csc_usr_ptr;
+	struct sde_csc_cfg *csc_ptr;
 };
 
 /**
@@ -359,4 +367,13 @@ void sde_plane_static_img_control(struct drm_plane *plane,
 		enum sde_crtc_cache_state state);
 
 void sde_plane_add_data_to_minidump_va(struct drm_plane *plane);
+
+/**
+ * sde_plane_property_is_dirty - check if property is dirty
+ * @plane_state: Pointer to drm plane state structure
+ * @property_idx: property index
+ */
+bool sde_plane_property_is_dirty(struct drm_plane_state *plane_state,
+		uint32_t property_idx);
+
 #endif /* _SDE_PLANE_H_ */

@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2021,  oplus Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_display_esd.h
 ** Description : oplus esd feature
-** Version : 1.0
-** Date : 2021/11/26
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**  Six.Xu         2021/11/26        1.0           Build this moudle
+** Version : 2.0
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 #ifndef _OPLUS_ESD_H_
 #define _OPLUS_ESD_H_

@@ -27,7 +27,7 @@
 #define DSI_MISC_W32(dsi_phy_hw, off, val) \
 	DSI_GEN_W32_DEBUG((dsi_phy_hw)->phy_clamp_base, (dsi_phy_hw)->index, off, val)
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 #undef DSI_PHY_ERR
 #include <soc/oplus/system/oplus_mm_kevent_fb.h>
 #define DSI_PHY_ERR(p, fmt, ...) \
@@ -36,7 +36,7 @@
 				fmt, p ? p->index : -1, ##__VA_ARGS__); \
 		mm_fb_display_kevent_named(MM_FB_KEY_RATELIMIT_1H, fmt, ##__VA_ARGS__); \
 	} while(0)
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 /**
  * enum dsi_phy_version - DSI PHY version enumeration

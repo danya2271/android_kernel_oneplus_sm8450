@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2020,  oplus Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_aod.c
 ** Description : oplus aod feature
 ** Version : 1.0
-** Date : 2020/09/24
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**  liping-m         2020/09/24        1.0           Build this moudle
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 #include <linux/msm_drm_notify.h>
 #include <linux/module.h>
@@ -16,9 +13,9 @@
 #include "dsi_display.h"
 #include "dsi_drm.h"
 #include "sde_encoder.h"
+#include "oplus_display_private_api.h"
 
 
-//#ifdef OPLUS_BUG_STABILITY
 static BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list);
 
 /**
@@ -63,52 +60,82 @@ int msm_drm_notifier_call_chain(unsigned long val, void *v)
 }
 EXPORT_SYMBOL(msm_drm_notifier_call_chain);
 
-int oplus_panel_event_notification_trigger(struct dsi_display *display, enum panel_event_notification_type notif_type)
+int oplus_panel_event_data_notifier_trigger(struct dsi_panel *panel,
+		enum panel_event_notification_type notif_type,
+		u32 data,
+		bool early_trigger)
 {
-	struct panel_event_notification notification;
-	struct drm_panel *panel = dsi_display_get_drm_panel(display);
+	struct panel_event_notification notifier;
 	enum panel_event_notifier_tag panel_type;
 
-	if (!panel)
-		return -ENOLINK;
-
-	panel_type = PANEL_EVENT_NOTIFICATION_PRIMARY;
-
-	memset(&notification, 0, sizeof(notification));
-
-	notification.notif_type = notif_type;
-	notification.panel = panel;
-	notification.notif_data.early_trigger = true;
-	panel_event_notification_trigger(panel_type, &notification);
-	return 0;
-}
-
-EXPORT_SYMBOL(oplus_panel_event_notification_trigger);
-
-int oplus_display_event_data_notifier_trigger(struct dsi_display *display,
-		enum panel_event_notifier_tag panel_type,
-		enum panel_event_notification_type notif_type,
-		u32 data)
-{
-	struct drm_panel *panel = dsi_display_get_drm_panel(display);
-	struct panel_event_notification notifier;
-
 	if (!panel) {
-		pr_err("[%s] invalid panel\n", __func__);
-		return -EINVAL;
+		DSI_ERR("Oplus Features config No panel device\n");
+		return -ENODEV;
 	}
+
+	if (!strcmp(panel->type, "secondary")) {
+		panel_type = PANEL_EVENT_NOTIFICATION_SECONDARY;
+	} else {
+		panel_type = PANEL_EVENT_NOTIFICATION_PRIMARY;
+	}
+
+	LCD_DEBUG_COMMON("[%s] notifier, panel:%d, type:%d, data:%d, early_trigger:%d\n",
+			panel->type, panel_type, notif_type, data, early_trigger);
 
 	memset(&notifier, 0, sizeof(notifier));
 
-	notifier.panel = panel;
+	notifier.panel = &panel->drm_panel;
 	notifier.notif_type = notif_type;
-	notifier.notif_data.early_trigger = true;
+	notifier.notif_data.early_trigger = early_trigger;
 	notifier.notif_data.data = data;
 
 	panel_event_notification_trigger(panel_type, &notifier);
 	return 0;
 }
-EXPORT_SYMBOL(oplus_display_event_data_notifier_trigger);
+
+EXPORT_SYMBOL(oplus_panel_event_data_notifier_trigger);
+
+int oplus_event_data_notifier_trigger(
+		enum panel_event_notification_type notif_type,
+		u32 data,
+		bool early_trigger)
+{
+	struct dsi_display *display = oplus_display_get_current_display();
+
+	if (!display || !display->panel) {
+		DSI_ERR("Oplus Features config No display device\n");
+		return -ENODEV;
+	}
+
+	oplus_panel_event_data_notifier_trigger(display->panel,
+				notif_type, data, early_trigger);
+
+	return 0;
+}
+EXPORT_SYMBOL(oplus_event_data_notifier_trigger);
+
+int oplus_panel_backlight_notifier(struct dsi_panel *panel, u32 bl_lvl)
+{
+	u32 threshold = panel->bl_config.dc_backlight_threshold;
+	bool dc_mode = panel->bl_config.oplus_dc_mode;
+
+	if (dc_mode && (bl_lvl > 1 && bl_lvl < threshold)) {
+			dc_mode = false;
+			oplus_panel_event_data_notifier_trigger(panel,
+			DRM_PANEL_EVENT_DC_MODE, dc_mode, true);
+	} else if (!dc_mode && bl_lvl >= threshold) {
+			dc_mode = true;
+			oplus_panel_event_data_notifier_trigger(panel,
+			DRM_PANEL_EVENT_DC_MODE, dc_mode, true);
+	}
+
+	oplus_panel_event_data_notifier_trigger(panel,
+					DRM_PANEL_EVENT_BACKLIGHT, bl_lvl, true);
+
+	return 0;
+}
+EXPORT_SYMBOL(oplus_panel_backlight_notifier);
+
 
 MODULE_LICENSE("GPL v2");
-//#endif /* VENDOR_EDIT */
+

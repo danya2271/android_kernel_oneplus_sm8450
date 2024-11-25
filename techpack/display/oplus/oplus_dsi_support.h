@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2018,  OPLUS Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_dsi_support.h
 ** Description : display driver private management
 ** Version : 1.0
-** Date : 2018/03/17
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**   Hu.Jie          2018/03/17        1.0           Build this moudle
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 #ifndef _OPLUS_DSI_SUPPORT_H_
 #define _OPLUS_DSI_SUPPORT_H_
@@ -82,6 +79,11 @@ typedef struct oplus_display_notifier_event {
 	void *data;
 } OPLUS_DISPLAY_NOTIFIER_EVENT;
 
+static inline int str_equal(const char *a, const char *b)
+{
+	return !strcmp(a, b);
+}
+
 int oplus_display_register_client(struct notifier_block *nb);
 
 int oplus_display_unregister_client(struct notifier_block *nb);
@@ -94,8 +96,6 @@ void notifier_oplus_display_status(enum oplus_display_power_status power_status)
 bool is_oplus_correct_display(enum oplus_display_support_list lcd_name);
 
 bool is_silence_reboot(void);
-
-int set_oplus_display_vendor(const char *display_name);
 
 void set_oplus_display_power_status(enum oplus_display_power_status power_status);
 

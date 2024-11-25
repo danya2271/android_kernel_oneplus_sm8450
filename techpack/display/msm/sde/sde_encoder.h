@@ -49,11 +49,11 @@
 #define SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE	BIT(4)
 #define SDE_ENCODER_FRAME_EVENT_CWB_DONE		BIT(5)
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 #define IDLE_POWERCOLLAPSE_DURATION	(80 - 16/2)
-#else
+#else /* OPLUS_FEATURE_DISPLAY */
 #define IDLE_POWERCOLLAPSE_DURATION	(66 - 16/2)
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 #define IDLE_POWERCOLLAPSE_IN_EARLY_WAKEUP (200 - 16/2)
 
 /* below this fps limit, timeouts are adjusted based on fps */
@@ -202,6 +202,7 @@ struct sde_encoder_ops {
  * @recovery_events_enabled:	status of hw recovery feature enable by client
  * @elevated_ahb_vote:		increase AHB bus speed for the first frame
  *				after power collapse
+ * @pm_qos_cpu_req:		qos request for all cpu core frequency
  * @valid_cpu_mask:		actual voted cpu core mask
  * @mode_info:                  stores the current mode and should be used
  *				only in commit phase
@@ -262,7 +263,7 @@ struct sde_encoder_virt {
 	struct kthread_work input_event_work;
 	struct kthread_work esd_trigger_work;
 	struct input_handler *input_handler;
-#if defined(OPLUS_FEATURE_PXLW_IRIS5)
+#if defined(CONFIG_PXLW_IRIS)
 	struct kthread_work disable_autorefresh_work;
 #endif
 	bool vblank_enabled;
@@ -278,18 +279,20 @@ struct sde_encoder_virt {
 	bool fal10_veto_override;
 	bool recovery_events_enabled;
 	bool elevated_ahb_vote;
+	struct dev_pm_qos_request pm_qos_cpu_req[NR_CPUS];
 	struct cpumask valid_cpu_mask;
 	struct msm_mode_info mode_info;
 	bool delay_kickoff;
 	bool autorefresh_solver_disable;
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	struct hrtimer fakeframe_timer;
 	struct kthread_work fakeframe_work;
 	uint32_t cur_mode_hdisplay;
-#endif
+	unsigned int encoder_idle_delayms;
+#endif /* OPLUS_FEATURE_DISPLAY */
 };
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 /**
  * Add for backlight smooths
  * @g_pri_bk_level: global backlight of the primary screen
@@ -308,7 +311,7 @@ enum oplus_sync_method {
 	OPLUS_WAIT_VSYNC_METHOD,
 	OPLUS_UNKNOW_METHOD,
 };
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 #define to_sde_encoder_virt(x) container_of(x, struct sde_encoder_virt, base)
 
@@ -730,7 +733,7 @@ static inline bool sde_encoder_is_widebus_enabled(struct drm_encoder *drm_enc)
 	return sde_enc->mode_info.wide_bus_en;
 }
 
-#if defined(OPLUS_FEATURE_PXLW_IRIS5)
+#if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
 /**
  * sde_encoder_rc_lock - lock the sde encoder resource control.
  * @drm_enc:    Pointer to drm encoder structure
@@ -751,16 +754,55 @@ void sde_encoder_rc_unlock(struct drm_encoder *drm_enc);
  * @Return:     void.
  */
 void sde_encoder_disable_autorefresh_handler(struct drm_encoder *drm_enc);
-#endif
 
-#ifdef OPLUS_BUG_STABILITY
 /**
  * sde_encoder_is_disabled - encoder is disabled
  * @drm_enc:    Pointer to drm encoder structure
  * @Return:     bool.
  */
 bool sde_encoder_is_disabled(struct drm_encoder *drm_enc);
+
+/**
+ * sde_encoder_wait_vblack - wait vblack
+ * @connector:	Pointer to drm connector structure
+ * @drm_enc:	  Pointer to drm encoder structure
+ * @wait_num:    wait vysnc times
+ * @Return:	  void.
+ */
+void sde_encoder_wait_vblack(struct drm_connector *connector, struct drm_encoder *drm_enc, int wait_num);
+
+ /**
+ * sde_encoder_pre_kickoff_update_panel_level - update panel backlight before kickoff
+ * @connector:   Pointer to drm connector
+ * @drm_enc:     structure Pointer to drm encoder structure
+ * @Return:     void.
+ */
+void sde_encoder_pre_kickoff_update_panel_level(struct drm_connector *connector,  struct drm_encoder *drm_enc);
+
+/**
+ * sde_encoder_post_kickoff_update_panel_level - update panel backlight after kickoff
+ * @connector:    Pointer to drm connector structure
+ * @Return:     void.
+ */
+void sde_encoder_post_kickoff_update_panel_level(struct drm_connector *connector);
+
+/**
+ * sde_encoder_update_panel_level - update panel level
+ * @connector:    Pointer to drm connector structure
+ * @drm_enc:    Pointer to drm encoder structure
+ */
+void sde_encoder_update_panel_level(struct drm_connector *connector,  struct drm_encoder *drm_enc);
+
 #endif
+
+#ifdef OPLUS_FEATURE_DISPLAY
+/**
+ * sde_encoder_is_disabled - encoder is disabled
+ * @drm_enc:    Pointer to drm encoder structure
+ * @Return:     bool.
+ */
+bool sde_encoder_is_disabled(struct drm_encoder *drm_enc);
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 void sde_encoder_add_data_to_minidump_va(struct drm_encoder *drm_enc);
 #endif /* __SDE_ENCODER_H__ */

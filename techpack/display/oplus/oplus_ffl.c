@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_ffl.c
 ** Description : oplus ffl feature
 ** Version : 1.0
-** Date : 2020/04/23
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**   Qianxu         2020/04/23        1.0           Build this moudle
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 
 #include <linux/mutex.h>
@@ -112,11 +109,11 @@ void oplus_ffl_setting_thread(struct kthread_work *work)
 	}
 
 	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
-				  DSI_CORE_CLK, DSI_CLK_ON);
+			DSI_CORE_CLK, DSI_CLK_ON);
 
 	if (rc) {
 		pr_err("[%s] failed to enable DSI core clocks, rc=%d\n",
-		       display->name, rc);
+				display->name, rc);
 		return;
 	}
 
@@ -193,11 +190,11 @@ void oplus_ffl_setting_thread(struct kthread_work *work)
 	mutex_unlock(&display->panel->panel_lock);
 
 	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
-				  DSI_CORE_CLK, DSI_CLK_OFF);
+			DSI_CORE_CLK, DSI_CLK_OFF);
 
 	if (rc) {
 		pr_err("[%s] failed to disable DSI core clocks, rc=%d\n",
-		       display->name, rc);
+				display->name, rc);
 	}
 }
 
@@ -231,8 +228,8 @@ int oplus_ffl_thread_init(void)
 {
 	kthread_init_worker(&oplus_ffl_worker);
 	kthread_init_work(&oplus_ffl_work, &oplus_ffl_setting_thread);
-	oplus_ffl_thread = kthread_run_perf_critical(cpu_prime_mask, kthread_worker_fn,
-				      &oplus_ffl_worker, "oplus_ffl");
+	oplus_ffl_thread = kthread_run(kthread_worker_fn,
+			&oplus_ffl_worker, "oplus_ffl");
 
 	if (IS_ERR(oplus_ffl_thread)) {
 		pr_err("fail to start oplus_ffl_thread\n");

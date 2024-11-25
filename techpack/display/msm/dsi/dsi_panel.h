@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -22,7 +22,7 @@
 #include "dsi_pwr.h"
 #include "dsi_parser.h"
 #include "msm_drv.h"
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 #include "../oplus/oplus_dsi_support.h"
 #include <linux/soc/qcom/panel_event_notifier.h>
 
@@ -30,7 +30,12 @@ struct oplus_brightness_alpha {
 	u32 brightness;
 	u32 alpha;
 };
-#endif /*OPLUS_BUG_STABILITY*/
+
+struct oplus_clk_osc {
+	u32 clk_rate;
+	u32 osc_rate;
+};
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 #define MAX_BL_LEVEL 4096
 #define MAX_BL_SCALE_LEVEL 1024
@@ -39,7 +44,7 @@ struct oplus_brightness_alpha {
 #define DSI_CMD_PPS_SIZE 135
 
 #define DSI_CMD_PPS_HDR_SIZE 7
-#define DSI_MODE_MAX 32
+#define DSI_MODE_MAX 64
 
 #define DSI_IS_FSC_PANEL(fsc_rgb_order) \
 		(((!strcmp(fsc_rgb_order, "fsc_rgb")) || \
@@ -73,6 +78,7 @@ enum dsi_backlight_type {
 	DSI_BACKLIGHT_WLED,
 	DSI_BACKLIGHT_DCS,
 	DSI_BACKLIGHT_EXTERNAL,
+	DSI_BACKLIGHT_I2C,
 	DSI_BACKLIGHT_UNKNOWN,
 	DSI_BACKLIGHT_MAX,
 };
@@ -133,10 +139,10 @@ struct dsi_pinctrl_info {
 	struct pinctrl_state *active;
 	struct pinctrl_state *suspend;
 	struct pinctrl_state *pwm_pin;
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	struct pinctrl_state *te1_active;
 	struct pinctrl_state *te1_suspend;
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 };
 
 struct dsi_panel_phy_props {
@@ -145,7 +151,7 @@ struct dsi_panel_phy_props {
 	enum dsi_panel_rotation rotation;
 };
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 struct dsi_panel_oplus_privite {
 	const char *vendor_name;
 	const char *manufacture_name;
@@ -168,16 +174,37 @@ struct dsi_panel_oplus_privite {
 	int iris_pw_enable;
 	int iris_pw_rst_gpio;
 	int iris_pw_0p9_en_gpio;
+	bool ffc_enabled;
+	u32 ffc_delay_frames;
+	u32 ffc_mode_count;
+	u32 ffc_mode_index;
+	struct oplus_clk_osc *clk_osc_seq;
+	u32 clk_rate_cur;
+	u32 osc_rate_cur;
+	bool crc_check_enabled;
+	bool pwm_turbo_support;
+	bool pwm_turbo_enabled;
+	u32 oplus_pwm_switch_state;
+	bool pwm_power_on;
+	bool pwm_turbo_status;
+	int last_demua_status;
+	bool pwm_turbo_ignore_set_dbv_frame;
+	bool need_sync;
+	bool pwm_switch_support;
+	bool power_seq_adj;
 };
 
 struct dsi_panel_oplus_serial_number {
 	bool serial_number_support;
 	bool is_reg_lock;
+	bool is_switch_page;
+	bool is_multi_reg;
 	u32 serial_number_reg;
+	u32 *serial_number_multi_regs;
 	int serial_number_index;
 	int serial_number_conut;
 };
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 struct dsi_backlight_config {
 	enum dsi_backlight_type type;
@@ -186,22 +213,28 @@ struct dsi_backlight_config {
 	u32 bl_min_level;
 	u32 bl_max_level;
 	u32 brightness_max_level;
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	u32 bl_normal_max_level;
 	u32 brightness_normal_max_level;
 	u32 brightness_default_level;
 	u32 dc_backlight_threshold;
 	bool oplus_dc_mode;
-#endif /* OPLUS_BUG_STABILITY */
+	u32 global_hbm_case_id;
+	u32 global_hbm_threshold;
+	bool global_hbm_scale_mapping;
+	u32 pwm_turbo_gamma_bl_threshold;
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 	/* current brightness value */
 	u32 brightness;
 	u32 bl_level;
-	#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	u32 oplus_raw_bl;
-#endif /* OPLUS_BUG_STABILITY */
+	u32 bl_dc_real;
+#endif /* OPLUS_FEATURE_DISPLAY */
 	u32 bl_scale;
 	u32 bl_scale_sv;
+	u32 bl_dcs_subtype;
 	bool bl_inverted_dbv;
 	/* digital dimming backlight LUT */
 	struct drm_msm_dimming_bl_lut *dimming_bl_lut;
@@ -223,6 +256,17 @@ struct dsi_backlight_config {
 	bool lp_mode;
 };
 
+#ifdef OPLUS_FEATURE_DISPLAY
+enum global_hbm_case {
+	GLOBAL_HBM_CASE_NONE,
+	GLOBAL_HBM_CASE_1,
+	GLOBAL_HBM_CASE_2,
+	GLOBAL_HBM_CASE_3,
+	GLOBAL_HBM_CASE_4,
+	GLOBAL_HBM_CASE_MAX
+};
+#endif /* OPLUS_FEATURE_DISPLAY */
+
 struct dsi_reset_seq {
 	u32 level;
 	u32 sleep_ms;
@@ -236,10 +280,10 @@ struct dsi_panel_reset_config {
 	int disp_en_gpio;
 	int lcd_mode_sel_gpio;
 	u32 mode_sel_state;
-//#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	int panel_vout_gpio;
 	int panel_vddr_aod_en_gpio;
-//#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 };
 
 enum esd_check_status_mode {
@@ -262,10 +306,10 @@ struct drm_panel_esd_config {
 	u8 *return_buf;
 	u8 *status_buf;
 	u32 groups;
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	u32 status_match_modes;
 	bool esd_debug_enabled;
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_FEATURE_DISPLAY */
 };
 struct dsi_panel_spr_info {
 	bool enable;
@@ -291,6 +335,8 @@ struct dsi_panel {
 	const char *type;
 	struct device_node *panel_of_node;
 	struct mipi_dsi_device mipi_device;
+	struct device_node *rgb_left_led_node;
+	struct device_node *rgb_right_led_node;
 
 	struct mutex panel_lock;
 	struct drm_panel drm_panel;
@@ -351,7 +397,7 @@ struct dsi_panel {
 	enum dsi_panel_physical_type panel_type;
 
 	struct dsi_panel_ops panel_ops;
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	bool need_power_on_backlight;
 	struct oplus_brightness_alpha *dc_ba_seq;
 	int dc_ba_count;
@@ -370,9 +416,15 @@ struct dsi_panel {
 	int dynamic_te_gpio;
 	struct mutex panel_tx_lock;
 	bool is_switching;
-#endif
-#if defined(OPLUS_FEATURE_PXLW_IRIS5)
+	struct mutex oplus_ffc_lock;
+	unsigned int idle_delayms;
+	ktime_t te_timestamp;
+#endif /* OPLUS_FEATURE_DISPLAY */
+
+#if defined(CONFIG_PXLW_IRIS)
 	bool is_secondary;
+	int hbm_mode;
+	u32 qsync_mode;
 #endif
 };
 
@@ -510,9 +562,12 @@ int dsi_panel_create_cmd_packets(const char *data, u32 length, u32 count,
 void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set);
 
 void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set);
-
-#ifdef OPLUS_BUG_STABILITY
-int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
-			   enum dsi_cmd_set_type type);
+#if defined(CONFIG_PXLW_IRIS)
+int dsi_panel_set_hbm_mode(struct dsi_panel *panel, int level);
 #endif
+
+#ifdef OPLUS_FEATURE_DISPLAY
+int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
+		enum dsi_cmd_set_type type);
+#endif /* OPLUS_FEATURE_DISPLAY */
 #endif /* _DSI_PANEL_H_ */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -13,12 +13,15 @@
 #include "dsi_drm.h"
 #include "sde_trace.h"
 #include "sde_dbg.h"
+#if defined(CONFIG_PXLW_IRIS)
+#include "dsi_iris_api.h"
+#endif
 #include "msm_drv.h"
 #include "sde_encoder.h"
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 #include "../oplus/oplus_adfr.h"
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 #define to_dsi_bridge(x)     container_of((x), struct dsi_bridge, base)
 #define to_dsi_state(x)      container_of((x), struct dsi_connector_state, base)
@@ -105,7 +108,16 @@ static void msm_parse_mode_priv_info(const struct msm_display_mode *msm_mode,
 void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 				struct drm_display_mode *drm_mode)
 {
+	char *panel_caps = "vid";
 	bool fsc_mode = dsi_mode->timing.fsc_mode;
+
+	if ((dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE) &&
+		(dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE))
+		panel_caps = "vid_cmd";
+	else if (dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE)
+		panel_caps = "vid";
+	else if (dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE)
+		panel_caps = "cmd";
 
 	memset(drm_mode, 0, sizeof(*drm_mode));
 
@@ -135,7 +147,9 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 		drm_mode->flags |= DRM_MODE_FLAG_PVSYNC;
 
 	/* set mode name */
-	*drm_mode->name = '\0';
+	snprintf(drm_mode->name, DRM_DISPLAY_MODE_LEN, "%dx%dx%d%s",
+			drm_mode->hdisplay, drm_mode->vdisplay,
+			drm_mode_vrefresh(drm_mode), panel_caps);
 }
 
 static void dsi_convert_to_msm_mode(const struct dsi_display_mode *dsi_mode,
@@ -197,7 +211,8 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 		return;
 	}
 
-	atomic_set(&c_bridge->display->panel->esd_recovery_pending, 0);
+	if (bridge->encoder->crtc->state->active_changed)
+		atomic_set(&c_bridge->display->panel->esd_recovery_pending, 0);
 
 	/* By this point mode should have been validated through mode_fixup */
 	rc = dsi_display_set_mode(c_bridge->display,
@@ -269,6 +284,10 @@ static void dsi_bridge_enable(struct drm_bridge *bridge)
 
 	if (display && display->drm_conn) {
 		sde_connector_helper_bridge_enable(display->drm_conn);
+#if defined(CONFIG_PXLW_IRIS)
+		if (iris_is_chip_supported())
+			iris_ioctl_unlock();
+#endif
 		if (display->poms_pending) {
 			display->poms_pending = false;
 			sde_connector_schedule_status_work(display->drm_conn,
@@ -304,6 +323,10 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 						&conn_state->msm_mode);
 
 		sde_connector_helper_bridge_disable(display->drm_conn);
+#if defined(CONFIG_PXLW_IRIS)
+		if (iris_is_chip_supported())
+			iris_ioctl_lock();
+#endif
 	}
 
 	rc = dsi_display_pre_disable(c_bridge->display);
@@ -481,12 +504,12 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 		return false;
 	}
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	/* add vsync source info from panel_dsi_mode to dsi_mode */
 	if (oplus_adfr_is_support()) {
 		dsi_mode.vsync_source = panel_dsi_mode->vsync_source;
 	}
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 	rc = dsi_display_validate_mode(c_bridge->display, &dsi_mode,
 			DSI_VALIDATE_FLAG_ALLOW_ADJUST);
@@ -539,10 +562,10 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 				dsi_mode.panel_mode_caps);
 		}
 	}
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	if (display->is_cont_splash_enabled)
 		dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_DMS;
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 	/* Reject seamless transition when active changed */
 	if (crtc_state->active_changed &&
@@ -888,8 +911,9 @@ int dsi_conn_set_info_blob(struct drm_connector *connector,
 		sde_kms_info_add_keystr(info, "fsc rgb color order",
 			panel->fsc_rgb_order);
 		sde_kms_info_add_keystr(info, "is fsc panel", "true");
-		sde_kms_info_add_keyint(info, "num fsc fields", 3);
 	}
+
+	sde_kms_info_add_keyint(info, "num fsc fields", 3);
 
 	fmt = dsi_display->config.common_config.dst_format;
 	bpp = dsi_ctrl_pixel_format_to_bpp(fmt);

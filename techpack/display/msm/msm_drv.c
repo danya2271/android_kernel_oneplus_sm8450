@@ -55,13 +55,13 @@
 #include "msm_mmu.h"
 #include "sde_wb.h"
 #include "sde_dbg.h"
-#if defined(OPLUS_FEATURE_PXLW_IRIS5) || defined(OPLUS_FEATURE_PXLW_SOFT_IRIS)
-#include "dsi/iris/dsi_iris5_api.h"
+#if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
+#include "dsi_iris_api.h"
 #endif
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 #include "../oplus/oplus_adfr.h"
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 /*
  * MSM driver version:
@@ -613,19 +613,10 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 		priv->disp_thread[i].crtc_id = priv->crtcs[i]->base.id;
 		kthread_init_worker(&priv->disp_thread[i].worker);
 		priv->disp_thread[i].dev = ddev;
-		if (i == 0) {
 		priv->disp_thread[i].thread =
-			kthread_run_perf_critical(cpu_prime_mask, kthread_worker_fn,
+			kthread_run(kthread_worker_fn,
 				&priv->disp_thread[i].worker,
 				"crtc_commit:%d", priv->disp_thread[i].crtc_id);
-			pr_info("%i to big cluster", priv->disp_thread[i].crtc_id);
-		} else {
-			priv->disp_thread[i].thread =
-			kthread_run(kthread_worker_fn,
-							&priv->disp_thread[i].worker,
-				"crtc_commit:%d", priv->disp_thread[i].crtc_id);
-			pr_info("%i to little cluster", priv->disp_thread[i].crtc_id);
-		}
 		kthread_init_work(&priv->thread_priority_work,
 				  msm_drm_display_thread_priority_worker);
 		kthread_queue_work(&priv->disp_thread[i].worker, &priv->thread_priority_work);
@@ -640,21 +631,10 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 		priv->event_thread[i].crtc_id = priv->crtcs[i]->base.id;
 		kthread_init_worker(&priv->event_thread[i].worker);
 		priv->event_thread[i].dev = ddev;
-		/* Only pin first event thread to big cluster */
-		if (i == 0) {
-			priv->event_thread[i].thread =
-				kthread_run_perf_critical(cpu_prime_mask,
-					kthread_worker_fn,
-					&priv->event_thread[i].worker,
-					"crtc_event:%d", priv->event_thread[i].crtc_id);
-			pr_info("%i to big cluster", priv->event_thread[i].crtc_id);
-		} else {
-			priv->event_thread[i].thread =
+		priv->event_thread[i].thread =
 			kthread_run(kthread_worker_fn,
 				&priv->event_thread[i].worker,
 				"crtc_event:%d", priv->event_thread[i].crtc_id);
-			pr_info("%i to little cluster", priv->event_thread[i].crtc_id);
-		}
 		/**
 		 * event thread should also run at same priority as disp_thread
 		 * because it is handling frame_done events. A lower priority
@@ -698,7 +678,7 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 	 * other important events.
 	 */
 	kthread_init_worker(&priv->pp_event_worker);
-	priv->pp_event_thread = kthread_run_perf_critical(cpu_prime_mask, kthread_worker_fn,
+	priv->pp_event_thread = kthread_run(kthread_worker_fn,
 			&priv->pp_event_worker, "pp_event");
 	kthread_init_work(&priv->thread_priority_work, msm_drm_display_thread_priority_worker);
 	kthread_queue_work(&priv->pp_event_worker, &priv->thread_priority_work);
@@ -711,7 +691,7 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 		return ret;
 	}
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	/**
 	 * Use a seperate adfr thread for fake frame.
 	 * Because fake frame maybe causes crtc commit/event more heavy.
@@ -722,7 +702,7 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 			return -EINVAL;
 		}
 	}
-#endif
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 	return 0;
 }
@@ -867,9 +847,9 @@ static int msm_drm_component_init(struct device *dev)
 
 	mutex_init(&priv->vm_client_lock);
 
-#ifdef OPLUS_BUG_STABILITY
+#ifdef OPLUS_FEATURE_DISPLAY
 	mutex_init(&priv->dspp_lock);
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_FEATURE_DISPLAY */
 
 	/* Bind all our sub-components: */
 	ret = msm_component_bind_all(dev, ddev);
@@ -1157,6 +1137,7 @@ static irqreturn_t msm_irq(int irq, void *arg)
 	struct drm_device *dev = arg;
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
+	BUG_ON(!kms);
 	return kms->funcs->irq(kms);
 }
 
@@ -1164,6 +1145,7 @@ static void msm_irq_preinstall(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
+	BUG_ON(!kms);
 	kms->funcs->irq_preinstall(kms);
 }
 
@@ -1171,6 +1153,7 @@ static int msm_irq_postinstall(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
+	BUG_ON(!kms);
 
 	if (kms->funcs->irq_postinstall)
 		return kms->funcs->irq_postinstall(kms);
@@ -1182,6 +1165,7 @@ static void msm_irq_uninstall(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
+	BUG_ON(!kms);
 	kms->funcs->irq_uninstall(kms);
 }
 
@@ -1775,12 +1759,14 @@ static const struct drm_ioctl_desc msm_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MSM_RMFB2, msm_ioctl_rmfb2, DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(MSM_POWER_CTRL, msm_ioctl_power_ctrl,
 			DRM_RENDER_ALLOW),
-#if defined(OPLUS_FEATURE_PXLW_IRIS5) || defined(OPLUS_FEATURE_PXLW_SOFT_IRIS)
-	DRM_IOCTL_DEF_DRV(MSM_IRIS_OPERATE_CONF, msm_ioctl_iris_operate_conf, DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(MSM_IRIS_OPERATE_TOOL, msm_ioctl_iris_operate_tool, DRM_UNLOCKED|DRM_RENDER_ALLOW),
-#endif
 	DRM_IOCTL_DEF_DRV(MSM_DISPLAY_HINT, msm_ioctl_display_hint_ops,
 			DRM_UNLOCKED),
+#if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
+	DRM_IOCTL_DEF_DRV(MSM_IRIS_OPERATE_CONF, msm_ioctl_iris_operate_conf,
+			DRM_UNLOCKED|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(MSM_IRIS_OPERATE_TOOL, msm_ioctl_iris_operate_tool,
+			DRM_UNLOCKED|DRM_RENDER_ALLOW),
+#endif
 };
 
 static const struct vm_operations_struct vm_ops = {
@@ -2181,17 +2167,24 @@ static int msm_drm_component_dependency_check(struct device *dev)
 		if (!node)
 			break;
 
-		if (of_node_name_eq(node,"qcom,sde_rscc") &&
-				of_device_is_available(node) &&
-				of_node_check_flag(node, OF_POPULATED)) {
-			struct platform_device *pdev =
-					of_find_device_by_node(node);
-			if (!platform_get_drvdata(pdev)) {
-				dev_err(dev,
-					"qcom,sde_rscc not probed yet\n");
-				return -EPROBE_DEFER;
+		if (of_node_name_eq(node, "qcom,sde_rscc")) {
+			if (of_device_is_available(node) &&
+					of_node_check_flag(node, OF_POPULATED)) {
+				struct platform_device *pdev =
+						of_find_device_by_node(node);
+				if (!platform_get_drvdata(pdev)) {
+					dev_err(dev,
+						"qcom,sde_rscc not probed yet\n");
+					return -EPROBE_DEFER;
+				} else {
+					return 0;
+				}
 			} else {
-				return 0;
+				dev_err(dev,
+					"of_device_is_available: %d of_node_check_flag: %d\n",
+						of_device_is_available(node),
+						of_node_check_flag(node, OF_POPULATED));
+				return -EPROBE_DEFER;
 			}
 		}
 	}
@@ -2244,8 +2237,8 @@ static void msm_pdev_shutdown(struct platform_device *pdev)
 	}
 
 	priv = ddev->dev_private;
-	if (!priv) {
-		DRM_ERROR("invalid msm drm private node\n");
+	if (!priv || !priv->registered) {
+		DRM_ERROR("invalid msm drm private node or drm dev not registered\n");
 		return;
 	}
 
@@ -2272,7 +2265,6 @@ static struct platform_driver msm_platform_driver = {
 		.of_match_table = dt_match,
 		.pm     = &msm_pm_ops,
 		.suppress_bind_attrs = true,
-		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 

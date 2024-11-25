@@ -1,14 +1,11 @@
 /***************************************************************
-** Copyright (C),  2020,  oplus Mobile Comm Corp.,  Ltd
+** Copyright (C), 2022, OPLUS Mobile Comm Corp., Ltd
 **
 ** File : oplus_dc_diming.h
 ** Description : oplus dc_diming feature
 ** Version : 1.0
-** Date : 2020/04/15
-**
-** ------------------------------- Revision History: -----------
-**  <author>        <data>        <version >        <desc>
-**   Qianxu         2020/04/15        1.0           Build this moudle
+** Date : 2022/08/01
+** Author : Display
 ******************************************************************/
 #ifndef _OPLUS_DC_DIMING_H_
 #define _OPLUS_DC_DIMING_H_
@@ -17,6 +14,8 @@
 
 #include "dsi_panel.h"
 #include "dsi_defs.h"
+
+#define JENNIE_DC_THRESHOLD 2316
 
 int sde_connector_update_backlight(struct drm_connector *connector, bool post);
 
