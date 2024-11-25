@@ -15,6 +15,9 @@
 #include "sde_trace.h"
 #include <linux/msm_drm_notify.h>
 #include <soc/oplus/touchpanel_event_notify.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/gpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 #ifdef OPLUS_FEATURE_DISPLAY_TEMP_COMPENSATION
 #include "oplus_display_temp_compensation.h"
@@ -2828,6 +2831,9 @@ int oplus_ofp_notify_fp_press(void *buf)
 	OPLUS_OFP_TRACE_BEGIN("oplus_ofp_notify_fp_press");
 
 	if (*fp_press) {
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 1200);
+		cpu_input_boost_kick_max(1200);
+		gpu_input_boost_kick_max(3200);
 		/* finger is pressed down and pressed icon layer is ready */
 		p_oplus_ofp_params->fp_press = true;
 	} else {
@@ -3215,3 +3221,4 @@ ssize_t oplus_ofp_get_ultra_low_power_aod_mode_attr(struct kobject *obj,
 
 	return sprintf(buf, "%u\n", p_oplus_ofp_params->ultra_low_power_aod_mode);
 }
+
