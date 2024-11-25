@@ -243,8 +243,6 @@ static int _sde_fence_create_fd(void *fence_ctx, uint32_t val)
 		return -ENOMEM;
 
 	sde_fence->ctx = fence_ctx;
-	snprintf(sde_fence->name, SDE_FENCE_NAME_SIZE, "sde_fence:%s:%u",
-						sde_fence->ctx->name, val);
 	dma_fence_init(&sde_fence->base, &sde_fence_ops, &ctx->lock,
 		ctx->context, val);
 	kref_get(&ctx->kref);
