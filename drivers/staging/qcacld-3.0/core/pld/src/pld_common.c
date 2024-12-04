@@ -1043,7 +1043,6 @@ void pld_request_pm_qos(struct device *dev, u32 qos_val)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_request_pm_qos(dev, qos_val);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
 	case PLD_BUS_TYPE_IPCI_FW_SIM:
@@ -1075,7 +1074,6 @@ void pld_remove_pm_qos(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_remove_pm_qos(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
 	case PLD_BUS_TYPE_IPCI_FW_SIM:
