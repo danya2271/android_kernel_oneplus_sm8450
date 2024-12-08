@@ -60,7 +60,10 @@
 
 typedef void (*qce_comp_func_ptr_t)(void *areq,
 		unsigned char *icv, unsigned char *iv, int ret);
-
+#ifndef CONFIG_COMPAT
+long qcedev_ioctl(struct file *file,
+				  unsigned int cmd, unsigned long arg);
+#endif
 /* Cipher algorithms supported */
 enum qce_cipher_alg_enum {
 	CIPHER_ALG_DES = 0,
