@@ -978,7 +978,6 @@ static int oplus_oem_misc_ctl(void)
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -1;
 	}
 	pst = &bcdev->psy_list[PSY_TYPE_USB];
@@ -1151,7 +1150,6 @@ int oplus_adsp_batt_curve_current_2_2(void)
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -ENODEV;
 	}
 	pst = &bcdev->psy_list[PSY_TYPE_USB];
@@ -1174,7 +1172,6 @@ int oplus_adsp_voocphy_get_fast_chg_type_2_2(void)
 	int fast_chg_type = 0;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -ENODEV;
 	}
 
@@ -1196,7 +1193,6 @@ int oplus_adsp_voocphy_enable_3(bool enable)
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -ENODEV;
 	}
 
@@ -1532,7 +1528,6 @@ bool oplus_get_wired_otg_online_2(void)
 	struct battery_chg_dev *bcdev = g_bcdev_3;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return false;
 	}
 
@@ -2110,7 +2105,6 @@ static void oplus_chg_set_match_temp_to_voocphy(void)
 	int match_temp = 0;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return;
 	}
 	pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
@@ -3044,7 +3038,6 @@ static bool oplus_vchg_trig_is_support(void)
 	struct battery_chg_dev *bcdev = g_bcdev_3;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return false;
 	}
 	if (bcdev->oplus_custom_gpio.vchg_trig_gpio <= 0)
@@ -3478,7 +3471,6 @@ static int oplus_chg_parse_custom_dt(struct battery_chg_dev *bcdev)
 	struct device_node *node = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -1;
 	}
 	node = bcdev->dev->of_node;
@@ -3710,7 +3702,6 @@ static int oplus_get_voocphy_enable(struct battery_chg_dev *bcdev)
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return 0;
 	}
 	pst = &bcdev->psy_list[PSY_TYPE_USB];
@@ -3732,7 +3723,6 @@ static int oplus_voocphy_enable(struct battery_chg_dev *bcdev, bool enable)
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -1;
 	}
 	pst = &bcdev->psy_list[PSY_TYPE_USB];
@@ -3755,7 +3745,6 @@ int oplus_adsp_voocphy_reset_again_3(void)
 	struct psy_state *pst;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -1;
 	}
 
@@ -4316,7 +4305,6 @@ static ssize_t proc_debug_reg_read(struct file *file, char __user *buf, size_t c
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return 0;
 	}
 	pst = &bcdev->psy_list[PSY_TYPE_USB];
@@ -4345,7 +4333,6 @@ static ssize_t proc_debug_reg_write(struct file *file, const char __user *buf, s
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return -1;
 	}
 	pst = &bcdev->psy_list[PSY_TYPE_USB];

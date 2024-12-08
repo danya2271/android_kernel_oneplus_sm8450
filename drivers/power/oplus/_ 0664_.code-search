@@ -1,0 +1,2371 @@
+# Query: , 0664,
+# ContextLines: 1
+
+589 results - 139 files
+
+arch/mips/alchemy/devboards/pm.c:
+  193  	static struct kobj_attribute x##_attribute =		\
+  194: 		__ATTR(x, 0664, db1x_pmattr_show,		\
+  195  				db1x_pmattr_store);
+
+drivers/fsi/fsi-master-ast-cf.c:
+  1124  
+  1125: static DEVICE_ATTR(external_mode, 0664,
+  1126  		external_mode_show, external_mode_store);
+
+drivers/fsi/fsi-master-gpio.c:
+  758  
+  759: static DEVICE_ATTR(external_mode, 0664,
+  760  		external_mode_show, external_mode_store);
+
+drivers/gpu/drm/arm/display/komeda/komeda_dev.c:
+  65  			    mdev, &komeda_register_fops);
+  66: 	debugfs_create_x16("err_verbosity", 0664, mdev->debugfs_root,
+  67  			   &mdev->err_verbosity);
+
+drivers/hid/hid-picolcd_fb.c:
+  493  
+  494: static DEVICE_ATTR(fb_update_rate, 0664, picolcd_fb_update_rate_show,
+  495  		picolcd_fb_update_rate_store);
+
+drivers/hid/hid-qvr.c:
+  473  
+  474: static struct kobj_attribute fd_attribute = __ATTR(fd, 0664,
+  475  	fd_show,
+  476  	fd_store);
+  477: static struct kobj_attribute ts_base_attribute = __ATTR(ts_base, 0664,
+  478  	ts_base_show,
+  479  	ts_base_store);
+  480: static struct kobj_attribute ts_offset_attribute = __ATTR(ts_offset, 0664,
+  481  	ts_offset_show,
+
+drivers/hwmon/pmbus/pmbus_core.c:
+  2440  
+  2441: 	debugfs_create_file("pec", 0664, data->debugfs, client,
+  2442  			    &pmbus_debugfs_ops_pec);
+
+drivers/input/misc/adxl34x.c:
+  479  
+  480: static DEVICE_ATTR(disable, 0664, adxl34x_disable_show, adxl34x_disable_store);
+  481  
+
+  526  
+  527: static DEVICE_ATTR(calibrate, 0664,
+  528  		   adxl34x_calibrate_show, adxl34x_calibrate_store);
+
+  561  
+  562: static DEVICE_ATTR(rate, 0664, adxl34x_rate_show, adxl34x_rate_store);
+  563  
+
+  599  
+  600: static DEVICE_ATTR(autosleep, 0664,
+  601  		   adxl34x_autosleep_show, adxl34x_autosleep_store);
+
+  641  
+  642: static DEVICE_ATTR(write, 0664, NULL, adxl34x_write_store);
+  643  #endif
+
+drivers/input/oplus_secure_drivers/oplus_secure_common/oplus_secure_common.c:
+  583          /*  make the proc /proc/oplus_secure_common/secureType  */
+  584:         pentry = proc_create("secureType", 0664, oplus_secure_common_dir, &secureType_proc_fops);
+  585          if(!pentry) {
+
+drivers/input/touchscreen/ad7877.c:
+  487  
+  488: static DEVICE_ATTR(disable, 0664, ad7877_disable_show, ad7877_disable_store);
+  489  
+
+  517  
+  518: static DEVICE_ATTR(dac, 0664, ad7877_dac_show, ad7877_dac_store);
+  519  
+
+  548  
+  549: static DEVICE_ATTR(gpio3, 0664, ad7877_gpio3_show, ad7877_gpio3_store);
+  550  
+
+  579  
+  580: static DEVICE_ATTR(gpio4, 0664, ad7877_gpio4_show, ad7877_gpio4_store);
+  581  
+
+drivers/input/touchscreen/ad7879.c:
+  382  
+  383: static DEVICE_ATTR(disable, 0664, ad7879_disable_show, ad7879_disable_store);
+  384  
+
+drivers/input/touchscreen/ads7846.c:
+  636  
+  637: static DEVICE_ATTR(disable, 0664, ads7846_disable_show, ads7846_disable_store);
+  638  
+
+drivers/input/touchscreen/hideep.c:
+  946  
+  947: static DEVICE_ATTR(version, 0664, hideep_fw_version_show, NULL);
+  948: static DEVICE_ATTR(product_id, 0664, hideep_product_id_show, NULL);
+  949: static DEVICE_ATTR(update_fw, 0664, NULL, hideep_update_fw);
+  950  
+
+drivers/input/touchscreen/goodix_berlin_driver/goodix_brl_fwupdate.c:
+  1104  static DEVICE_ATTR(update_en, 0220, NULL, goodix_sysfs_update_en_store);
+  1105: static DEVICE_ATTR(result, 0664, goodix_sysfs_result_show, NULL);
+  1106  
+
+drivers/input/touchscreen/goodix_berlin_driver/goodix_ts_core.c:
+  783  		read_cfg_show, NULL);
+  784: static DEVICE_ATTR(reg_rw, 0664,
+  785  		goodix_ts_reg_rw_show, goodix_ts_reg_rw_store);
+  786: static DEVICE_ATTR(irq_info, 0664,
+  787  		goodix_ts_irq_info_show, goodix_ts_irq_info_store);
+  788: static DEVICE_ATTR(esd_info, 0664,
+  789  		goodix_ts_esd_info_show, goodix_ts_esd_info_store);
+  790: static DEVICE_ATTR(debug_log, 0664,
+  791  		goodix_ts_debug_log_show, goodix_ts_debug_log_store);
+
+drivers/input/touchscreen/goodix_berlin_driver/goodix_ts_gesture.c:
+  184  const struct goodix_ext_attribute gesture_attrs[] = {
+  185: 	__EXTMOD_ATTR(double_en, 0664,
+  186  			gsx_double_type_show, gsx_double_type_store),
+  187: 	__EXTMOD_ATTR(single_en, 0664,
+  188  			gsx_single_type_show, gsx_single_type_store),
+  189: 	__EXTMOD_ATTR(fod_en, 0664,
+  190  			gsx_fod_type_show, gsx_fod_type_store),
+
+drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_proc.c:
+  3079  		{
+  3080: 			"oplus_tp_noise_modetest", 0664, NULL, &proc_noise_modetest_fops, ts, false,
+  3081  			ts->noise_modetest_support
+
+  3083  		{"tp_fw_update", 0666, NULL, &proc_fw_update_ops, ts, false, true},
+  3084: 		{"oplus_register_info", 0664, NULL, &proc_register_info_fops, ts, false, true},
+  3085  		{
+  3086: 			"incell_panel", 0664, NULL, &proc_incell_panel_fops, ts, false,
+  3087  			ts->is_incell_panel
+
+drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.c:
+  704  			synaptics_rmi4_store_error),
+  705: 	__ATTR(0dbutton, 0664,
+  706  			synaptics_rmi4_0dbutton_show,
+
+  710  			synaptics_rmi4_suspend_store),
+  711: 	__ATTR(wake_gesture, 0664,
+  712  			synaptics_rmi4_wake_gesture_show,
+
+drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_fw_update.c:
+  811  #ifdef SYNA_TDDI
+  812: 	__ATTR(lockdowncode, 0664,
+  813  			fwu_sysfs_read_lockdown_code_show,
+
+drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_gesture.c:
+  424  			udg_sysfs_template_index_store),
+  425: 	__ATTR(template_valid, 0664,
+  426  			udg_sysfs_template_valid_show,
+
+  456  static struct device_attribute params[] = {
+  457: 	__ATTR(template_displacement, 0664,
+  458  			udg_sysfs_template_displacement_show,
+  459  			udg_sysfs_template_displacement_store),
+  460: 	__ATTR(rotation_invariance, 0664,
+  461  			udg_sysfs_rotation_invariance_show,
+  462  			udg_sysfs_rotation_invariance_store),
+  463: 	__ATTR(scale_invariance, 0664,
+  464  			udg_sysfs_scale_invariance_show,
+  465  			udg_sysfs_scale_invariance_store),
+  466: 	__ATTR(threshold_factor, 0664,
+  467  			udg_sysfs_threshold_factor_show,
+  468  			udg_sysfs_threshold_factor_store),
+  469: 	__ATTR(match_metric_threshold, 0664,
+  470  			udg_sysfs_match_metric_threshold_show,
+  471  			udg_sysfs_match_metric_threshold_store),
+  472: 	__ATTR(max_inter_stroke_time, 0664,
+  473  			udg_sysfs_max_inter_stroke_time_show,
+
+drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_proximity.c:
+  57  static struct device_attribute attrs[] = {
+  58: 	__ATTR(hover_finger_en, 0664,
+  59  			synaptics_rmi4_hover_finger_en_show,
+
+drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_rmi_dev.c:
+  140  			synaptics_rmi4_store_error),
+  141: 	__ATTR(pid, 0664,
+  142  			rmidev_sysfs_pid_show,
+
+  146  			rmidev_sysfs_term_store),
+  147: 	__ATTR(intr_mask, 0664,
+  148  			rmidev_sysfs_intr_mask_show,
+  149  			rmidev_sysfs_intr_mask_store),
+  150: 	__ATTR(concurrent, 0664,
+  151  			rmidev_sysfs_concurrent_show,
+
+drivers/leds/leds-qpnp-flash-v2.c:
+  2131  static struct device_attribute qpnp_flash_led_attrs[] = {
+  2132: 	__ATTR(max_current, 0664, qpnp_flash_led_max_current_show, NULL),
+  2133: 	__ATTR(enable, 0664, NULL, qpnp_flash_led_prepare_store),
+  2134  	__ATTR(on_time, 0600, qpnp_flash_on_time_show,
+
+drivers/leds/aw210xx/leds_aw210xx.c:
+  1186  
+  1187: static DEVICE_ATTR(support, 0664, aw210xx_led_support_attr_show, NULL);
+  1188: static DEVICE_ATTR(reg, 0664, aw210xx_reg_show, aw210xx_reg_store);
+  1189: static DEVICE_ATTR(hwen, 0664, aw210xx_hwen_show, aw210xx_hwen_store);
+  1190: static DEVICE_ATTR(effect, 0664, aw210xx_effect_show, aw210xx_effect_store);
+  1191: static DEVICE_ATTR(rgbcolor, 0664, NULL, aw210xx_rgbcolor_store);
+  1192: static DEVICE_ATTR(singleled, 0664, NULL, aw210xx_singleled_store);
+  1193: static DEVICE_ATTR(opdetect, 0664, aw210xx_opdetect_show, NULL);
+  1194: static DEVICE_ATTR(stdetect, 0664, aw210xx_stdetect_show, NULL);
+  1195: static DEVICE_ATTR(ton, 0664, aw210xx_led_ton_attr_show, aw210xx_led_ton_attr_store);
+  1196: static DEVICE_ATTR(toff, 0664, aw210xx_led_toff_attr_show, aw210xx_led_toff_attr_store);
+  1197: static DEVICE_ATTR(tr1, 0664, aw210xx_led_tr1_attr_show, aw210xx_led_tr1_attr_store);
+  1198: static DEVICE_ATTR(tf1, 0664, aw210xx_led_tf1_attr_show, aw210xx_led_tf1_attr_store);
+  1199  
+
+drivers/media/pci/ddbridge/ddbridge-core.c:
+  3070  	__ATTR_RO(i2c_irq),
+  3071: 	__ATTR(gap0, 0664, gap_show, gap_store),
+  3072: 	__ATTR(gap1, 0664, gap_show, gap_store),
+  3073: 	__ATTR(gap2, 0664, gap_show, gap_store),
+  3074: 	__ATTR(gap3, 0664, gap_show, gap_store),
+  3075: 	__ATTR(fmode0, 0664, fmode_show, fmode_store),
+  3076: 	__ATTR(fmode1, 0664, fmode_show, fmode_store),
+  3077: 	__ATTR(fmode2, 0664, fmode_show, fmode_store),
+  3078: 	__ATTR(fmode3, 0664, fmode_show, fmode_store),
+  3079  	__ATTR_MRO(devid0, devid_show),
+
+  3084  	__ATTR_RO(regmap),
+  3085: 	__ATTR(redirect, 0664, redirect_show, redirect_store),
+  3086  	__ATTR_MRO(snr,  bsnr_show),
+
+  3095  static struct device_attribute ddb_attrs_fan[] = {
+  3096: 	__ATTR(fan, 0664, fan_show, fan_store),
+  3097  };
+
+  3113  static struct device_attribute ddb_attrs_led[] = {
+  3114: 	__ATTR(led0, 0664, led_show, led_store),
+  3115: 	__ATTR(led1, 0664, led_show, led_store),
+  3116: 	__ATTR(led2, 0664, led_show, led_store),
+  3117: 	__ATTR(led3, 0664, led_show, led_store),
+  3118  };
+
+drivers/misc/aw8697_haptic/aw8697.c:
+  7363  
+  7364: 	prEntry_tmp = proc_create_data("touch_style", 0664, prEntry_da,
+  7365  				       &proc_vibration_style_ops, aw8697);
+
+drivers/misc/aw8697_haptic/haptic_feedback.c:
+  523  
+  524: static DEVICE_ATTR(event_track, 0664, dev_event_track_show,
+  525  		   dev_event_track_store);
+  526: static DEVICE_ATTR(fre_cali_track, 0664, dev_fre_cail_track_show,
+  527  		   dev_fre_cail_track_store);
+  528: static DEVICE_ATTR(mem_alloc_track, 0664, dev_mem_alloc_track_show,
+  529  		   dev_mem_alloc_track_store);
+
+drivers/misc/aw8697_haptic/haptic_hv.c:
+  8190  	}
+  8191: 	aw_haptic->prEntry_tmp = proc_create_data("touch_style", 0664,
+  8192  						  aw_haptic->prEntry_da,
+
+drivers/misc/rtimd-i2c/rtimd-i2c.c:
+   993  static struct kobj_attribute left_eye_shift_left_attr =
+   994: 	__ATTR(left_eye_shift_left, 0664,
+   995  			left_eye_shift_left_show, left_eye_shift_left_store);
+
+   997  static struct kobj_attribute left_eye_shift_right_attr =
+   998: 	__ATTR(left_eye_shift_right, 0664,
+   999  			left_eye_shift_right_show, left_eye_shift_right_store);
+
+  1001  static struct kobj_attribute left_eye_shift_top_attr =
+  1002: 	__ATTR(left_eye_shift_top, 0664,
+  1003  			left_eye_shift_top_show, left_eye_shift_top_store);
+
+  1005  static struct kobj_attribute left_eye_shift_bottom_attr =
+  1006: 	__ATTR(left_eye_shift_bottom, 0664,
+  1007  			left_eye_shift_bottom_show, left_eye_shift_bottom_store);
+
+  1009  static struct kobj_attribute right_eye_shift_left_attr =
+  1010: 	__ATTR(right_eye_shift_left, 0664,
+  1011  			right_eye_shift_left_show, right_eye_shift_left_store);
+
+  1013  static struct kobj_attribute right_eye_shift_right_attr =
+  1014: 	__ATTR(right_eye_shift_right, 0664,
+  1015  			right_eye_shift_right_show, right_eye_shift_right_store);
+
+  1017  static struct kobj_attribute right_eye_shift_top_attr =
+  1018: 	__ATTR(right_eye_shift_top, 0664,
+  1019  			right_eye_shift_top_show, right_eye_shift_top_store);
+
+  1021  static struct kobj_attribute right_eye_shift_bottom_attr =
+  1022: 	__ATTR(right_eye_shift_bottom, 0664,
+  1023  			right_eye_shift_bottom_show, right_eye_shift_bottom_store);
+
+drivers/net/netdevsim/bus.c:
+  91  static struct device_attribute nsim_bus_dev_numvfs_attr =
+  92: 	__ATTR(sriov_numvfs, 0664, nsim_bus_dev_numvfs_show,
+  93  	       nsim_bus_dev_numvfs_store);
+
+drivers/nfc/nfcsim.c:
+  371  
+  372: 	debugfs_create_u8("dropframe", 0664, dev_dir, &dev->dropframe);
+  373  }
+
+drivers/pci/controller/pci-msm.c:
+  2710  
+  2711: 	dfile_rc_sel = debugfs_create_file("rc_sel", 0664,
+  2712  					dent_msm_pcie, NULL,
+
+  2718  
+  2719: 	dfile_case = debugfs_create_file("case", 0664,
+  2720  					dent_msm_pcie, NULL,
+
+  2726  
+  2727: 	dfile_base_sel = debugfs_create_file("base_sel", 0664,
+  2728  					dent_msm_pcie, NULL,
+
+  2742  
+  2743: 	dfile_gen_speed_sel = debugfs_create_file("gen_speed_sel", 0664,
+  2744  					dent_msm_pcie, NULL,
+
+  2750  
+  2751: 	dfile_wr_offset = debugfs_create_file("wr_offset", 0664,
+  2752  					dent_msm_pcie, NULL,
+
+  2758  
+  2759: 	dfile_wr_mask = debugfs_create_file("wr_mask", 0664,
+  2760  					dent_msm_pcie, NULL,
+
+  2766  
+  2767: 	dfile_wr_value = debugfs_create_file("wr_value", 0664,
+  2768  					dent_msm_pcie, NULL,
+
+  2774  
+  2775: 	dfile_boot_option = debugfs_create_file("boot_option", 0664,
+  2776  					dent_msm_pcie, NULL,
+
+  2782  
+  2783: 	dfile_aer_enable = debugfs_create_file("aer_enable", 0664,
+  2784  					dent_msm_pcie, NULL,
+
+drivers/platform/msm/ep_pcie/ep_pcie_dbg.c:
+  511  
+  512: 	dfile_case = debugfs_create_file("case", 0664,
+  513  					dent_ep_pcie, 0,
+
+drivers/platform/msm/sps/sps.c:
+  510  
+  511: 	dfile_info = debugfs_create_file("info", 0664, dent, NULL,
+  512  			&sps_info_ops);
+
+  517  
+  518: 	dfile_logging_option = debugfs_create_file("logging_option", 0664,
+  519  			dent, NULL, &sps_logging_option_ops);
+
+  530  
+  531: 	debugfs_create_u8("reg_dump_option", 0664, dent, &reg_dump_option);
+  532  
+  533: 	debugfs_create_u32("testbus_sel", 0664, dent, &testbus_sel);
+  534  
+  535: 	debugfs_create_u32("bam_pipe_sel", 0664, dent, &bam_pipe_sel);
+  536  
+  537: 	debugfs_create_u32("desc_option", 0664, dent, &desc_option);
+  538  
+  539: 	dfile_bam_addr = debugfs_create_file("bam_addr", 0664,
+  540  			dent, NULL, &sps_bam_addr_ops);
+
+  545  
+  546: 	debugfs_create_u32("log_level_sel", 0664, dent, &log_level_sel);
+  547  
+
+drivers/power/oplus/oplus_charger.c:
+  1264  
+  1265: 	p = proc_create("batt_param_noplug", 0664, NULL, &batt_param_noplug_proc_fops);
+  1266  	if (!p) {
+
+  1339  
+  1340: 	p = proc_create("tbatt_pwroff", 0664, NULL, &tbatt_pwroff_proc_fops);
+  1341  	if (!p) {
+
+  1414  
+  1415: 	p = proc_create("charger_log", 0664, NULL, &chg_log_proc_fops);
+  1416  	if (!p) {
+
+  1739  
+  1740: 	p = proc_create("charger_critical_log", 0664, NULL, &chg_critical_log_proc_fops);
+  1741  	if (!p) {
+
+  1791  
+  1792: 	p = proc_create("rtc_reset", 0664, NULL, &rtc_reset_det_fops);
+  1793  	if (!p) {
+
+  1837  
+  1838: 	p = proc_create("vbat_low", 0664, NULL, &vbat_low_det_fops);
+  1839  	if (!p) {
+
+  2791  
+  2792: 	prEntry_tmp = proc_create_data("cp_vbat_deviation", 0664, prEntry_da, &cp_vbat_deviation_proc_fops, chip);
+  2793          if (prEntry_tmp == NULL) {
+
+  2810  
+  2811: 	prEntry_tmp = proc_create_data("force_current_limit", 0664, prEntry_da, &proc_force_current_limit_ops, chip);
+  2812  	if (prEntry_tmp == NULL) {
+
+  3189  
+  3190: 	p_time = proc_create("charging_limit_time", 0664, NULL, &charging_limit_time_fops);
+  3191  	if (!p_time) {
+
+  3193  	}
+  3194: 	p_current = proc_create("charging_limit_current", 0664, NULL, &charging_limit_current_fops);
+  3195  	if (!p_current) {
+
+drivers/power/oplus/oplus_debug_info.c:
+  2827  
+  2828: 	proc_dentry = proc_create("charge_monitor_test", 0664, NULL,
+  2829  			&charge_monitor_test_fops);
+
+drivers/power/oplus/oplus_vooc.c:
+  2282  
+  2283: 	p = proc_create_data("fastchg_fw_update", 0664, NULL, &fastchg_fw_update_proc_fops, chip);
+  2284  	if (!p) {
+
+drivers/power/oplus/oplus_wlchg_policy.c:
+  6040  
+  6041: 	prEntry_tmp = proc_create_data("ftm_mode", 0664, prEntry_da, &proc_wireless_ftm_mode_ops, chip);
+  6042  	if (prEntry_tmp == NULL) {
+
+  6047  
+  6048: 	prEntry_tmp = proc_create_data("enable_tx", 0666, prEntry_da, &proc_wireless_tx_ops, chip);
+  6049  	if (prEntry_tmp == NULL) {
+
+  6054  
+  6055: 	prEntry_tmp = proc_create_data("quiet_mode", 0664, prEntry_da, &proc_wireless_quiet_mode_ops, chip);
+  6056  	if (prEntry_tmp == NULL) {
+
+  6061  
+  6062: 	prEntry_tmp = proc_create_data("deviated", 0664, prEntry_da, &proc_wireless_deviated_ops, chip);
+  6063  	if (prEntry_tmp == NULL) {
+
+  6068  
+  6069: 	prEntry_tmp = proc_create_data("idt_adc_test", 0664, prEntry_da, &oplus_chg_wlchg_proc_idt_adc_test_ops, chip);
+  6070  	if (prEntry_tmp == NULL) {
+
+  6075  
+  6076: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da, &proc_wireless_rx_ops, chip);
+  6077  	if (prEntry_tmp == NULL) {
+
+  6082  
+  6083: 	prEntry_tmp = proc_create_data("fast_skin_threld", 0664, prEntry_da, &proc_fast_skin_threld_ops, chip);
+  6084  	if (prEntry_tmp == NULL) {
+
+  6089  
+  6090: 	prEntry_tmp = proc_create_data("ftm_test", 0664, prEntry_da, &proc_wireless_ftm_test_ops, chip);
+  6091  	if (prEntry_tmp == NULL) {
+
+  6096  
+  6097: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  6098  					&proc_wireless_user_sleep_mode_ops, chip);
+
+  6106  #ifdef OP_DEBUG
+  6107: 	prEntry_tmp = proc_create_data("voltage_rect", 0664, prEntry_da, &proc_wireless_voltage_rect_ops, chip);
+  6108  	if (prEntry_tmp == NULL) {
+
+  6113  
+  6114: 	prEntry_tmp = proc_create_data("rx_voltage", 0664, prEntry_da, &proc_wireless_rx_voltage, chip);
+  6115  	if (prEntry_tmp == NULL) {
+
+  6120  
+  6121: 	prEntry_tmp = proc_create_data("current_out", 0664, prEntry_da, &proc_wireless_current_out_ops, chip);
+  6122  	if (prEntry_tmp == NULL) {
+
+  6127  
+  6128: 	prEntry_tmp = proc_create_data("epp_or_bpp", 0664, prEntry_da, &proc_wireless_epp_ops, chip);
+  6129  	if (prEntry_tmp == NULL) {
+
+  6134  
+  6135: 	prEntry_tmp = proc_create_data("charge_pump_en", 0664, prEntry_da, &proc_wireless_charge_pump_ops, chip);
+  6136  	if (prEntry_tmp == NULL) {
+
+  6141  
+  6142: 	prEntry_tmp = proc_create_data("rx_freq", 0664, prEntry_da, &proc_wireless_rx_freq_ops, chip);
+  6143  	if (prEntry_tmp == NULL) {
+
+  6148  
+  6149: 	prEntry_tmp = proc_create_data("match_q", 0664, prEntry_da, &proc_match_q_ops, chip);
+  6150  	if (prEntry_tmp == NULL) {
+
+  6157  #ifdef HW_TEST_EDITION
+  6158: 	prEntry_tmp = proc_create_data("w30w_time", 0664, prEntry_da, &proc_wireless_w30w_time_ops, chip);
+  6159  	if (prEntry_tmp == NULL) {
+
+drivers/power/oplus/charger_ic/mtk_battery.c:
+  1145  
+  1146: static DEVICE_ATTR(Battery_Temperature, 0664, show_Battery_Temperature,
+  1147  		   store_Battery_Temperature);
+
+  5131  }
+  5132: static DEVICE_ATTR(FG_daemon_disable, 0664, show_FG_daemon_disable, store_FG_daemon_disable);
+  5133  
+
+  5162  }
+  5163: static DEVICE_ATTR(FG_meter_resistance, 0664, show_FG_meter_resistance, store_FG_meter_resistance);
+  5164  
+
+  5199  }
+  5200: static DEVICE_ATTR(disable_nafg, 0664, show_FG_nafg_disable, store_FG_nafg_disable);
+  5201  
+
+  5233  }
+  5234: static DEVICE_ATTR(uisoc_update_type, 0664, show_uisoc_update_type, store_uisoc_update_type);
+  5235  
+
+  5273  }
+  5274: static DEVICE_ATTR(FG_daemon_log_level, 0664, show_FG_daemon_log_level, store_FG_daemon_log_level);
+  5275  
+
+  5303  }
+  5304: static DEVICE_ATTR(shutdown_condition_enable, 0664, show_shutdown_cond_enable, store_shutdown_cond_enable);
+  5305  
+
+  5336  }
+  5337: static DEVICE_ATTR(reset_battery_cycle, 0664, show_reset_battery_cycle, store_reset_battery_cycle);
+  5338  
+
+  5386  }
+  5387: static DEVICE_ATTR(BAT_EC, 0664, show_BAT_EC, store_BAT_EC);
+  5388  
+
+  5406  
+  5407: static DEVICE_ATTR(FG_Battery_CurrentConsumption, 0664, show_FG_Battery_CurrentConsumption,
+  5408  		   store_FG_Battery_CurrentConsumption);
+
+  5428  
+  5429: static DEVICE_ATTR(Power_On_Voltage, 0664, show_Power_On_Voltage, store_Power_On_Voltage);
+  5430  
+
+  5449  
+  5450: static DEVICE_ATTR(Power_Off_Voltage, 0664, show_Power_Off_Voltage, store_Power_Off_Voltage);
+  5451  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6765S.c:
+  2899  
+  2900: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2901  		   store_sw_jeita);
+
+  2940  
+  2941: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2942  
+
+  2971  }
+  2972: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2973  		store_pdc_max_watt_level);
+
+  3788  }
+  3789: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3790  		store_input_current);
+
+  3819  }
+  3820: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3821  
+
+  3849  }
+  3850: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3851  
+
+  3876  }
+  3877: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3878  
+
+  4680  }
+  4681: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4682  
+
+  4693  }
+  4694: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4695  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6768R.c:
+  2142  
+  2143: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2144  		   store_sw_jeita);
+
+  2182  
+  2183: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2184  
+
+  2217  }
+  2218: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  2219  		store_charger_log_level);
+
+  2242  }
+  2243: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2244  		store_pdc_max_watt_level);
+
+  3264  }
+  3265: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3266  		store_input_current);
+
+  3295  }
+  3296: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3297  
+
+  3325  }
+  3326: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3327  
+
+  3356  
+  3357: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  3358  
+
+  3383  }
+  3384: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3385  
+
+  4180  }
+  4181: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4182  
+
+  4193  }
+  4194: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4195  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6769.c:
+  2092  
+  2093: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2094  		   store_sw_jeita);
+
+  2132  
+  2133: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2134  
+
+  2167  }
+  2168: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  2169  		store_charger_log_level);
+
+  2192  }
+  2193: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2194  		store_pdc_max_watt_level);
+
+  3214  }
+  3215: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3216  		store_input_current);
+
+  3245  }
+  3246: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3247  
+
+  3275  }
+  3276: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3277  
+
+  3306  
+  3307: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  3308  
+
+  3333  }
+  3334: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3335  
+
+  4179  }
+  4180: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4181  
+
+  4192  }
+  4193: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4194  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6769R.c:
+  2037  
+  2038: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2039  		   store_sw_jeita);
+
+  2077  
+  2078: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2079  
+
+  2112  }
+  2113: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  2114  		store_charger_log_level);
+
+  2137  }
+  2138: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2139  		store_pdc_max_watt_level);
+
+  3171  }
+  3172: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3173  		store_input_current);
+
+  3202  }
+  3203: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3204  
+
+  3232  }
+  3233: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3234  
+
+  3263  
+  3264: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  3265  
+
+  3290  }
+  3291: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3292  
+
+  4531  }
+  4532: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4533  
+
+  4544  }
+  4545: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4546  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6779.c:
+  801  
+  802: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  803  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6779Q.c:
+  801  
+  802: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  803  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6781R.c:
+  1217  
+  1218: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1219  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6785.c:
+  1322  }
+  1323: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1324  		store_charger_log_level);
+
+  6992  }
+  6993: static DEVICE_ATTR(enable_sc, 0664,
+  6994  	show_sc_en, store_sc_en);
+
+  7033  }
+  7034: static DEVICE_ATTR(sc_stime, 0664,
+  7035  	show_sc_stime, store_sc_stime);
+
+  7074  }
+  7075: static DEVICE_ATTR(sc_etime, 0664,
+  7076  	show_sc_etime, store_sc_etime);
+
+  7115  }
+  7116: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7117  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7156  }
+  7157: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7158  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6785R.c:
+  1385  }
+  1386: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1387  		store_charger_log_level);
+
+  6996  }
+  6997: static DEVICE_ATTR(enable_sc, 0664,
+  6998  	show_sc_en, store_sc_en);
+
+  7037  }
+  7038: static DEVICE_ATTR(sc_stime, 0664,
+  7039  	show_sc_stime, store_sc_stime);
+
+  7078  }
+  7079: static DEVICE_ATTR(sc_etime, 0664,
+  7080  	show_sc_etime, store_sc_etime);
+
+  7119  }
+  7120: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7121  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7160  }
+  7161: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7162  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6833R.c:
+  1301  
+  1302: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1303  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6853.c:
+  1101  
+  1102: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1103  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6853R.c:
+  1241  
+  1242: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1243  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6873.c:
+  886  
+  887: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  888  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6873R.c:
+  1034  
+  1035: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1036  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6877R.c:
+  7548  }
+  7549: static DEVICE_ATTR(enable_sc, 0664,
+  7550  	show_sc_en, store_sc_en);
+
+  7589  }
+  7590: static DEVICE_ATTR(sc_stime, 0664,
+  7591  	show_sc_stime, store_sc_stime);
+
+  7630  }
+  7631: static DEVICE_ATTR(sc_etime, 0664,
+  7632  	show_sc_etime, store_sc_etime);
+
+  7671  }
+  7672: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7673  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7712  }
+  7713: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7714  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+  7725  }
+  7726: static DEVICE_ATTR(typec_sbu_voltage, 0664, show_typec_sbu_voltage, store_typec_sbu_voltage);
+  7727  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6885.c:
+  893  
+  894: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  895  
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6885R.c:
+  1268  }
+  1269: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1270  		store_charger_log_level);
+
+  6887  }
+  6888: static DEVICE_ATTR(enable_sc, 0664,
+  6889  	show_sc_en, store_sc_en);
+
+  6928  }
+  6929: static DEVICE_ATTR(sc_stime, 0664,
+  6930  	show_sc_stime, store_sc_stime);
+
+  6969  }
+  6970: static DEVICE_ATTR(sc_etime, 0664,
+  6971  	show_sc_etime, store_sc_etime);
+
+  7010  }
+  7011: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7012  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7051  }
+  7052: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7053  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6889R.c:
+  1314  }
+  1315: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1316  		store_charger_log_level);
+
+  6948  }
+  6949: static DEVICE_ATTR(enable_sc, 0664,
+  6950  	show_sc_en, store_sc_en);
+
+  6989  }
+  6990: static DEVICE_ATTR(sc_stime, 0664,
+  6991  	show_sc_stime, store_sc_stime);
+
+  7030  }
+  7031: static DEVICE_ATTR(sc_etime, 0664,
+  7032  	show_sc_etime, store_sc_etime);
+
+  7071  }
+  7072: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7073  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7112  }
+  7113: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7114  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/charger_ic/oplus_battery_mtk6893R.c:
+  1274  }
+  1275: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1276  		store_charger_log_level);
+
+  7452  }
+  7453: static DEVICE_ATTR(enable_sc, 0664,
+  7454  	show_sc_en, store_sc_en);
+
+  7493  }
+  7494: static DEVICE_ATTR(sc_stime, 0664,
+  7495  	show_sc_stime, store_sc_stime);
+
+  7534  }
+  7535: static DEVICE_ATTR(sc_etime, 0664,
+  7536  	show_sc_etime, store_sc_etime);
+
+  7575  }
+  7576: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7577  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7616  }
+  7617: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7618  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/charger_ic/oplus_bq24190.c:
+  1311  
+  1312: //static DEVICE_ATTR(bq24190_access, 0664, show_bq24190_access, store_bq24190_access);
+  1313  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/charger_ic/oplus_bq25601d.c:
+  1767  #endif
+  1768: //static DEVICE_ATTR(bq25601d_access, 0664, show_bq25601d_access, store_bq25601d_access);
+  1769  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/charger_ic/oplus_bq25890h.c:
+  1456  
+  1457: //static DEVICE_ATTR(bq25601d_access, 0664, show_bq25601d_access, store_bq25601d_access);
+  1458  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/charger_ic/oplus_charge_pump.c:
+  766  
+  767:     prEntry_tmp = proc_create_data("work_mode", 0664, prEntry_da, &proc_work_mode_ops, da);
+  768      if (prEntry_tmp == NULL) {
+
+  772  
+  773:     prEntry_set_reg = proc_create_data("register", 0664, prEntry_da, &proc_register_ops, da);
+  774      if (prEntry_set_reg == NULL) {
+
+drivers/power/oplus/charger_ic/oplus_mp2650.c:
+  3014  
+  3015: 	p = proc_create("mp2650_write_log", 0664, NULL, &mp2650_write_log_proc_fops);
+  3016  	if (!p) {
+
+  3114  
+  3115: 	p = proc_create("mp2650_read_log", 0664, NULL, &mp2650_read_log_proc_fops);
+  3116  	if (!p) {
+
+drivers/power/oplus/charger_ic/oplus_sy6974.c:
+  1344  
+  1345: //static DEVICE_ATTR(sy6974_access, 0664, show_sy6974_access, store_sy6974_access);
+  1346  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/op_wlchg_v2/oplus_chg_wls.c:
+  9195  
+  9196: 	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da,
+  9197  				       &oplus_chg_wls_proc_tx_ops, wls_dev);
+
+  9204  	prEntry_tmp =
+  9205: 		proc_create_data("deviated", 0664, prEntry_da,
+  9206  				 &oplus_chg_wls_proc_deviated_ops, wls_dev);
+
+  9212  
+  9213: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  9214  				       &oplus_chg_wls_proc_user_sleep_mode_ops,
+
+  9222  	prEntry_tmp =
+  9223: 		proc_create_data("idt_adc_test", 0664, prEntry_da,
+  9224  				 &oplus_chg_wls_proc_idt_adc_test_ops, wls_dev);
+
+  9230  
+  9231: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da,
+  9232  				       &oplus_chg_wls_proc_rx_ops, wls_dev);
+
+  9239  	prEntry_tmp =
+  9240: 		proc_create_data("rx_power", 0664, prEntry_da,
+  9241  				 &oplus_chg_wls_proc_rx_power_ops, wls_dev);
+
+  9248  	prEntry_tmp =
+  9249: 		proc_create_data("tx_power", 0664, prEntry_da,
+  9250  				 &oplus_chg_wls_proc_tx_power_ops, wls_dev);
+
+  9257  	prEntry_tmp =
+  9258: 		proc_create_data("rx_version", 0664, prEntry_da,
+  9259  				 &oplus_chg_wls_proc_rx_version_ops, wls_dev);
+
+  9266  	prEntry_tmp =
+  9267: 		proc_create_data("tx_version", 0664, prEntry_da,
+  9268  				 &oplus_chg_wls_proc_tx_version_ops, wls_dev);
+
+  9275  	prEntry_tmp =
+  9276: 		proc_create_data("ftm_mode", 0664, prEntry_da,
+  9277  				 &oplus_chg_wls_proc_ftm_mode_ops, wls_dev);
+
+drivers/power/oplus/v1/oplus_charger.c:
+  1264  
+  1265: 	p = proc_create("batt_param_noplug", 0664, NULL, &batt_param_noplug_proc_fops);
+  1266  	if (!p) {
+
+  1339  
+  1340: 	p = proc_create("tbatt_pwroff", 0664, NULL, &tbatt_pwroff_proc_fops);
+  1341  	if (!p) {
+
+  1414  
+  1415: 	p = proc_create("charger_log", 0664, NULL, &chg_log_proc_fops);
+  1416  	if (!p) {
+
+  1739  
+  1740: 	p = proc_create("charger_critical_log", 0664, NULL, &chg_critical_log_proc_fops);
+  1741  	if (!p) {
+
+  1791  
+  1792: 	p = proc_create("rtc_reset", 0664, NULL, &rtc_reset_det_fops);
+  1793  	if (!p) {
+
+  1837  
+  1838: 	p = proc_create("vbat_low", 0664, NULL, &vbat_low_det_fops);
+  1839  	if (!p) {
+
+  2791  
+  2792: 	prEntry_tmp = proc_create_data("cp_vbat_deviation", 0664, prEntry_da, &cp_vbat_deviation_proc_fops, chip);
+  2793          if (prEntry_tmp == NULL) {
+
+  2810  
+  2811: 	prEntry_tmp = proc_create_data("force_current_limit", 0664, prEntry_da, &proc_force_current_limit_ops, chip);
+  2812  	if (prEntry_tmp == NULL) {
+
+  3189  
+  3190: 	p_time = proc_create("charging_limit_time", 0664, NULL, &charging_limit_time_fops);
+  3191  	if (!p_time) {
+
+  3193  	}
+  3194: 	p_current = proc_create("charging_limit_current", 0664, NULL, &charging_limit_current_fops);
+  3195  	if (!p_current) {
+
+drivers/power/oplus/v1/oplus_debug_info.c:
+  2827  
+  2828: 	proc_dentry = proc_create("charge_monitor_test", 0664, NULL,
+  2829  			&charge_monitor_test_fops);
+
+drivers/power/oplus/v1/oplus_vooc.c:
+  2282  
+  2283: 	p = proc_create_data("fastchg_fw_update", 0664, NULL, &fastchg_fw_update_proc_fops, chip);
+  2284  	if (!p) {
+
+drivers/power/oplus/v1/oplus_wlchg_policy.c:
+  6040  
+  6041: 	prEntry_tmp = proc_create_data("ftm_mode", 0664, prEntry_da, &proc_wireless_ftm_mode_ops, chip);
+  6042  	if (prEntry_tmp == NULL) {
+
+  6047  
+  6048: 	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da, &proc_wireless_tx_ops, chip);
+  6049  	if (prEntry_tmp == NULL) {
+
+  6054  
+  6055: 	prEntry_tmp = proc_create_data("quiet_mode", 0664, prEntry_da, &proc_wireless_quiet_mode_ops, chip);
+  6056  	if (prEntry_tmp == NULL) {
+
+  6061  
+  6062: 	prEntry_tmp = proc_create_data("deviated", 0664, prEntry_da, &proc_wireless_deviated_ops, chip);
+  6063  	if (prEntry_tmp == NULL) {
+
+  6068  
+  6069: 	prEntry_tmp = proc_create_data("idt_adc_test", 0664, prEntry_da, &oplus_chg_wlchg_proc_idt_adc_test_ops, chip);
+  6070  	if (prEntry_tmp == NULL) {
+
+  6075  
+  6076: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da, &proc_wireless_rx_ops, chip);
+  6077  	if (prEntry_tmp == NULL) {
+
+  6082  
+  6083: 	prEntry_tmp = proc_create_data("fast_skin_threld", 0664, prEntry_da, &proc_fast_skin_threld_ops, chip);
+  6084  	if (prEntry_tmp == NULL) {
+
+  6089  
+  6090: 	prEntry_tmp = proc_create_data("ftm_test", 0664, prEntry_da, &proc_wireless_ftm_test_ops, chip);
+  6091  	if (prEntry_tmp == NULL) {
+
+  6096  
+  6097: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  6098  					&proc_wireless_user_sleep_mode_ops, chip);
+
+  6106  #ifdef OP_DEBUG
+  6107: 	prEntry_tmp = proc_create_data("voltage_rect", 0664, prEntry_da, &proc_wireless_voltage_rect_ops, chip);
+  6108  	if (prEntry_tmp == NULL) {
+
+  6113  
+  6114: 	prEntry_tmp = proc_create_data("rx_voltage", 0664, prEntry_da, &proc_wireless_rx_voltage, chip);
+  6115  	if (prEntry_tmp == NULL) {
+
+  6120  
+  6121: 	prEntry_tmp = proc_create_data("current_out", 0664, prEntry_da, &proc_wireless_current_out_ops, chip);
+  6122  	if (prEntry_tmp == NULL) {
+
+  6127  
+  6128: 	prEntry_tmp = proc_create_data("epp_or_bpp", 0664, prEntry_da, &proc_wireless_epp_ops, chip);
+  6129  	if (prEntry_tmp == NULL) {
+
+  6134  
+  6135: 	prEntry_tmp = proc_create_data("charge_pump_en", 0664, prEntry_da, &proc_wireless_charge_pump_ops, chip);
+  6136  	if (prEntry_tmp == NULL) {
+
+  6141  
+  6142: 	prEntry_tmp = proc_create_data("rx_freq", 0664, prEntry_da, &proc_wireless_rx_freq_ops, chip);
+  6143  	if (prEntry_tmp == NULL) {
+
+  6148  
+  6149: 	prEntry_tmp = proc_create_data("match_q", 0664, prEntry_da, &proc_match_q_ops, chip);
+  6150  	if (prEntry_tmp == NULL) {
+
+  6157  #ifdef HW_TEST_EDITION
+  6158: 	prEntry_tmp = proc_create_data("w30w_time", 0664, prEntry_da, &proc_wireless_w30w_time_ops, chip);
+  6159  	if (prEntry_tmp == NULL) {
+
+drivers/power/oplus/v1/charger_ic/mtk_battery.c:
+  1145  
+  1146: static DEVICE_ATTR(Battery_Temperature, 0664, show_Battery_Temperature,
+  1147  		   store_Battery_Temperature);
+
+  5131  }
+  5132: static DEVICE_ATTR(FG_daemon_disable, 0664, show_FG_daemon_disable, store_FG_daemon_disable);
+  5133  
+
+  5162  }
+  5163: static DEVICE_ATTR(FG_meter_resistance, 0664, show_FG_meter_resistance, store_FG_meter_resistance);
+  5164  
+
+  5199  }
+  5200: static DEVICE_ATTR(disable_nafg, 0664, show_FG_nafg_disable, store_FG_nafg_disable);
+  5201  
+
+  5233  }
+  5234: static DEVICE_ATTR(uisoc_update_type, 0664, show_uisoc_update_type, store_uisoc_update_type);
+  5235  
+
+  5273  }
+  5274: static DEVICE_ATTR(FG_daemon_log_level, 0664, show_FG_daemon_log_level, store_FG_daemon_log_level);
+  5275  
+
+  5303  }
+  5304: static DEVICE_ATTR(shutdown_condition_enable, 0664, show_shutdown_cond_enable, store_shutdown_cond_enable);
+  5305  
+
+  5336  }
+  5337: static DEVICE_ATTR(reset_battery_cycle, 0664, show_reset_battery_cycle, store_reset_battery_cycle);
+  5338  
+
+  5386  }
+  5387: static DEVICE_ATTR(BAT_EC, 0664, show_BAT_EC, store_BAT_EC);
+  5388  
+
+  5406  
+  5407: static DEVICE_ATTR(FG_Battery_CurrentConsumption, 0664, show_FG_Battery_CurrentConsumption,
+  5408  		   store_FG_Battery_CurrentConsumption);
+
+  5428  
+  5429: static DEVICE_ATTR(Power_On_Voltage, 0664, show_Power_On_Voltage, store_Power_On_Voltage);
+  5430  
+
+  5449  
+  5450: static DEVICE_ATTR(Power_Off_Voltage, 0664, show_Power_Off_Voltage, store_Power_Off_Voltage);
+  5451  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6765S.c:
+  2899  
+  2900: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2901  		   store_sw_jeita);
+
+  2940  
+  2941: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2942  
+
+  2971  }
+  2972: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2973  		store_pdc_max_watt_level);
+
+  3788  }
+  3789: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3790  		store_input_current);
+
+  3819  }
+  3820: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3821  
+
+  3849  }
+  3850: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3851  
+
+  3876  }
+  3877: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3878  
+
+  4680  }
+  4681: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4682  
+
+  4693  }
+  4694: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4695  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6768R.c:
+  2142  
+  2143: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2144  		   store_sw_jeita);
+
+  2182  
+  2183: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2184  
+
+  2217  }
+  2218: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  2219  		store_charger_log_level);
+
+  2242  }
+  2243: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2244  		store_pdc_max_watt_level);
+
+  3264  }
+  3265: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3266  		store_input_current);
+
+  3295  }
+  3296: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3297  
+
+  3325  }
+  3326: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3327  
+
+  3356  
+  3357: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  3358  
+
+  3383  }
+  3384: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3385  
+
+  4180  }
+  4181: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4182  
+
+  4193  }
+  4194: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4195  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6769.c:
+  2092  
+  2093: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2094  		   store_sw_jeita);
+
+  2132  
+  2133: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2134  
+
+  2167  }
+  2168: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  2169  		store_charger_log_level);
+
+  2192  }
+  2193: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2194  		store_pdc_max_watt_level);
+
+  3214  }
+  3215: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3216  		store_input_current);
+
+  3245  }
+  3246: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3247  
+
+  3275  }
+  3276: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3277  
+
+  3306  
+  3307: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  3308  
+
+  3333  }
+  3334: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3335  
+
+  4179  }
+  4180: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4181  
+
+  4192  }
+  4193: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4194  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6769R.c:
+  2037  
+  2038: static DEVICE_ATTR(sw_jeita, 0664, show_sw_jeita,
+  2039  		   store_sw_jeita);
+
+  2077  
+  2078: static DEVICE_ATTR(pe20, 0664, show_pe20, store_pe20);
+  2079  
+
+  2112  }
+  2113: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  2114  		store_charger_log_level);
+
+  2137  }
+  2138: static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level,
+  2139  		store_pdc_max_watt_level);
+
+  3171  }
+  3172: static DEVICE_ATTR(input_current, 0664, show_input_current,
+  3173  		store_input_current);
+
+  3202  }
+  3203: static DEVICE_ATTR(chg1_current, 0664, show_chg1_current, store_chg1_current);
+  3204  
+
+  3232  }
+  3233: static DEVICE_ATTR(chg2_current, 0664, show_chg2_current, store_chg2_current);
+  3234  
+
+  3263  
+  3264: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  3265  
+
+  3290  }
+  3291: static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
+  3292  
+
+  4531  }
+  4532: static DEVICE_ATTR(StopCharging_Test, 0664, show_StopCharging_Test, store_StopCharging_Test);
+  4533  
+
+  4544  }
+  4545: static DEVICE_ATTR(StartCharging_Test, 0664, show_StartCharging_Test, store_StartCharging_Test);
+  4546  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6779.c:
+  801  
+  802: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  803  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6779Q.c:
+  801  
+  802: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  803  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6781R.c:
+  1217  
+  1218: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1219  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6785.c:
+  1322  }
+  1323: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1324  		store_charger_log_level);
+
+  6992  }
+  6993: static DEVICE_ATTR(enable_sc, 0664,
+  6994  	show_sc_en, store_sc_en);
+
+  7033  }
+  7034: static DEVICE_ATTR(sc_stime, 0664,
+  7035  	show_sc_stime, store_sc_stime);
+
+  7074  }
+  7075: static DEVICE_ATTR(sc_etime, 0664,
+  7076  	show_sc_etime, store_sc_etime);
+
+  7115  }
+  7116: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7117  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7156  }
+  7157: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7158  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6785R.c:
+  1385  }
+  1386: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1387  		store_charger_log_level);
+
+  6996  }
+  6997: static DEVICE_ATTR(enable_sc, 0664,
+  6998  	show_sc_en, store_sc_en);
+
+  7037  }
+  7038: static DEVICE_ATTR(sc_stime, 0664,
+  7039  	show_sc_stime, store_sc_stime);
+
+  7078  }
+  7079: static DEVICE_ATTR(sc_etime, 0664,
+  7080  	show_sc_etime, store_sc_etime);
+
+  7119  }
+  7120: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7121  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7160  }
+  7161: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7162  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6833R.c:
+  1301  
+  1302: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1303  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6853.c:
+  1101  
+  1102: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1103  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6853R.c:
+  1241  
+  1242: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1243  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6873.c:
+  886  
+  887: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  888  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6873R.c:
+  1034  
+  1035: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  1036  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6877R.c:
+  7548  }
+  7549: static DEVICE_ATTR(enable_sc, 0664,
+  7550  	show_sc_en, store_sc_en);
+
+  7589  }
+  7590: static DEVICE_ATTR(sc_stime, 0664,
+  7591  	show_sc_stime, store_sc_stime);
+
+  7630  }
+  7631: static DEVICE_ATTR(sc_etime, 0664,
+  7632  	show_sc_etime, store_sc_etime);
+
+  7671  }
+  7672: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7673  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7712  }
+  7713: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7714  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+  7725  }
+  7726: static DEVICE_ATTR(typec_sbu_voltage, 0664, show_typec_sbu_voltage, store_typec_sbu_voltage);
+  7727  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6885.c:
+  893  
+  894: static DEVICE_ATTR(BatteryNotify, 0664, show_BatNotify, store_BatNotify);
+  895  
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6885R.c:
+  1268  }
+  1269: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1270  		store_charger_log_level);
+
+  6887  }
+  6888: static DEVICE_ATTR(enable_sc, 0664,
+  6889  	show_sc_en, store_sc_en);
+
+  6928  }
+  6929: static DEVICE_ATTR(sc_stime, 0664,
+  6930  	show_sc_stime, store_sc_stime);
+
+  6969  }
+  6970: static DEVICE_ATTR(sc_etime, 0664,
+  6971  	show_sc_etime, store_sc_etime);
+
+  7010  }
+  7011: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7012  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7051  }
+  7052: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7053  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6889R.c:
+  1314  }
+  1315: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1316  		store_charger_log_level);
+
+  6948  }
+  6949: static DEVICE_ATTR(enable_sc, 0664,
+  6950  	show_sc_en, store_sc_en);
+
+  6989  }
+  6990: static DEVICE_ATTR(sc_stime, 0664,
+  6991  	show_sc_stime, store_sc_stime);
+
+  7030  }
+  7031: static DEVICE_ATTR(sc_etime, 0664,
+  7032  	show_sc_etime, store_sc_etime);
+
+  7071  }
+  7072: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7073  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7112  }
+  7113: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7114  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/v1/charger_ic/oplus_battery_mtk6893R.c:
+  1274  }
+  1275: static DEVICE_ATTR(charger_log_level, 0664, show_charger_log_level,
+  1276  		store_charger_log_level);
+
+  7452  }
+  7453: static DEVICE_ATTR(enable_sc, 0664,
+  7454  	show_sc_en, store_sc_en);
+
+  7493  }
+  7494: static DEVICE_ATTR(sc_stime, 0664,
+  7495  	show_sc_stime, store_sc_stime);
+
+  7534  }
+  7535: static DEVICE_ATTR(sc_etime, 0664,
+  7536  	show_sc_etime, store_sc_etime);
+
+  7575  }
+  7576: static DEVICE_ATTR(sc_tuisoc, 0664,
+  7577  	show_sc_tuisoc, store_sc_tuisoc);
+
+  7616  }
+  7617: static DEVICE_ATTR(sc_ibat_limit, 0664,
+  7618  	show_sc_ibat_limit, store_sc_ibat_limit);
+
+drivers/power/oplus/v1/charger_ic/oplus_bq24190.c:
+  1311  
+  1312: //static DEVICE_ATTR(bq24190_access, 0664, show_bq24190_access, store_bq24190_access);
+  1313  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/v1/charger_ic/oplus_bq25601d.c:
+  1767  #endif
+  1768: //static DEVICE_ATTR(bq25601d_access, 0664, show_bq25601d_access, store_bq25601d_access);
+  1769  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/v1/charger_ic/oplus_bq25890h.c:
+  1456  
+  1457: //static DEVICE_ATTR(bq25601d_access, 0664, show_bq25601d_access, store_bq25601d_access);
+  1458  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/v1/charger_ic/oplus_charge_pump.c:
+  766  
+  767:     prEntry_tmp = proc_create_data("work_mode", 0664, prEntry_da, &proc_work_mode_ops, da);
+  768      if (prEntry_tmp == NULL) {
+
+  772  
+  773:     prEntry_set_reg = proc_create_data("register", 0664, prEntry_da, &proc_register_ops, da);
+  774      if (prEntry_set_reg == NULL) {
+
+drivers/power/oplus/v1/charger_ic/oplus_mp2650.c:
+  3014  
+  3015: 	p = proc_create("mp2650_write_log", 0664, NULL, &mp2650_write_log_proc_fops);
+  3016  	if (!p) {
+
+  3114  
+  3115: 	p = proc_create("mp2650_read_log", 0664, NULL, &mp2650_read_log_proc_fops);
+  3116  	if (!p) {
+
+drivers/power/oplus/v1/charger_ic/oplus_sy6974.c:
+  1344  
+  1345: //static DEVICE_ATTR(sy6974_access, 0664, show_sy6974_access, store_sy6974_access);
+  1346  #ifdef OPLUS_FEATURE_CHG_BASIC
+
+drivers/power/oplus/v1/op_wlchg_v2/oplus_chg_wls.c:
+  9195  
+  9196: 	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da,
+  9197  				       &oplus_chg_wls_proc_tx_ops, wls_dev);
+
+  9204  	prEntry_tmp =
+  9205: 		proc_create_data("deviated", 0664, prEntry_da,
+  9206  				 &oplus_chg_wls_proc_deviated_ops, wls_dev);
+
+  9212  
+  9213: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  9214  				       &oplus_chg_wls_proc_user_sleep_mode_ops,
+
+  9222  	prEntry_tmp =
+  9223: 		proc_create_data("idt_adc_test", 0664, prEntry_da,
+  9224  				 &oplus_chg_wls_proc_idt_adc_test_ops, wls_dev);
+
+  9230  
+  9231: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da,
+  9232  				       &oplus_chg_wls_proc_rx_ops, wls_dev);
+
+  9239  	prEntry_tmp =
+  9240: 		proc_create_data("rx_power", 0664, prEntry_da,
+  9241  				 &oplus_chg_wls_proc_rx_power_ops, wls_dev);
+
+  9248  	prEntry_tmp =
+  9249: 		proc_create_data("tx_power", 0664, prEntry_da,
+  9250  				 &oplus_chg_wls_proc_tx_power_ops, wls_dev);
+
+  9257  	prEntry_tmp =
+  9258: 		proc_create_data("rx_version", 0664, prEntry_da,
+  9259  				 &oplus_chg_wls_proc_rx_version_ops, wls_dev);
+
+  9266  	prEntry_tmp =
+  9267: 		proc_create_data("tx_version", 0664, prEntry_da,
+  9268  				 &oplus_chg_wls_proc_tx_version_ops, wls_dev);
+
+  9275  	prEntry_tmp =
+  9276: 		proc_create_data("ftm_mode", 0664, prEntry_da,
+  9277  				 &oplus_chg_wls_proc_ftm_mode_ops, wls_dev);
+
+drivers/power/oplus/v1/voocphy/oplus_voocphy.c:
+  860  
+  861: 	p_batt_fake_temp = proc_create("voocphy_batt_fake_temp", 0664, NULL,
+  862  	                               &oplus_voocphy_batt_fake_temp_fops);
+
+  867  
+  868: 	p_batt_fake_soc = proc_create("voocphy_batt_fake_soc", 0664, NULL,
+  869  	                              &oplus_voocphy_batt_fake_soc_fops);
+
+  875  
+  876: 	p_batt_loglevel = proc_create("voocphy_loglevel", 0664, NULL,
+  877  	                              &oplus_voocphy_loglevel_fops);
+
+drivers/power/oplus/v1/wireless_ic/oplus_nu1619.c:
+   8847  
+   8848: 	p = proc_create("nu1619_add_log", 0664, NULL, &nu1619_add_log_proc_fops);
+   8849  	if (!p) {
+
+   8904  
+   8905: 	p = proc_create("nu1619_data_log", 0664, NULL, &nu1619_data_log_proc_fops);
+   8906  	if (!p) {
+
+  10848  
+  10849: 	prEntry_tmp = proc_create_data("voltage_rect", 0664, prEntry_da,
+  10850  				       &proc_wireless_voltage_rect_ops, chip);
+
+  10856  
+  10857: 	prEntry_tmp = proc_create_data("rx_voltage", 0664, prEntry_da,
+  10858  				       &proc_wireless_rx_voltage, chip);
+
+  10864  
+  10865: 	prEntry_tmp = proc_create_data("current_out", 0664, prEntry_da,
+  10866  				       &proc_wireless_current_out_ops, chip);
+
+  10872  
+  10873: 	prEntry_tmp = proc_create_data("ftm_mode", 0664, prEntry_da,
+  10874  				       &proc_wireless_ftm_mode_ops, chip);
+
+  10880  
+  10881: 	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da,
+  10882  				       &proc_wireless_tx_ops, chip);
+
+  10888  
+  10889: 	prEntry_tmp = proc_create_data("epp_or_bpp", 0664, prEntry_da,
+  10890  				       &proc_wireless_epp_ops, chip);
+
+  10896  
+  10897: 	prEntry_tmp = proc_create_data("charge_pump_en", 0664, prEntry_da,
+  10898  				       &proc_wireless_charge_pump_ops, chip);
+
+  10904  
+  10905: 	prEntry_tmp = proc_create_data("bat_mult", 0664, prEntry_da,
+  10906  				       &proc_wireless_bat_mult_ops, chip);
+
+  10912  
+  10913: 	prEntry_tmp = proc_create_data("deviated", 0664, prEntry_da,
+  10914  				       &proc_wireless_deviated_ops, chip);
+
+  10920  
+  10921: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da,
+  10922  				       &proc_wireless_rx_ops, chip);
+
+  10929  #ifdef OPLUS_CHG_ADB_FW_DEBUG
+  10930: 	prEntry_tmp = proc_create_data("upgrade_firmware", 0664, prEntry_da,
+  10931  				       &proc_upgrade_firmware_ops, chip);
+
+  10938  
+  10939: 	prEntry_tmp = proc_create_data("rx_freq", 0664, prEntry_da,
+  10940  				       &proc_wireless_rx_freq_ops, chip);
+
+  10946  
+  10947: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  10948  				       &proc_wireless_user_sleep_mode_ops, chip);
+
+  10954  
+  10955: 	prEntry_tmp = proc_create_data("idt_adc_test", 0664, prEntry_da,
+  10956  				       &proc_wireless_idt_adc_test_ops, chip);
+
+  10963  #ifdef HW_TEST_EDITION
+  10964: 	prEntry_tmp = proc_create_data("w30w_time", 0664, prEntry_da,
+  10965  				       &proc_wireless_w30w_time_ops, chip);
+
+  10972  
+  10973: 	prEntry_tmp = proc_create_data("rx_power", 0664, prEntry_da,
+  10974  				       &proc_wireless_rx_power_ops, chip);
+
+  10980  
+  10981: 	prEntry_tmp = proc_create_data("tx_power", 0664, prEntry_da,
+  10982  				       &proc_wireless_tx_power_ops, chip);
+
+  10988  
+  10989: 	prEntry_tmp = proc_create_data("rx_version", 0664, prEntry_da,
+  10990  				       &proc_wireless_rx_version_ops, chip);
+
+  10996  
+  10997: 	prEntry_tmp = proc_create_data("wired_otg_online", 0664, prEntry_da,
+  10998  				       &proc_wired_otg_online_ops, chip);
+
+drivers/power/oplus/v1/wireless_ic/oplus_p922x.c:
+  5484  
+  5485: 	p = proc_create("p922x_add_log", 0664, NULL, &p922x_add_log_proc_fops);
+  5486  	if (!p) {
+
+  5541  
+  5542: 	p = proc_create("p922x_data_log", 0664, NULL, &p922x_data_log_proc_fops);
+  5543  	if (!p)
+
+  6840  
+  6841: 	prEntry_tmp = proc_create_data("voltage_rect", 0664, prEntry_da,
+  6842  				       &proc_wireless_voltage_rect_ops, chip);
+
+  6848  
+  6849: 	prEntry_tmp = proc_create_data("rx_voltage", 0664, prEntry_da,
+  6850  				       &proc_wireless_rx_voltage, chip);
+
+  6856  
+  6857: 	prEntry_tmp = proc_create_data("current_out", 0664, prEntry_da,
+  6858  				       &proc_wireless_current_out_ops, chip);
+
+  6864  
+  6865: 	prEntry_tmp = proc_create_data("ftm_mode", 0664, prEntry_da,
+  6866  				       &proc_wireless_ftm_mode_ops, chip);
+
+  6872  
+  6873: 	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da,
+  6874  				       &proc_wireless_tx_ops, chip);
+
+  6880  
+  6881: 	prEntry_tmp = proc_create_data("epp_or_bpp", 0664, prEntry_da,
+  6882  				       &proc_wireless_epp_ops, chip);
+
+  6888  
+  6889: 	prEntry_tmp = proc_create_data("charge_pump_en", 0664, prEntry_da,
+  6890  				       &proc_wireless_charge_pump_ops, chip);
+
+  6896  
+  6897: 	prEntry_tmp = proc_create_data("bat_mult", 0664, prEntry_da,
+  6898  				       &proc_wireless_bat_mult_ops, chip);
+
+  6904  
+  6905: 	prEntry_tmp = proc_create_data("deviated", 0664, prEntry_da,
+  6906  				       &proc_wireless_deviated_ops, chip);
+
+  6912  
+  6913: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da,
+  6914  				       &proc_wireless_rx_ops, chip);
+
+  6920  
+  6921: 	prEntry_tmp = proc_create_data("upgrade_firmware", 0664, prEntry_da,
+  6922  				       &proc_upgrade_firmware_ops, chip);
+
+  6928  
+  6929: 	prEntry_tmp = proc_create_data("rx_freq", 0664, prEntry_da,
+  6930  				       &proc_wireless_rx_freq_ops, chip);
+
+  6936  
+  6937: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  6938  				       &proc_wireless_user_sleep_mode_ops, chip);
+
+  6944  
+  6945: 	prEntry_tmp = proc_create_data("idt_adc_test", 0664, prEntry_da,
+  6946  				       &proc_wireless_idt_adc_test_ops, chip);
+
+  6953  #ifdef HW_TEST_EDITION
+  6954: 	prEntry_tmp = proc_create_data("w30w_time", 0664, prEntry_da,
+  6955  				       &proc_wireless_w30w_time_ops, chip);
+
+drivers/power/oplus/v1/wireless_ic/oplus_p9418.c:
+  1880  
+  1881: 	p = proc_create("p9418_add_log", 0664, NULL, &p9418_add_log_proc_fops);
+  1882  	if (!p) {
+
+  1936  
+  1937: 	p = proc_create("p9418_data_log", 0664, NULL, &p9418_data_log_proc_fops);
+  1938  	if (!p)
+
+drivers/power/oplus/v1/wireless_ic/oplus_ra9530.c:
+  2119  
+  2120: 	p = proc_create("ra9530_add_log", 0664, NULL, &ra9530_add_log_proc_fops);
+  2121  	if (!p) {
+
+  2168  
+  2169: 	p = proc_create("ra9530_data_log", 0664, NULL, &ra9530_data_log_proc_fops);
+  2170  	if (!p)
+
+drivers/power/oplus/v2/oplus_chg_comm.c:
+  6258  
+  6259: 	pr_entry_tmp = proc_create_data("ui_soc_decimal", 0664, NULL,
+  6260  					&ui_soc_decimal_ops, chip);
+
+  6263  
+  6264: 	pr_entry_tmp = proc_create_data("charger_cycle", 0664, NULL,
+  6265  					&chg_cycle_proc_fops, chip);
+
+  6268  
+  6269: 	pr_entry_tmp = proc_create_data("tbatt_pwroff", 0664, NULL,
+  6270  					&tbatt_pwroff_proc_fops, chip);
+
+  6273  
+  6274: 	pr_entry_tmp = proc_create_data("batt_param_noplug", 0664, NULL,
+  6275  					&batt_param_noplug_proc_fops, chip);
+
+  6299  	pr_entry_tmp =
+  6300: 		proc_create_data("integrate_gauge_fcc_flag", 0664, pr_entry_da,
+  6301  				 &proc_integrate_gauge_fcc_flag_ops, chip);
+
+drivers/power/oplus/v2/oplus_chg_vooc.c:
+  5297  	if (config->voocphy_support == NO_VOOCPHY && chip->vooc_fw_update_newmethod) {
+  5298: 		p = proc_create_data("fastchg_fw_update", 0664, NULL,
+  5299  					 &fastchg_fw_update_proc_fops, chip);
+
+drivers/power/oplus/v2/oplus_chg_wls.c:
+  10011  
+  10012: 	pr_entry_tmp = proc_create_data("enable_tx", 0664, pr_entry_da,
+  10013  					&oplus_chg_wls_proc_tx_ops, wls_dev);
+
+  10019  
+  10020: 	pr_entry_tmp = proc_create_data("deviated", 0664, pr_entry_da,
+  10021  					&oplus_chg_wls_proc_deviated_ops, wls_dev);
+
+  10027  
+  10028: 	pr_entry_tmp = proc_create_data("user_sleep_mode", 0664, pr_entry_da,
+  10029  					&oplus_chg_wls_proc_user_sleep_mode_ops, wls_dev);
+
+  10035  
+  10036: 	pr_entry_tmp = proc_create_data("idt_adc_test", 0664, pr_entry_da,
+  10037  					&oplus_chg_wls_proc_idt_adc_test_ops, wls_dev);
+
+  10043  
+  10044: 	pr_entry_tmp = proc_create_data("enable_rx", 0664, pr_entry_da,
+  10045  					&oplus_chg_wls_proc_rx_ops, wls_dev);
+
+  10051  
+  10052: 	pr_entry_tmp = proc_create_data("rx_power", 0664, pr_entry_da,
+  10053  					&oplus_chg_wls_proc_rx_power_ops, wls_dev);
+
+  10059  
+  10060: 	pr_entry_tmp = proc_create_data("tx_power", 0664, pr_entry_da,
+  10061  					&oplus_chg_wls_proc_tx_power_ops, wls_dev);
+
+  10067  
+  10068: 	pr_entry_tmp = proc_create_data("rx_version", 0664, pr_entry_da,
+  10069  					&oplus_chg_wls_proc_rx_version_ops, wls_dev);
+
+  10075  
+  10076: 	pr_entry_tmp = proc_create_data("tx_version", 0664, pr_entry_da,
+  10077  					&oplus_chg_wls_proc_tx_version_ops, wls_dev);
+
+  10083  
+  10084: 	pr_entry_tmp = proc_create_data("ftm_mode", 0664, pr_entry_da,
+  10085  					&oplus_chg_wls_proc_ftm_mode_ops, wls_dev);
+
+drivers/power/oplus/v2/charger_ic/oplus_hal_mp2650.c:
+  2839  
+  2840: 	p = proc_create("mp2650_2_write_log", 0664, NULL,
+  2841  			&mp2650_2_write_log_proc_fops);
+
+  2945  
+  2946: 	p = proc_create("mp2650_2_read_log", 0664, NULL,
+  2947  			&mp2650_2_read_log_proc_fops);
+
+drivers/power/oplus/v2/voocphy/oplus_ap_voocphy.c:
+  677  
+  678: 	p_batt_fake_temp = proc_create("voocphy_batt_fake_temp", 0664, NULL,
+  679  	                               &oplus_voocphy_batt_fake_temp_fops);
+
+  684  
+  685: 	p_batt_fake_soc = proc_create("voocphy_batt_fake_soc", 0664, NULL,
+  686  	                              &oplus_voocphy_batt_fake_soc_fops);
+
+  692  
+  693: 	p_batt_loglevel = proc_create("voocphy_loglevel", 0664, NULL,
+  694  	                              &oplus_voocphy_loglevel_fops);
+
+drivers/power/oplus/voocphy/oplus_voocphy.c:
+  860  
+  861: 	p_batt_fake_temp = proc_create("voocphy_batt_fake_temp", 0664, NULL,
+  862  	                               &oplus_voocphy_batt_fake_temp_fops);
+
+  867  
+  868: 	p_batt_fake_soc = proc_create("voocphy_batt_fake_soc", 0664, NULL,
+  869  	                              &oplus_voocphy_batt_fake_soc_fops);
+
+  875  
+  876: 	p_batt_loglevel = proc_create("voocphy_loglevel", 0664, NULL,
+  877  	                              &oplus_voocphy_loglevel_fops);
+
+drivers/power/oplus/wireless_ic/oplus_nu1619.c:
+   8847  
+   8848: 	p = proc_create("nu1619_add_log", 0664, NULL, &nu1619_add_log_proc_fops);
+   8849  	if (!p) {
+
+   8904  
+   8905: 	p = proc_create("nu1619_data_log", 0664, NULL, &nu1619_data_log_proc_fops);
+   8906  	if (!p) {
+
+  10848  
+  10849: 	prEntry_tmp = proc_create_data("voltage_rect", 0664, prEntry_da,
+  10850  				       &proc_wireless_voltage_rect_ops, chip);
+
+  10856  
+  10857: 	prEntry_tmp = proc_create_data("rx_voltage", 0664, prEntry_da,
+  10858  				       &proc_wireless_rx_voltage, chip);
+
+  10864  
+  10865: 	prEntry_tmp = proc_create_data("current_out", 0664, prEntry_da,
+  10866  				       &proc_wireless_current_out_ops, chip);
+
+  10872  
+  10873: 	prEntry_tmp = proc_create_data("ftm_mode", 0664, prEntry_da,
+  10874  				       &proc_wireless_ftm_mode_ops, chip);
+
+  10880  
+  10881: 	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da,
+  10882  				       &proc_wireless_tx_ops, chip);
+
+  10888  
+  10889: 	prEntry_tmp = proc_create_data("epp_or_bpp", 0664, prEntry_da,
+  10890  				       &proc_wireless_epp_ops, chip);
+
+  10896  
+  10897: 	prEntry_tmp = proc_create_data("charge_pump_en", 0664, prEntry_da,
+  10898  				       &proc_wireless_charge_pump_ops, chip);
+
+  10904  
+  10905: 	prEntry_tmp = proc_create_data("bat_mult", 0664, prEntry_da,
+  10906  				       &proc_wireless_bat_mult_ops, chip);
+
+  10912  
+  10913: 	prEntry_tmp = proc_create_data("deviated", 0664, prEntry_da,
+  10914  				       &proc_wireless_deviated_ops, chip);
+
+  10920  
+  10921: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da,
+  10922  				       &proc_wireless_rx_ops, chip);
+
+  10929  #ifdef OPLUS_CHG_ADB_FW_DEBUG
+  10930: 	prEntry_tmp = proc_create_data("upgrade_firmware", 0664, prEntry_da,
+  10931  				       &proc_upgrade_firmware_ops, chip);
+
+  10938  
+  10939: 	prEntry_tmp = proc_create_data("rx_freq", 0664, prEntry_da,
+  10940  				       &proc_wireless_rx_freq_ops, chip);
+
+  10946  
+  10947: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  10948  				       &proc_wireless_user_sleep_mode_ops, chip);
+
+  10954  
+  10955: 	prEntry_tmp = proc_create_data("idt_adc_test", 0664, prEntry_da,
+  10956  				       &proc_wireless_idt_adc_test_ops, chip);
+
+  10963  #ifdef HW_TEST_EDITION
+  10964: 	prEntry_tmp = proc_create_data("w30w_time", 0664, prEntry_da,
+  10965  				       &proc_wireless_w30w_time_ops, chip);
+
+  10972  
+  10973: 	prEntry_tmp = proc_create_data("rx_power", 0664, prEntry_da,
+  10974  				       &proc_wireless_rx_power_ops, chip);
+
+  10980  
+  10981: 	prEntry_tmp = proc_create_data("tx_power", 0664, prEntry_da,
+  10982  				       &proc_wireless_tx_power_ops, chip);
+
+  10988  
+  10989: 	prEntry_tmp = proc_create_data("rx_version", 0664, prEntry_da,
+  10990  				       &proc_wireless_rx_version_ops, chip);
+
+  10996  
+  10997: 	prEntry_tmp = proc_create_data("wired_otg_online", 0664, prEntry_da,
+  10998  				       &proc_wired_otg_online_ops, chip);
+
+drivers/power/oplus/wireless_ic/oplus_p922x.c:
+  5484  
+  5485: 	p = proc_create("p922x_add_log", 0664, NULL, &p922x_add_log_proc_fops);
+  5486  	if (!p) {
+
+  5541  
+  5542: 	p = proc_create("p922x_data_log", 0664, NULL, &p922x_data_log_proc_fops);
+  5543  	if (!p)
+
+  6840  
+  6841: 	prEntry_tmp = proc_create_data("voltage_rect", 0664, prEntry_da,
+  6842  				       &proc_wireless_voltage_rect_ops, chip);
+
+  6848  
+  6849: 	prEntry_tmp = proc_create_data("rx_voltage", 0664, prEntry_da,
+  6850  				       &proc_wireless_rx_voltage, chip);
+
+  6856  
+  6857: 	prEntry_tmp = proc_create_data("current_out", 0664, prEntry_da,
+  6858  				       &proc_wireless_current_out_ops, chip);
+
+  6864  
+  6865: 	prEntry_tmp = proc_create_data("ftm_mode", 0664, prEntry_da,
+  6866  				       &proc_wireless_ftm_mode_ops, chip);
+
+  6872  
+  6873: 	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da,
+  6874  				       &proc_wireless_tx_ops, chip);
+
+  6880  
+  6881: 	prEntry_tmp = proc_create_data("epp_or_bpp", 0664, prEntry_da,
+  6882  				       &proc_wireless_epp_ops, chip);
+
+  6888  
+  6889: 	prEntry_tmp = proc_create_data("charge_pump_en", 0664, prEntry_da,
+  6890  				       &proc_wireless_charge_pump_ops, chip);
+
+  6896  
+  6897: 	prEntry_tmp = proc_create_data("bat_mult", 0664, prEntry_da,
+  6898  				       &proc_wireless_bat_mult_ops, chip);
+
+  6904  
+  6905: 	prEntry_tmp = proc_create_data("deviated", 0664, prEntry_da,
+  6906  				       &proc_wireless_deviated_ops, chip);
+
+  6912  
+  6913: 	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da,
+  6914  				       &proc_wireless_rx_ops, chip);
+
+  6920  
+  6921: 	prEntry_tmp = proc_create_data("upgrade_firmware", 0664, prEntry_da,
+  6922  				       &proc_upgrade_firmware_ops, chip);
+
+  6928  
+  6929: 	prEntry_tmp = proc_create_data("rx_freq", 0664, prEntry_da,
+  6930  				       &proc_wireless_rx_freq_ops, chip);
+
+  6936  
+  6937: 	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+  6938  				       &proc_wireless_user_sleep_mode_ops, chip);
+
+  6944  
+  6945: 	prEntry_tmp = proc_create_data("idt_adc_test", 0664, prEntry_da,
+  6946  				       &proc_wireless_idt_adc_test_ops, chip);
+
+  6953  #ifdef HW_TEST_EDITION
+  6954: 	prEntry_tmp = proc_create_data("w30w_time", 0664, prEntry_da,
+  6955  				       &proc_wireless_w30w_time_ops, chip);
+
+drivers/power/oplus/wireless_ic/oplus_p9418.c:
+  1880  
+  1881: 	p = proc_create("p9418_add_log", 0664, NULL, &p9418_add_log_proc_fops);
+  1882  	if (!p) {
+
+  1936  
+  1937: 	p = proc_create("p9418_data_log", 0664, NULL, &p9418_data_log_proc_fops);
+  1938  	if (!p)
+
+drivers/power/oplus/wireless_ic/oplus_ra9530.c:
+  2119  
+  2120: 	p = proc_create("ra9530_add_log", 0664, NULL, &ra9530_add_log_proc_fops);
+  2121  	if (!p) {
+
+  2168  
+  2169: 	p = proc_create("ra9530_data_log", 0664, NULL, &ra9530_data_log_proc_fops);
+  2170  	if (!p)
+
+drivers/regulator/virtual.c:
+  264  
+  265: static DEVICE_ATTR(min_microvolts, 0664, show_min_uV, set_min_uV);
+  266: static DEVICE_ATTR(max_microvolts, 0664, show_max_uV, set_max_uV);
+  267: static DEVICE_ATTR(min_microamps, 0664, show_min_uA, set_min_uA);
+  268: static DEVICE_ATTR(max_microamps, 0664, show_max_uA, set_max_uA);
+  269: static DEVICE_ATTR(mode, 0664, show_mode, set_mode);
+  270  
+
+drivers/soc/oplus/boot/oplus_phoenix/phoenix_reboot_speed.c:
+  626  
+  627: 	pe = proc_create("bootprof", 0664, NULL, &mt_bootprof_fops);
+  628  	if (!pe) {
+
+drivers/soc/oplus/dfr/common/last_boot_reason/last_boot_reason.c:
+  309  
+  310:     pe = proc_create("shutdown_recorder", 0664, NULL, &shutdown_recorder_fops);
+  311      if (!pe) {
+
+drivers/soc/oplus/dfr/common/shutdown_detect/shutdown_detect.c:
+  748  	pr_err("shutdown_detect:register shutdown_detect interface\n");
+  749: 	pe = proc_create("shutdown_detect", 0664, NULL, &shutdown_detect_fops);
+  750  	if (!pe) {
+
+drivers/soc/oplus/dfr/qcom/qcom_pmicwd/qcom_pwkpwr.c:
+  229  
+  230: 	pe = proc_create("kpdpwr", 0664, NULL, &kpdpwr_proc_pops);
+  231  	if (!pe) {
+
+drivers/soc/oplus/dft/common/feedback/kernel_fb.c:
+  715  
+  716: 	d_entry = proc_create_data("kern_fb", 0664, NULL, &kern_fb_fops, NULL);
+  717  
+
+  723  
+  724: 	d_entry = proc_create_data("crash_cause", 0664, NULL, &crash_cause_fops, NULL);
+  725  
+
+drivers/soc/oplus/dft/common/feedback/gki_mtk/kernel_fb.c:
+  674  
+  675: 	d_entry = proc_create_data("kern_fb", 0664, NULL, &kern_fb_fops, NULL);
+  676  
+
+  682  
+  683: 	d_entry = proc_create_data("crash_cause", 0664, NULL, &crash_cause_fops, NULL);
+  684  
+
+drivers/soc/oplus/multimedia/oplus_mm_kevent_fb.c:
+  643  
+  644: 	d_entry = proc_create_data("mm_fb", 0664, NULL, &mm_fb_fops, NULL);
+  645  	if (!d_entry) {
+
+  650  
+  651: 	d_entry = proc_create_data("adsp_crash_cause", 0664, NULL,
+  652  				   &adsp_crash_cause_fops, NULL);
+
+drivers/staging/greybus/audio_manager_module.c:
+   80  static struct gb_audio_manager_module_attribute gb_audio_module_name_attribute =
+   81: 	__ATTR(name, 0664, gb_audio_module_name_show, NULL);
+   82  
+
+   90  static struct gb_audio_manager_module_attribute gb_audio_module_vid_attribute =
+   91: 	__ATTR(vid, 0664, gb_audio_module_vid_show, NULL);
+   92  
+
+  100  static struct gb_audio_manager_module_attribute gb_audio_module_pid_attribute =
+  101: 	__ATTR(pid, 0664, gb_audio_module_pid_show, NULL);
+  102  
+
+  111  					gb_audio_module_intf_id_attribute =
+  112: 	__ATTR(intf_id, 0664, gb_audio_module_intf_id_show, NULL);
+  113  
+
+  122  					gb_audio_module_ip_devices_attribute =
+  123: 	__ATTR(ip_devices, 0664, gb_audio_module_ip_devices_show, NULL);
+  124  
+
+  133  					gb_audio_module_op_devices_attribute =
+  134: 	__ATTR(op_devices, 0664, gb_audio_module_op_devices_show, NULL);
+  135  
+
+drivers/staging/greybus/audio_manager_sysfs.c:
+  36  static struct kobj_attribute manager_add_attribute =
+  37: 	__ATTR(add, 0664, NULL, manager_sysfs_add_store);
+  38  
+
+  57  static struct kobj_attribute manager_remove_attribute =
+  58: 	__ATTR(remove, 0664, NULL, manager_sysfs_remove_store);
+  59  
+
+  81  static struct kobj_attribute manager_dump_attribute =
+  82: 	__ATTR(dump, 0664, NULL, manager_sysfs_dump_store);
+  83  
+
+drivers/staging/qcacld-3.0/core/hdd/src/wlan_hdd_sysfs_dcm.c:
+  141  
+  142: static DEVICE_ATTR(dcm, 0664, wlan_hdd_sysfs_dcm_show,
+  143  		   wlan_hdd_sysfs_dcm_store);
+
+drivers/staging/qcacld-3.0/core/hdd/src/wlan_hdd_sysfs_dp_aggregation.c:
+  148  static struct kobj_attribute dp_aggregation_attribute =
+  149: 	__ATTR(dp_aggregation, 0664, hdd_sysfs_dp_aggregation_show,
+  150  	       hdd_sysfs_dp_aggregation_store);
+
+drivers/staging/qcacld-3.0/core/hdd/src/wlan_hdd_sysfs_get_freq_for_pwr.c:
+  159  static struct kobj_attribute valid_freq_attribute =
+  160: __ATTR(valid_freq, 0664, wlan_hdd_sysfs_freq_show, wlan_hdd_sysfs_power_store);
+  161  
+
+drivers/staging/qcacld-3.0/core/hdd/src/wlan_hdd_sysfs_swlm.c:
+  125  static struct kobj_attribute dp_swlm_attribute =
+  126: 	__ATTR(dp_swlm, 0664, hdd_sysfs_dp_swlm_show,
+  127  	       hdd_sysfs_dp_swlm_store);
+
+drivers/staging/qcacld-3.0/core/hdd/src/wlan_hdd_sysfs_txrx_stats_console.c:
+  196  static struct kobj_attribute dp_txrx_stats_attribute =
+  197: 	__ATTR(txrx_stats, 0664,  hdd_sysfs_dp_txrx_stats_show,
+  198  	       hdd_sysfs_dp_txrx_stats_store);
+
+drivers/uio/uio_fsl_elbc_gpcm.c:
+  70  
+  71: static DEVICE_ATTR(reg_br, 0664, reg_show, reg_store);
+  72: static DEVICE_ATTR(reg_or, 0664, reg_show, reg_store);
+  73  
+
+drivers/video/backlight/adp5520_bl.c:
+  180  }
+  181: static DEVICE_ATTR(dark_max, 0664, adp5520_bl_dark_max_show,
+  182  			adp5520_bl_dark_max_store);
+
+  195  }
+  196: static DEVICE_ATTR(office_max, 0664, adp5520_bl_office_max_show,
+  197  			adp5520_bl_office_max_store);
+
+  217  }
+  218: static DEVICE_ATTR(daylight_max, 0664, adp5520_bl_daylight_max_show,
+  219  			adp5520_bl_daylight_max_store);
+
+  232  }
+  233: static DEVICE_ATTR(dark_dim, 0664, adp5520_bl_dark_dim_show,
+  234  			adp5520_bl_dark_dim_store);
+
+  247  }
+  248: static DEVICE_ATTR(office_dim, 0664, adp5520_bl_office_dim_show,
+  249  			adp5520_bl_office_dim_store);
+
+  262  }
+  263: static DEVICE_ATTR(daylight_dim, 0664, adp5520_bl_daylight_dim_show,
+  264  			adp5520_bl_daylight_dim_store);
+
+drivers/video/backlight/adp8860_bl.c:
+  466  
+  467: static DEVICE_ATTR(l3_dark_max, 0664, adp8860_bl_l3_dark_max_show,
+  468  			adp8860_bl_l3_dark_max_store);
+
+  480  }
+  481: static DEVICE_ATTR(l2_office_max, 0664, adp8860_bl_l2_office_max_show,
+  482  			adp8860_bl_l2_office_max_store);
+
+  500  }
+  501: static DEVICE_ATTR(l1_daylight_max, 0664, adp8860_bl_l1_daylight_max_show,
+  502  			adp8860_bl_l1_daylight_max_store);
+
+  515  }
+  516: static DEVICE_ATTR(l3_dark_dim, 0664, adp8860_bl_l3_dark_dim_show,
+  517  			adp8860_bl_l3_dark_dim_store);
+
+  530  }
+  531: static DEVICE_ATTR(l2_office_dim, 0664, adp8860_bl_l2_office_dim_show,
+  532  			adp8860_bl_l2_office_dim_store);
+
+  545  }
+  546: static DEVICE_ATTR(l1_daylight_dim, 0664, adp8860_bl_l1_daylight_dim_show,
+  547  			adp8860_bl_l1_daylight_dim_store);
+
+  627  }
+  628: static DEVICE_ATTR(ambient_light_zone, 0664,
+  629  		adp8860_bl_ambient_light_zone_show,
+
+drivers/video/backlight/adp8870_bl.c:
+  586  }
+  587: static DEVICE_ATTR(l5_dark_max, 0664, adp8870_bl_l5_dark_max_show,
+  588  			adp8870_bl_l5_dark_max_store);
+
+  601  }
+  602: static DEVICE_ATTR(l4_indoor_max, 0664, adp8870_bl_l4_indoor_max_show,
+  603  			adp8870_bl_l4_indoor_max_store);
+
+  617  
+  618: static DEVICE_ATTR(l3_office_max, 0664, adp8870_bl_l3_office_max_show,
+  619  			adp8870_bl_l3_office_max_store);
+
+  631  }
+  632: static DEVICE_ATTR(l2_bright_max, 0664, adp8870_bl_l2_bright_max_show,
+  633  			adp8870_bl_l2_bright_max_store);
+
+  651  }
+  652: static DEVICE_ATTR(l1_daylight_max, 0664, adp8870_bl_l1_daylight_max_show,
+  653  			adp8870_bl_l1_daylight_max_store);
+
+  666  }
+  667: static DEVICE_ATTR(l5_dark_dim, 0664, adp8870_bl_l5_dark_dim_show,
+  668  			adp8870_bl_l5_dark_dim_store);
+
+  681  }
+  682: static DEVICE_ATTR(l4_indoor_dim, 0664, adp8870_bl_l4_indoor_dim_show,
+  683  			adp8870_bl_l4_indoor_dim_store);
+
+  697  }
+  698: static DEVICE_ATTR(l3_office_dim, 0664, adp8870_bl_l3_office_dim_show,
+  699  			adp8870_bl_l3_office_dim_store);
+
+  712  }
+  713: static DEVICE_ATTR(l2_bright_dim, 0664, adp8870_bl_l2_bright_dim_show,
+  714  			adp8870_bl_l2_bright_dim_store);
+
+  727  }
+  728: static DEVICE_ATTR(l1_daylight_dim, 0664, adp8870_bl_l1_daylight_dim_show,
+  729  			adp8870_bl_l1_daylight_dim_store);
+
+  811  }
+  812: static DEVICE_ATTR(ambient_light_zone, 0664,
+  813  		adp8870_bl_ambient_light_zone_show,
+
+drivers/video/backlight/qcom-spmi-wled.c:
+  1886  static struct device_attribute wled_flash_attrs[] = {
+  1887: 	__ATTR(max_avail_current, 0664, wled_flash_max_avail_current_show,
+  1888  		NULL),
+
+drivers/video/fbdev/s3c2410fb.c:
+  613  
+  614: static DEVICE_ATTR(debug, 0664, s3c2410fb_debug_show, s3c2410fb_debug_store);
+  615  
+
+drivers/video/fbdev/sm501fb.c:
+  1215  /* Prepare the device_attr for registration with sysfs later */
+  1216: static DEVICE_ATTR(crt_src, 0664, sm501fb_crtsrc_show, sm501fb_crtsrc_store);
+  1217  
+
+drivers/video/fbdev/omap/omapfb_main.c:
+  1359  	__ATTR(name, 0444, omapfb_show_panel_name, NULL);
+  1360: static DEVICE_ATTR(backlight_level, 0664,
+  1361  		   omapfb_show_bklight_level, omapfb_store_bklight_level);
+
+fs/orangefs/orangefs-sysfs.c:
+  833  static struct orangefs_attribute op_timeout_secs_attribute =
+  834: 	__ATTR(op_timeout_secs, 0664, sysfs_int_show, sysfs_int_store);
+  835  
+  836  static struct orangefs_attribute slot_timeout_secs_attribute =
+  837: 	__ATTR(slot_timeout_secs, 0664, sysfs_int_show, sysfs_int_store);
+  838  
+  839  static struct orangefs_attribute cache_timeout_msecs_attribute =
+  840: 	__ATTR(cache_timeout_msecs, 0664, sysfs_int_show, sysfs_int_store);
+  841  
+  842  static struct orangefs_attribute dcache_timeout_msecs_attribute =
+  843: 	__ATTR(dcache_timeout_msecs, 0664, sysfs_int_show, sysfs_int_store);
+  844  
+  845  static struct orangefs_attribute getattr_timeout_msecs_attribute =
+  846: 	__ATTR(getattr_timeout_msecs, 0664, sysfs_int_show, sysfs_int_store);
+  847  
+  848  static struct orangefs_attribute readahead_count_attribute =
+  849: 	__ATTR(readahead_count, 0664, sysfs_service_op_show,
+  850  	       sysfs_service_op_store);
+
+  852  static struct orangefs_attribute readahead_size_attribute =
+  853: 	__ATTR(readahead_size, 0664, sysfs_service_op_show,
+  854  	       sysfs_service_op_store);
+
+  856  static struct orangefs_attribute readahead_count_size_attribute =
+  857: 	__ATTR(readahead_count_size, 0664, sysfs_service_op_show,
+  858  	       sysfs_service_op_store);
+
+  860  static struct orangefs_attribute readahead_readcnt_attribute =
+  861: 	__ATTR(readahead_readcnt, 0664, sysfs_service_op_show,
+  862  	       sysfs_service_op_store);
+
+mm/showmem.c:
+  41  {
+  42: 	debugfs_create_file("show_mem_notifier", 0664, NULL, NULL,
+  43  				&show_mem_notifier_debug_ops);
+
+samples/kobject/kobject-example.c:
+  47  static struct kobj_attribute foo_attribute =
+  48: 	__ATTR(foo, 0664, foo_show, foo_store);
+  49  
+
+  82  static struct kobj_attribute baz_attribute =
+  83: 	__ATTR(baz, 0664, b_show, b_store);
+  84  static struct kobj_attribute bar_attribute =
+  85: 	__ATTR(bar, 0664, b_show, b_store);
+  86  
+
+samples/kobject/kset-example.c:
+  131  static struct foo_attribute foo_attribute =
+  132: 	__ATTR(foo, 0664, foo_show, foo_store);
+  133  
+
+  166  static struct foo_attribute baz_attribute =
+  167: 	__ATTR(baz, 0664, b_show, b_store);
+  168  static struct foo_attribute bar_attribute =
+  169: 	__ATTR(bar, 0664, b_show, b_store);
+  170  
+
+techpack/display/rotator/sde_rotator_dev.c:
+  758  static struct kobj_attribute sde_rotator_ctx_attr =
+  759: 	__ATTR(state, 0664, sde_rotator_ctx_show, NULL);
+  760  

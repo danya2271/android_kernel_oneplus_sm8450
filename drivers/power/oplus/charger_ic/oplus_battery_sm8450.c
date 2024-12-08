@@ -8016,7 +8016,6 @@ static void oplus_recheck_input_current_work(struct work_struct *work)
 	}
 	bcdev = chip->pmic_spmi.bcdev_chip;
 	if (!bcdev) {
-		chg_err("bcdev is NULL!\n");
 		return;
 	}
 	chg_err("reset input current count:%d\n", count);

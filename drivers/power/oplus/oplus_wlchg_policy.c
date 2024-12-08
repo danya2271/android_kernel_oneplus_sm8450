@@ -6045,14 +6045,14 @@ static int init_wireless_charge_proc(struct op_chg_chip *chip)
 		goto fail;
 	}
 
-	prEntry_tmp = proc_create_data("enable_tx", 0664, prEntry_da, &proc_wireless_tx_ops, chip);
+	prEntry_tmp = proc_create_data("enable_tx", 0666, prEntry_da, &proc_wireless_tx_ops, chip);
 	if (prEntry_tmp == NULL) {
 		ret = -ENOMEM;
 		chg_err("%s: Couldn't create proc entry, %d\n", __func__, __LINE__);
 		goto fail;
 	}
 
-	prEntry_tmp = proc_create_data("quiet_mode", 0664, prEntry_da, &proc_wireless_quiet_mode_ops, chip);
+	prEntry_tmp = proc_create_data("quiet_mode", 0666, prEntry_da, &proc_wireless_quiet_mode_ops, chip);
 	if (prEntry_tmp == NULL) {
 		ret = -ENOMEM;
 		chg_err("%s: Couldn't create proc entry, %d\n", __func__, __LINE__);
@@ -6073,7 +6073,7 @@ static int init_wireless_charge_proc(struct op_chg_chip *chip)
 		goto fail;
 	}
 
-	prEntry_tmp = proc_create_data("enable_rx", 0664, prEntry_da, &proc_wireless_rx_ops, chip);
+	prEntry_tmp = proc_create_data("enable_rx", 0666, prEntry_da, &proc_wireless_rx_ops, chip);
 	if (prEntry_tmp == NULL) {
 		ret = -ENOMEM;
 		chg_err("%s: Couldn't create proc entry, %d\n", __func__, __LINE__);
@@ -6094,7 +6094,7 @@ static int init_wireless_charge_proc(struct op_chg_chip *chip)
 		goto fail;
 	}
 
-	prEntry_tmp = proc_create_data("user_sleep_mode", 0664, prEntry_da,
+	prEntry_tmp = proc_create_data("user_sleep_mode", 0666, prEntry_da,
 					&proc_wireless_user_sleep_mode_ops, chip);
 	if (prEntry_tmp == NULL) {
 		ret = -ENOMEM;
