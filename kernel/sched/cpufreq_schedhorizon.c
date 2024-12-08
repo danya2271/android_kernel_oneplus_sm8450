@@ -403,7 +403,7 @@ unsigned long apply_dvfs_headroom2(int cpu, unsigned long util, unsigned long ma
 {
 	unsigned long headroom;
 	if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
-		headroom = util + (util >> 1);
+		headroom = util + util;
 	} else {
 		headroom = util + (util >> 3);
 	}
