@@ -7,8 +7,8 @@
 #
 
 # Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=6800
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=3500
+KBUILD_CFLAGS  += -mllvm -inline-threshold=7800
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=7500
 
 obj-y				+= irqchip/
 obj-y				+= bus/
