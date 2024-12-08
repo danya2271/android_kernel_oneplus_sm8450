@@ -421,7 +421,6 @@ struct ufs_qcom_host {
 	int ufs_dev_types;
 	bool ufs_dev_revert;
 
-	bool disable_lpm;
 	struct qcom_bus_scale_data *qbsd;
 	struct ufs_vreg *vddp_ref_clk;
 	struct ufs_vreg *vccq_parent;

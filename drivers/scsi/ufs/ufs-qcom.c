@@ -112,7 +112,6 @@ static int ufs_qcom_set_dme_vs_core_clk_ctrl_clear_div(struct ufs_hba *hba,
 						       u32 clk_1us_cycles,
 						       u32 clk_40ns_cycles);
 static void ufs_qcom_parse_limits(struct ufs_qcom_host *host);
-static void ufs_qcom_parse_lpm(struct ufs_qcom_host *host);
 static int ufs_qcom_set_dme_vs_core_clk_ctrl_max_freq_mode(struct ufs_hba *hba);
 static int ufs_qcom_init_sysfs(struct ufs_hba *hba);
 static int ufs_qcom_update_qos_constraints(struct qos_cpu_group *qcg,
@@ -2312,9 +2311,6 @@ static void ufs_qcom_advertise_quirks(struct ufs_hba *hba)
 				| UFSHCD_QUIRK_BROKEN_PA_RXHSUNTERMCAP);
 	}
 
-	if (host->disable_lpm)
-		hba->quirks |= UFSHCD_QUIRK_BROKEN_AUTO_HIBERN8;
-
 #if IS_ENABLED(CONFIG_SCSI_UFS_CRYPTO_QTI)
 	hba->quirks |= UFSHCD_QUIRK_CUSTOM_KEYSLOT_MANAGER;
 #endif
@@ -2324,14 +2320,12 @@ static void ufs_qcom_set_caps(struct ufs_hba *hba)
 {
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
 
-	if (!host->disable_lpm) {
-		hba->caps |= UFSHCD_CAP_CLK_GATING |
-		UFSHCD_CAP_HIBERN8_WITH_CLK_GATING |
-		UFSHCD_CAP_AUTO_BKOPS_SUSPEND |
-		UFSHCD_CAP_RPM_AUTOSUSPEND;
-		hba->caps |= UFSHCD_CAP_WB_EN;
-		hba->caps |= UFSHCD_CAP_AGGR_POWER_COLLAPSE;
-	}
+	hba->caps |= UFSHCD_CAP_CLK_GATING |
+	UFSHCD_CAP_HIBERN8_WITH_CLK_GATING |
+	UFSHCD_CAP_AUTO_BKOPS_SUSPEND |
+	UFSHCD_CAP_RPM_AUTOSUSPEND;
+	hba->caps |= UFSHCD_CAP_WB_EN;
+	hba->caps |= UFSHCD_CAP_AGGR_POWER_COLLAPSE;
 
 	hba->caps |= UFSHCD_CAP_CRYPTO;
 
@@ -3404,9 +3398,6 @@ static int ufs_qcom_init(struct ufs_hba *hba)
 	ufs_qcom_parse_g4_workaround_flag(host);
 	ufs_qcom_parse_turbo_clk_freq(host);
 	ufs_qcom_update_max_clk_freq(hba);
-	ufs_qcom_parse_lpm(host);
-	if (host->disable_lpm)
-		pm_runtime_forbid(host->hba->dev);
 
 	ufs_qcom_set_caps(hba);
 	ufs_qcom_advertise_quirks(hba);
@@ -4423,18 +4414,6 @@ static void ufs_qcom_hook_clock_scaling(void *unused, struct ufs_hba *hba, bool 
 		*force_scaling = false;
 		 host->turbo_down_thres_cnt = 0;
 	}
-}
-/*
- * ufs_qcom_parse_lpm - read from DTS whether LPM modes should be disabled.
- */
-static void ufs_qcom_parse_lpm(struct ufs_qcom_host *host)
-{
-	struct device_node *node = host->hba->dev->of_node;
-
-	host->disable_lpm = false;
-	if (host->disable_lpm)
-		dev_info(host->hba->dev, "(%s) All LPM is disabled\n",
-			 __func__);
 }
 
 /**
