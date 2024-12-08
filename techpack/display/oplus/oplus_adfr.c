@@ -726,7 +726,7 @@ int dsi_display_qsync_restore(void *dsi_display)
 	}
 
 	params.qsync_mode = display->current_qsync_mode;
-	params.qsync_dynamic_min_fps = display->current_qsync_dynamic_min_fps;
+	params.qsync_dynamic_min_fps = 10;
 
 	SDE_ATRACE_BEGIN("dsi_display_qsync_restore");
 
@@ -2712,7 +2712,7 @@ int oplus_adfr_send_min_fps_event(unsigned int h_skew, unsigned int min_fps)
 			data = OPLUS_ADFR_AUTO_MIN_FPS_20HZ;
 		} else {
 			/* generally greater than 20 */
-			data = OPLUS_ADFR_AUTO_MIN_FPS_10HZ;
+			data = OPLUS_ADFR_AUTO_MIN_FPS_1HZ;
 		}
 	}
 
