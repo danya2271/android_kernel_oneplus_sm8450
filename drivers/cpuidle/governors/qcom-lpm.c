@@ -25,6 +25,7 @@
 #include <trace/events/ipi.h>
 #include <trace/events/power.h>
 #include <trace/hooks/cpuidle.h>
+#include <linux/rcupdate.h>
 
 #include "qcom-lpm.h"
 #define CREATE_TRACE_POINTS
@@ -378,8 +379,8 @@ static void update_cpu_history(struct lpm_cpu *cpu_gov)
 	lpm_history->mode[lpm_history->samples_idx] = idx;
 	cpu_gov->pred_type = LPM_PRED_RESET;
 
-	trace_gov_pred_hist(idx, lpm_history->resi[lpm_history->samples_idx],
-			    tmr);
+	RCU_NONIDLE(trace_gov_pred_hist(idx, lpm_history->resi[lpm_history->samples_idx],
+			    tmr));
 
 	if (lpm_history->nsamp < MAXSAMPLES)
 		lpm_history->nsamp++;
@@ -652,8 +653,8 @@ done:
 		reason |= UPDATE_REASON(i, LPM_SELECT_STATE_SCHED_BIAS);
 	}
 
-	trace_lpm_gov_select(i, latency_req, duration_ns, reason);
-	trace_gov_pred_select(cpu_gov->pred_type, cpu_gov->predicted, htime);
+	RCU_NONIDLE(trace_lpm_gov_select(i, latency_req, duration_ns, reason));
+	RCU_NONIDLE(trace_gov_pred_select(cpu_gov->pred_type, cpu_gov->predicted, htime));
 
 	return i;
 }
@@ -691,7 +692,7 @@ static void lpm_idle_enter(void *unused, int *state, struct cpuidle_device *dev)
 	if (cpu_gov->ipi_pending) {
 		reason = UPDATE_REASON(*state, LPM_SELECT_STATE_IPI_PENDING);
 		*state = 0;
-		trace_lpm_gov_select(*state, 0xdeaffeed, 0xdeaffeed, reason);
+		RCU_NONIDLE(trace_lpm_gov_select(*state, 0xdeaffeed, 0xdeaffeed, reason));
 	}
 	spin_unlock_irqrestore(&cpu_gov->lock, flags);
 }
