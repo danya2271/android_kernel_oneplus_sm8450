@@ -77,8 +77,6 @@ static u32 oplus_adfr_auto_mode = 0;
 bool oplus_adfr_auto_fakeframe_updated = false;
 static u32 oplus_adfr_auto_fakeframe = 0;
 bool oplus_adfr_auto_min_fps_updated = false;
-static u32 oplus_adfr_auto_min_fps = 0;
-static u32 oplus_adfr_auto_sw_fps = 0;
 static u64 oplus_adfr_auto_update_counter = 0;
 bool oplus_adfr_need_filter_auto_on_cmd = false;
 static u32 oplus_adfr_exit_idle_minfps = 0;
@@ -121,12 +119,7 @@ void oplus_adfr_init(void *panel_node)
 		oplus_adfr_config = 0;
 	}
 
-	rc = of_property_read_u32(of_node, "oplus,adfr-exit-idle-min-fps", &config);
-	if (rc == 0) {
-		oplus_adfr_exit_idle_minfps = config;
-	} else {
-		oplus_adfr_exit_idle_minfps = 0;
-	}
+	oplus_adfr_exit_idle_minfps = 40;
 
 	/* add for adfr hardware revision compatibility */
 	if (oplus_adfr_is_support()) {
@@ -183,14 +176,12 @@ enum oplus_vsync_mode oplus_adfr_get_vsync_mode(void)
 
 inline bool oplus_adfr_idle_mode_is_enable(void)
 {
-	return (bool)(ADFR_GET_IDLE_MODE_CONFIG(oplus_adfr_config) &&
-		!(oplus_adfr_debug & OPLUS_ADFR_DEBUG_IDLE_MODE_DISABLE));
+	return 1;
 }
 
 inline bool oplus_adfr_is_support(void)
 {
-	return (bool)(ADFR_GET_GLOBAL_CONFIG(oplus_adfr_config) &&
-		!(oplus_adfr_debug & OPLUS_ADFR_DEBUG_GLOBAL_DISABLE));
+	return 1;
 }
 
 
@@ -682,12 +673,13 @@ int dsi_display_qsync_update_min_fps(void *dsi_display, void *dsi_params)
 	}
 
 	/* allow qsync off but update qsync min fps only */
-	SDE_ATRACE_BEGIN("dsi_display_qsync_update_min_fps");
+	SDE_ATRACE_BEGIN("dsi_display_qsync_update_min_fps #3");
 
 	mutex_lock(&display->display_lock);
 
 	display_for_each_ctrl(i, display) {
 		/* send the commands to updaet qsync min fps */
+		pr_info("dsi_panel_send_qsync_min_fps_dcs #2");
 		rc = dsi_panel_send_qsync_min_fps_dcs(display->panel, i, params->qsync_dynamic_min_fps);
 		if (rc) {
 			DSI_ERR("kVRR fail qsync UPDATE cmds rc:%d\n", rc);
@@ -1244,7 +1236,7 @@ int dsi_panel_send_qsync_min_fps_dcs(void *dsi_panel,
 		if (rc)
 			DSI_ERR("kVRR [%s] failed to send DSI_CMD_QSYNC_MIN_FPS cmds rc=%d\n",
 				panel->name, rc);
-
+		pr_info("oplus_adfr_send_min_fps_event #3");
 		oplus_adfr_send_min_fps_event(OPLUS_ADFR, min_fps);
 	} else {
 		DSI_ERR("kVRR ctrl:%d failed to sets qsync min fps %u, %d\n", ctrl_idx, min_fps, i);
@@ -1407,7 +1399,6 @@ int oplus_adfr_fakeframe_status_update(void *dsi_panel, bool force_disable)
 			}
 		}
 	}
-	DSI_INFO("kVRR sw_fps %d, fakeframe %d\n", oplus_adfr_auto_sw_fps, oplus_adfr_auto_fakeframe);
 	SDE_ATRACE_INT("oplus_adfr_auto_fakeframe", oplus_adfr_auto_fakeframe);
 
 	return 0;
@@ -1461,8 +1452,6 @@ void dsi_panel_adfr_status_reset(void *dsi_panel)
 		SDE_ATRACE_INT("oplus_adfr_auto_mode_cmd", oplus_adfr_auto_mode);
 		SDE_ATRACE_INT("oplus_adfr_auto_min_fps_cmd", oplus_adfr_auto_min_fps_cmd);
 		SDE_ATRACE_INT("oplus_adfr_qsync_mode_minfps_cmd", 0);
-		DSI_INFO("kVRR auto mode reset: auto mode %d, fakeframe %d, min fps %d\n", oplus_adfr_auto_mode,
-			oplus_adfr_auto_fakeframe, oplus_adfr_auto_min_fps);
 	} else {
 		oplus_adfr_send_min_fps_event(OPLUS_ADFR, refresh_rate);
 
@@ -2700,23 +2689,34 @@ int oplus_adfr_send_min_fps_event(unsigned int h_skew, unsigned int min_fps)
 	if (h_skew == OPLUS_ADFR) {
 		if (min_fps >= 120) {
 			data = OPLUS_ADFR_AUTO_MIN_FPS_MAX;
+			pr_info("Using 120HZ refresh rate");
 		} else if (min_fps >= 60) {
 			data = OPLUS_ADFR_AUTO_MIN_FPS_60HZ;
+			pr_info("Using 60HZ refresh rate");
 		} else if (min_fps >= 40) {
 			data = OPLUS_ADFR_AUTO_MIN_FPS_40HZ;
+			pr_info("Using 40HZ refresh rate");
 		} else if (min_fps >= 30) {
 			data = OPLUS_ADFR_AUTO_MIN_FPS_30HZ;
+			pr_info("Using 30HZ refresh rate");
 		} else if (min_fps >= 24) {
 			data = OPLUS_ADFR_AUTO_MIN_FPS_24HZ;
+			pr_info("Using 24HZ refresh rate");
 		} else if (min_fps >= 20) {
 			data = OPLUS_ADFR_AUTO_MIN_FPS_20HZ;
+			pr_info("Using 20HZ refresh rate");
+		} else if (min_fps >= 10) {
+			data = OPLUS_ADFR_AUTO_MIN_FPS_10HZ;
+			pr_info("Using 20HZ refresh rate");
 		} else {
 			/* generally greater than 20 */
 			data = OPLUS_ADFR_AUTO_MIN_FPS_1HZ;
+			pr_info("Using 1HZ refresh rate");
 		}
 	}
 
 	oplus_event_data_notifier_trigger(DRM_PANEL_EVENT_ADFR_MIN_FPS, data, true);
+
 	DSI_DEBUG("kVRR DRM_PANEL_EVENT_ADFR_MIN_FPS:%u\n", data);
 
 	DSI_DEBUG("KVRR end\n");
@@ -2737,40 +2737,9 @@ int oplus_adfr_temperature_detection_handle(void *dsi_display, int ntc_temp, int
 		return 0;
 	}
 
-	if (!display || !display->panel || !display->panel->cur_mode) {
-		DSI_ERR("KVRR Invalid params\n");
-		return -EINVAL;
-	}
-
 	refresh_rate = display->panel->cur_mode->timing.refresh_rate;
 	h_skew = display->panel->cur_mode->timing.h_skew;
 
-	if ((h_skew != OPLUS_ADFR)
-			&& ((abs(ntc_temp - shell_temp) >= 5)
-				|| (ntc_temp < 0)
-				|| (shell_temp < 0)
-				|| (((ntc_temp > 45) || (shell_temp > 45)) && (refresh_rate == 144))
-				|| (((ntc_temp > 45) || (shell_temp > 45)) && (refresh_rate == 120))
-				|| (((ntc_temp > 40) || (shell_temp > 40)) && (refresh_rate == 90))
-				|| (((ntc_temp > 40) || (shell_temp > 40)) && (refresh_rate == 60)))) {
-		oplus_adfr_skip_min_fps_cmd = true;
-		if (!last_oplus_adfr_skip_min_fps_cmd && oplus_adfr_skip_min_fps_cmd) {
-			if (((oplus_adfr_auto_min_fps == 0) && (refresh_rate == 144))
-					|| ((oplus_adfr_auto_min_fps == 0) && (refresh_rate == 120))
-					|| ((oplus_adfr_auto_min_fps == 0) && (refresh_rate == 90))
-					|| ((oplus_adfr_auto_min_fps == 1) && (refresh_rate == 60))) {
-				DSI_INFO("KVRR ntc_temp:%d,shell_temp:%d,refresh_rate:%u,already in min fps %u\n", ntc_temp, shell_temp, refresh_rate, oplus_adfr_auto_min_fps);
-			} else {
-				if (refresh_rate == 60) {
-					temp_min_fps = OPLUS_ADFR_AUTO_MIN_FPS_60HZ;
-				} else {
-					temp_min_fps = OPLUS_ADFR_AUTO_MIN_FPS_MAX;
-				}
-				DSI_INFO("KVRR ntc_temp:%d,shell_temp:%d,refresh_rate:%u,need to set min fps to %u\n", ntc_temp, shell_temp, refresh_rate, temp_min_fps);
-				dsi_display_auto_mode_min_fps(display, temp_min_fps);
-			}
-		}
-	} else {
 		oplus_adfr_skip_min_fps_cmd = false;
 
 		if (last_oplus_adfr_skip_min_fps_cmd && !oplus_adfr_skip_min_fps_cmd) {
@@ -2785,7 +2754,7 @@ int oplus_adfr_temperature_detection_handle(void *dsi_display, int ntc_temp, int
 				DSI_INFO("KVRR ntc_temp:%d,shell_temp:%d,refresh_rate:%u,need to recovery min fps to %u\n", ntc_temp, shell_temp, refresh_rate, oplus_adfr_auto_min_fps);
 			}
 		}
-	}
+	
 
 	last_oplus_adfr_skip_min_fps_cmd = oplus_adfr_skip_min_fps_cmd;
 
@@ -2895,8 +2864,8 @@ void oplus_adfr_handle_idle_mode(void *sde_enc_v, int enter_idle)
 		if (h_skew == SDC_ADFR || h_skew == SDC_MFR) {
 			if (refresh_rate == 120 || refresh_rate == 60) {
 				/* enter idle mode if auto mode is off and min fps is less than minfps_exidle */
-				if ((oplus_adfr_auto_mode == OPLUS_ADFR_AUTO_OFF) && (oplus_adfr_auto_min_fps > minfps_exidle)
-					&& (oplus_adfr_auto_min_fps <= OPLUS_ADFR_AUTO_MIN_FPS_1HZ)) {
+				if ((oplus_adfr_auto_mode == OPLUS_ADFR_AUTO_OFF) && (oplus_adfr_auto_min_fps < minfps_exidle)
+					&& (oplus_adfr_auto_min_fps >= OPLUS_ADFR_AUTO_MIN_FPS_1HZ)) {
 					oplus_adfr_idle_mode = OPLUS_ADFR_IDLE_ON;
 					SDE_DEBUG("kVRR idle mode on");
 
@@ -2906,7 +2875,7 @@ void oplus_adfr_handle_idle_mode(void *sde_enc_v, int enter_idle)
 					}
 
 					/* send min fps before enter idle */
-					SDE_DEBUG("kVRR enter idle, min fps %d", oplus_adfr_auto_min_fps);
+					pr_info("kVRR enter idle, min fps %d", oplus_adfr_auto_min_fps);
 					dsi_display_auto_mode_min_fps(display, oplus_adfr_auto_min_fps);
 
 					if (oplus_adfr_dynamic_te.config != OPLUS_ADFR_DYNAMIC_TE_DISABLE) {

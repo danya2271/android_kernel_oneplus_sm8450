@@ -2682,7 +2682,7 @@ int oplus_panel_tx_cmd_update(struct dsi_panel *panel, enum dsi_cmd_set_type *ty
 			break;
 		}
 	}
-	DSI_INFO("pwm_turbo_enabled:%d set type from %d to %d", panel->oplus_priv.pwm_turbo_enabled, last_type, *type);
+	//DSI_INFO("pwm_turbo_enabled:%d set type from %d to %d", panel->oplus_priv.pwm_turbo_enabled, last_type, *type);
 
 	return 0;
 }

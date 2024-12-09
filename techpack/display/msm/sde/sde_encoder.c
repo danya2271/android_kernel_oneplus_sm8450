@@ -3061,7 +3061,7 @@ static void sde_encoder_off_work(struct kthread_work *work)
 	SDE_ATRACE_BEGIN("sde_encoder_off_work");
 #ifdef OPLUS_FEATURE_DISPLAY
 	if (oplus_adfr_is_support() && oplus_adfr_idle_mode_is_enable()) {
-		SDE_DEBUG("kVRR enter idle mode\n");
+		pr_info("kVRR enter idle mode\n");
 		oplus_adfr_handle_idle_mode(sde_enc, true);
 	}
 #endif /* OPLUS_FEATURE_DISPLAY */

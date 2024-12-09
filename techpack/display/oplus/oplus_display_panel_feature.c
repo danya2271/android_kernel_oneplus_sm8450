@@ -600,15 +600,11 @@ void oplus_printf_backlight_log(struct dsi_display *display, u32 bl_lvl) {
 	static time64_t time_last = 0;
 	struct backlight_log *bl_log;
 	int i = 0;
-	int len = 0;
 	char backlight_log_buf[1024];
 
 	ktime_get_real_ts64(&now);
 	time64_to_tm(now.tv_sec, 0, &broken_time);
 	if (now.tv_sec - time_last >= 60) {
-		pr_info("<%s> dsi_display_set_backlight time:%02d:%02d:%02d.%03ld,bl_lvl:%d\n",
-			display->panel->oplus_priv.vendor_name, broken_time.tm_hour, broken_time.tm_min,
-			broken_time.tm_sec, now.tv_nsec / 1000000, bl_lvl);
 		time_last = now.tv_sec;
 	}
 
@@ -626,10 +622,6 @@ void oplus_printf_backlight_log(struct dsi_display *display, u32 bl_lvl) {
 		memset(backlight_log_buf, 0, sizeof(backlight_log_buf));
 		for (i = 0; i < BACKLIGHT_CACHE_MAX; i++) {
 			time64_to_tm(bl_log->past_times[i].tv_sec, 0, &broken_time);
-			len += snprintf(backlight_log_buf + len, sizeof(backlight_log_buf) - len,
-				"%02d:%02d:%02d.%03ld:%d,", broken_time.tm_hour, broken_time.tm_min,
-				broken_time.tm_sec, bl_log->past_times[i].tv_nsec / 1000000, bl_log->backlight[i]);
 		}
-		pr_info("<%s> len:%d dsi_display_set_backlight %s\n", display->panel->oplus_priv.vendor_name, len, backlight_log_buf);
 	}
 }
