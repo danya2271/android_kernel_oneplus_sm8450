@@ -69,7 +69,7 @@ int oplus_panel_event_data_notifier_trigger(struct dsi_panel *panel,
 	enum panel_event_notifier_tag panel_type;
 
 	if (!panel) {
-		DSI_ERR("Oplus Features config No panel device\n");
+		pr_info("DSI: Oplus Features config No panel device\n #1");
 		return -ENODEV;
 	}
 
@@ -103,7 +103,7 @@ int oplus_event_data_notifier_trigger(
 	struct dsi_display *display = oplus_display_get_current_display();
 
 	if (!display || !display->panel) {
-		DSI_ERR("Oplus Features config No display device\n");
+		pr_info("DSI: Oplus Features config No display device\n #2");
 		return -ENODEV;
 	}
 

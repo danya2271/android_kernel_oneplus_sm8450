@@ -8193,17 +8193,10 @@ int dsi_display_set_mode(struct dsi_display *display,
 	}
 
 #ifdef OPLUS_FEATURE_DISPLAY
-	if (oplus_adfr_is_support()) {
 		DSI_INFO("kVRR mdp_transfer_time=%d, hactive=%d, vactive=%d, fps=%d, h_skew=%d, clk_rate=%llu\n",
 				adj_mode.priv_info->mdp_transfer_time_us,
 				timing.h_active, timing.v_active, timing.refresh_rate, timing.h_skew,
 				adj_mode.priv_info->clk_rate_hz);
-	} else {
-		DSI_INFO("mdp_transfer_time=%d, hactive=%d, vactive=%d, fps=%d, clk_rate=%llu\n",
-				adj_mode.priv_info->mdp_transfer_time_us,
-				timing.h_active, timing.v_active, timing.refresh_rate,
-				adj_mode.priv_info->clk_rate_hz);
-	}
 #else /* OPLUS_FEATURE_DISPLAY */
 	DSI_INFO("mdp_transfer_time=%d, hactive=%d, vactive=%d, fps=%d, clk_rate=%llu\n",
 			adj_mode.priv_info->mdp_transfer_time_us,
@@ -8946,7 +8939,7 @@ error_out:
 int dsi_display_pre_commit(void *display,
 		struct msm_display_conn_params *params)
 {
-	bool enable = false;
+	bool enable = true;
 	int rc = 0;
 #if defined(CONFIG_PXLW_IRIS)
 	struct dsi_display *dsi_display;
@@ -8962,7 +8955,6 @@ int dsi_display_pre_commit(void *display,
 	}
 
 	if (params->qsync_update) {
-		enable = (params->qsync_mode > 0) ? true : false;
 		rc = dsi_display_qsync(display, enable);
 		if (rc)
 			pr_err("%s failed to send qsync commands\n",
@@ -8975,31 +8967,26 @@ int dsi_display_pre_commit(void *display,
 #endif
 
 #ifdef OPLUS_FEATURE_DISPLAY
-		if (oplus_adfr_is_support()) {
 			// if qsync is disable, just save the min fps value, not tx cmd
-			if (enable) {
-				ret = dsi_display_qsync_update_min_fps(display, params);
-				if (ret)
-					pr_err("%s failed to send qsync update commands\n", __func__);
-				SDE_EVT32(params->qsync_dynamic_min_fps, ret);
-			}
+			pr_info("dsi_display_qsync_update_min_fps #1");
+			ret = dsi_display_qsync_update_min_fps(display, params);
+			if (ret)
+				pr_err("%s failed to send qsync update commands\n", __func__);
+			SDE_EVT32(params->qsync_dynamic_min_fps, ret);
 
 			/* save qsync info, then restore qsync status after panel enable again*/
 			// TODO: think about change timming when panel off case?????
 			((struct dsi_display *)display)->current_qsync_mode = params->qsync_mode;
 			((struct dsi_display *)display)->current_qsync_dynamic_min_fps = params->qsync_dynamic_min_fps;
-		}
 #endif /* OPLUS_FEATURE_DISPLAY */
 	}
 
 #ifdef OPLUS_FEATURE_DISPLAY
-	if (oplus_adfr_is_support()) {
-		ret = dsi_display_auto_mode_update(display);
-		if (ret)
-			pr_err("%s failed to send auto mode update commands\n",
-				__func__);
-		SDE_EVT32(params->qsync_mode, params->qsync_dynamic_min_fps, ret);
-	}
+	ret = dsi_display_auto_mode_update(display);
+	if (ret)
+		pr_err("%s failed to send auto mode update commands\n",
+			__func__);
+	SDE_EVT32(params->qsync_mode, params->qsync_dynamic_min_fps, ret);
 #endif /* OPLUS_FEATURE_DISPLAY */
 
 	return rc;
@@ -9150,9 +9137,7 @@ error:
 #endif /* OPLUS_FEATURE_DISPLAY_TEMP_COMPENSATION */
 
 #ifdef OPLUS_FEATURE_DISPLAY
-	if (oplus_adfr_is_support()) {
-		dsi_display_qsync_restore(display);
-	}
+	dsi_display_qsync_restore(display);
 #endif /* OPLUS_FEATURE_DISPLAY */
 
 	SDE_EVT32(SDE_EVTLOG_FUNC_EXIT);
