@@ -8801,7 +8801,6 @@ bool oplus_check_afi_update_condition(void)
 				}
 				return false;
 			} else { /* normal charger or unkown */
-				chg_err(" true 3: normal charger or others unkown\n");
 				return true;
 			}
 		}
@@ -10026,10 +10025,6 @@ static void oplus_chg_update_ui_soc(struct oplus_chg_chip *chip)
 			chg_debug("full [soc ui_soc smooth_soc down_limit up_limit] = [%d %d %d %d %d]\n", chip->soc,
 				  chip->ui_soc, chip->smooth_soc, soc_down_limit, soc_up_limit);
 		}
-		charger_xlog_printk(CHG_LOG_CRTI,
-				    "ui_soc:%d,waiting_for_ffc:%d,fastchg_to_ffc:%d,fastchg_start:%d,chg_type=0x%x\n",
-				    chip->ui_soc, chip->waiting_for_ffc, chip->fastchg_to_ffc,
-				    oplus_vooc_get_fastchg_started(), oplus_vooc_get_fast_chg_type());
 		if (chip->ui_soc == 100 && (chip->rsd.smooth_switch_v2 || (chip->fastchg_to_ffc == false && !oplus_chg_is_wls_ffc())) &&
 		    ((oplus_vooc_get_fastchg_started() == false) ||
 		     (chip->chg_ctrl_by_vooc && oplus_vooc_get_fast_chg_type() == CHARGER_SUBTYPE_FASTCHG_VOOC)) &&
@@ -13524,7 +13519,6 @@ int oplus_chg_get_shell_temp(void)
 		g_charger_chip->shell_themal = thermal_zone_get_zone_by_name("shell_back");
 		rc = thermal_zone_get_temp(g_charger_chip->shell_themal, &temp_val);
 		if (rc) {
-			chg_err("thermal_zone_get_temp get error");
 			return g_charger_chip->shell_temp;
 		}
 	}
@@ -13615,7 +13609,6 @@ void oplus_smart_charge_by_shell_temp(struct oplus_chg_chip *chip, int val)
 			rc = thermal_zone_get_temp(g_charger_chip->shell_themal, &chip->shell_temp);
 			if (rc) {
 				chip->shell_temp = (val >> 16) & 0XFFFF;
-				chg_err("thermal_zone_get_temp get error");
 			} else {
 				chip->shell_temp = chip->shell_temp / 100;
 			}

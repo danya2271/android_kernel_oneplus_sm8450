@@ -6318,7 +6318,6 @@ static bool oplus_check_afi_update_condition(struct oplus_chg_vooc *chip)
 				}
 				return false;
 			} else {
-				chg_err(" true 3: normal charger or others unkown\n");
 				return true;
 			}
 		}

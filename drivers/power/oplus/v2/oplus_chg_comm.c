@@ -3140,7 +3140,6 @@ static void oplus_comm_check_shell_temp(struct oplus_chg_comm *chip, bool update
 		chg_err("Can get shell_back %p\n", chip->shell_themal);
 
 		if (rc) {
-			chg_err("thermal_zone_get_temp get error");
 			shell_temp = chip->batt_temp;
 		} else {
 			shell_temp = shell_temp / 100;
