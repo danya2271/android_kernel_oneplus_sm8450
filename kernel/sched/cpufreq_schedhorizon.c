@@ -13,11 +13,12 @@
 #include <linux/sched/cpufreq.h>
 #include <trace/events/power.h>
 #include <trace/hooks/sched.h>
+#include <drm/drm_refresh_rate.h>
 
 #define IOWAIT_BOOST_MIN	(SCHED_CAPACITY_SCALE / 8)
 
-static unsigned int default_efficient_freq_lp[] = {0};
-static u64 default_up_delay_lp[] = {0};
+static unsigned int default_efficient_freq_lp[] = {1478200};
+static u64 default_up_delay_lp[] = {30 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_hp[] = {1555200, 2227400};
 static u64 default_up_delay_hp[] = {30 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
@@ -402,10 +403,15 @@ static __always_inline
 unsigned long apply_dvfs_headroom2(int cpu, unsigned long util, unsigned long max_cap)
 {
 	unsigned long headroom;
-	if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
-		headroom = util + util;
+	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
+	if (refresh_rate > 60) {
+		if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
+			headroom = util + util;
+		} else {
+			headroom = util + (util >> 3);
+		}
 	} else {
-		headroom = util + (util >> 3);
+		headroom = util;
 	}
 	return headroom;
 }
@@ -1082,8 +1088,8 @@ static int sugov_init(struct cpufreq_policy *policy)
 
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
-		tunables->up_rate_limit_us = 500;
-		tunables->down_rate_limit_us = 1000;
+		tunables->up_rate_limit_us = 1000;
+		tunables->down_rate_limit_us = 2000;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
