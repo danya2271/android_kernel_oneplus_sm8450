@@ -16,6 +16,7 @@
 
 static u32 oplus_adfr_auto_min_fps = 0;
 static u32 oplus_adfr_auto_sw_fps = 0;
+static unsigned int msm_panel_fps = 60;
 
 enum oplus_vsync_mode {
 	OPLUS_DOUBLE_TE_VSYNC = 0,
