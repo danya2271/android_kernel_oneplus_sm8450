@@ -108,6 +108,7 @@
 #define RX_IO_EN2CORE_EN_DELAY_SHFT	8
 #define RX_SI_EN2IO_DELAY_SHFT 12
 
+#ifdef CONFIG_DEBUG
 #define SPI_LOG_DBG(log_ctx, print, dev, x...) do { \
 GENI_SE_DBG(log_ctx, print, dev, x); \
 if (dev) \
@@ -137,6 +138,19 @@ void spi_trace_log(struct device *dev, const char *fmt, ...)
 	trace_spi_log_info(dev_name(dev), &vaf);
 	va_end(args);
 }
+#else
+#define SPI_LOG_DBG(log_ctx, print, dev, x...) do {} while (0)
+
+#define SPI_LOG_ERR(log_ctx, print, dev, x...) do {} while (0)
+
+#define CREATE_TRACE_POINTS
+#include "spi-qup-trace.h"
+
+/* FTRACE Logging */
+void spi_trace_log(struct device *dev, const char *fmt, ...)
+{
+}
+#endif
 
 struct gsi_desc_cb {
 	struct spi_master *spi;
