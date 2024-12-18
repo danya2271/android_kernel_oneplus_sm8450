@@ -86,7 +86,7 @@
 #define I2C_TIMEOUT_MIN_USEC	500000
 
 #define MAX_SE	20
-
+#ifdef CONFIG_DEBUG
 #define I2C_LOG_DBG(log_ctx, print, dev, x...) do { \
 GENI_SE_DBG(log_ctx, print, dev, x); \
 if (dev) \
@@ -116,6 +116,18 @@ void i2c_trace_log(struct device *dev, const char *fmt, ...)
 	trace_i2c_log_info(dev_name(dev), &vaf);
 	va_end(args);
 }
+#else
+#define I2C_LOG_DBG(log_ctx, print, dev, x...) do {} while (0)
+
+#define I2C_LOG_ERR(log_ctx, print, dev, x...) do {} while (0)
+
+#define CREATE_TRACE_POINTS
+#include "i2c-qup-trace.h"
+
+/* FTRACE Logging */
+static inline void i2c_trace_log(struct device *dev, const char *fmt, ...) {}
+
+#endif
 
 enum i2c_se_mode {
 	UNINITIALIZED,
