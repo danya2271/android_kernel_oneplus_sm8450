@@ -3,3 +3,4 @@
  * Copyright (C) 2020 Sultan Alsawaf <sultan@kerneltoast.com>.
  */
 unsigned int dsi_panel_get_refresh_rate(void);
+static unsigned int msm_panel_fps = 60;
