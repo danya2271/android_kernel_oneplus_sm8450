@@ -14,6 +14,13 @@
 #include <trace/events/power.h>
 #include <trace/hooks/sched.h>
 #include <drm/drm_refresh_rate.h>
+#ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
+#include "../../drivers/cpuidle/governors/qcom-lpm.h"
+#else
+#ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
+#include "../../drivers/cpuidle/governors/qcom-simple-lpm.h"
+#endif
+#endif
 
 #define IOWAIT_BOOST_MIN	(SCHED_CAPACITY_SCALE / 8)
 
@@ -422,19 +429,42 @@ unsigned long schedhorizon_cpu_util(int cpu, unsigned long util_cfs,
 EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
 static __always_inline
-unsigned long apply_dvfs_headroom2(int cpu, unsigned long util, unsigned long max_cap)
-{
-	unsigned long headroom;
-	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
-	if (refresh_rate > 60) {
-		if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
-			headroom = util + util;
-		} else {
-			headroom = util + (util >> 3);
-		}
+unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
+	if (cpumask_test_cpu(cpu, cpu_prime_mask))
+		return util; // we don't want to boost prime cluster if there is no touchboost
+	if (sleep_disabled) { // check for touchboost
+		return util + util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : sysctl_headroom_big);
 	} else {
-		headroom = util;
+		return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? (util >> 1) : sysctl_headroom_big);
 	}
+}
+
+static __always_inline
+unsigned long calculate_headroom_low(unsigned long headroom, int cpu, unsigned long util, int fps) {
+	if (sleep_disabled) { // check for touchboost
+		return util + (util >> 1);
+	} else if (util <= sysctl_util_low) { // check if util is way too high for decreasing headroom
+		if (cpumask_test_cpu(cpu, cpu_prime_mask))
+			return (util >> 3); // we want to reduce headroom of prime cluster if phone is idling with screen on
+		return (fps > sysctl_fps_threshold_high) ? (util - (util >> 1)) :
+		(fps < sysctl_fps_threshold_low) ? (util >> 3) :
+		(util >> 2);
+	} else {
+		return util;
+	}
+}
+
+static __always_inline
+unsigned long apply_dvfs_headroom(int cpu, unsigned long util)
+{
+	unsigned long headroom = util;
+	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
+	int fps = msm_panel_fps;
+	if (refresh_rate > 60)
+		headroom = calculate_headroom_high(headroom, cpu, util);
+	else
+		headroom = calculate_headroom_low(headroom, cpu, util, fps);
+
 	return headroom;
 }
 
@@ -443,7 +473,7 @@ unsigned long sugov_effective_cpu_perf(int cpu, unsigned long actual,
 				 unsigned long max)
 {
 	/* Add dvfs headroom to actual utilization */
-	actual = apply_dvfs_headroom2(cpu, actual, max);
+	actual = apply_dvfs_headroom(cpu, actual);
 	/* Actually we don't need to target the max performance */
 	if (actual < max)
 		max = actual;
