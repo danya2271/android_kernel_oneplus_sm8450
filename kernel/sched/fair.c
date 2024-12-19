@@ -6986,9 +6986,12 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
 {
 	struct cfs_rq *cfs_rq;
 	unsigned int util;
+	unsigned int estimated = 0;
+	bool is_current_cpu = (cpu == task_cpu(p));
+	bool has_last_update_time = READ_ONCE(p->se.avg.last_update_time);
 
 	/* Task has no contribution or is new */
-	if (cpu != task_cpu(p) || !READ_ONCE(p->se.avg.last_update_time))
+	if (!is_current_cpu || !has_last_update_time)
 		return cpu_util(cpu);
 
 	cfs_rq = &cpu_rq(cpu)->cfs;
@@ -6997,35 +7000,8 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
 	/* Discount task's util from CPU's util */
 	lsub_positive(&util, task_util(p));
 
-	/*
-	 * Covered cases:
-	 *
-	 * a) if *p is the only task sleeping on this CPU, then:
-	 *      cpu_util (== task_util) > util_est (== 0)
-	 *    and thus we return:
-	 *      cpu_util_without = (cpu_util - task_util) = 0
-	 *
-	 * b) if other tasks are SLEEPING on this CPU, which is now exiting
-	 *    IDLE, then:
-	 *      cpu_util >= task_util
-	 *      cpu_util > util_est (== 0)
-	 *    and thus we discount *p's blocked utilization to return:
-	 *      cpu_util_without = (cpu_util - task_util) >= 0
-	 *
-	 * c) if other tasks are RUNNABLE on that CPU and
-	 *      util_est > cpu_util
-	 *    then we use util_est since it returns a more restrictive
-	 *    estimation of the spare capacity on that CPU, by just
-	 *    considering the expected utilization of tasks already
-	 *    runnable on that CPU.
-	 *
-	 * Cases a) and b) are covered by the above code, while case c) is
-	 * covered by the following code when estimated utilization is
-	 * enabled.
-	 */
 	if (sched_feat(UTIL_EST)) {
-		unsigned int estimated =
-			READ_ONCE(cfs_rq->avg.util_est.enqueued);
+		estimated = READ_ONCE(cfs_rq->avg.util_est.enqueued);
 
 		/*
 		 * Despite the following checks we still have a small window
@@ -8372,6 +8348,7 @@ static int detach_tasks(struct lb_env *env)
 	unsigned long util, load;
 	struct task_struct *p;
 	int detached = 0;
+	int nr_running = env->src_rq->nr_running;
 
 	lockdep_assert_held(&env->src_rq->lock);
 
@@ -8379,7 +8356,7 @@ static int detach_tasks(struct lb_env *env)
 	 * Source run queue has been emptied by another CPU, clear
 	 * LBF_ALL_PINNED flag as we will not test any task.
 	 */
-	if (env->src_rq->nr_running <= 1) {
+	if (nr_running <= 1) {
 		env->flags &= ~LBF_ALL_PINNED;
 		return 0;
 	}
@@ -8392,7 +8369,7 @@ static int detach_tasks(struct lb_env *env)
 		 * We don't want to steal all, otherwise we may be treated likewise,
 		 * which could at worst lead to a livelock crash.
 		 */
-		if (env->idle != CPU_NOT_IDLE && env->src_rq->nr_running <= 1)
+		if (env->idle != CPU_NOT_IDLE && nr_running <= 1)
 			break;
 
 		p = list_last_entry(tasks, struct task_struct, se.group_node);
