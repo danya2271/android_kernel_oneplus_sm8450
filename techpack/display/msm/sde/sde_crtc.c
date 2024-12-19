@@ -26,6 +26,7 @@
 #include <drm/drm_crtc.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_flip_work.h>
+#include <drm/drm_refresh_rate.h>
 
 #include "sde_kms.h"
 #include "sde_hw_lm.h"
