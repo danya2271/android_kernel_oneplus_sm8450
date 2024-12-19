@@ -14,13 +14,6 @@
 #include <trace/events/power.h>
 #include <trace/hooks/sched.h>
 #include <drm/drm_refresh_rate.h>
-#ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
-#include "../../drivers/cpuidle/governors/qcom-lpm.h"
-#else
-#ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
-#include "../../drivers/cpuidle/governors/qcom-simple-lpm.h"
-#endif
-#endif
 
 #define IOWAIT_BOOST_MIN	(SCHED_CAPACITY_SCALE / 8)
 
@@ -28,7 +21,7 @@ static unsigned int default_efficient_freq_lp[] = {1478200};
 static u64 default_up_delay_lp[] = {30 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_hp[] = {1555200, 2227400};
-static u64 default_up_delay_hp[] = {3 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
+static u64 default_up_delay_hp[] = {30 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_pr[] = {2054400, 2630200};
 static u64 default_up_delay_pr[] = {15 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
@@ -428,48 +421,20 @@ unsigned long schedhorizon_cpu_util(int cpu, unsigned long util_cfs,
 }
 EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
-#define HEADROOM_BIG 18 // headroom for big cluster
-#define UTIL_LOW 65 // phone will idle harder if util is lower than this value
-#define FPS_THRESHOLD_HIGH 45
-#define FPS_THRESHOLD_LOW 25
-
 static __always_inline
-unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
-	if (cpumask_test_cpu(cpu, cpu_prime_mask))
-		return util; // we don't want to boost prime cluster if there is no touchboost
-	if (sleep_disabled) { // check for touchboost
-		return util + util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : sysctl_headroom_big);
-	} else {
-		return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? (util >> 1) : sysctl_headroom_big);
-	}
-}
-
-static __always_inline
-unsigned long calculate_headroom_low(unsigned long headroom, int cpu, unsigned long util, int fps) {
-	if (sleep_disabled) { // check for touchboost
-		return util + (util >> 1);
-	} else if (util <= sysctl_util_low) { // check if util is way too high for decreasing headroom
-		if (cpumask_test_cpu(cpu, cpu_prime_mask))
-			return (util >> 3); // we want to reduce headroom of prime cluster if phone is idling with screen on
-		return (fps > sysctl_fps_threshold_high) ? (util - (util >> 1)) :
-		(fps < sysctl_fps_threshold_low) ? (util >> 3) :
-		(util >> 2);
-	} else {
-		return util;
-	}
-}
-
-static __always_inline
-unsigned long apply_dvfs_headroom(int cpu, unsigned long util)
+unsigned long apply_dvfs_headroom2(int cpu, unsigned long util, unsigned long max_cap)
 {
-	unsigned long headroom = util;
+	unsigned long headroom;
 	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
-	int fps = msm_panel_fps;
-	if (refresh_rate > 60)
-		headroom = calculate_headroom_high(headroom, cpu, util);
-	else
-		headroom = calculate_headroom_low(headroom, cpu, util, fps);
-
+	if (refresh_rate > 60) {
+		if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
+			headroom = util + util;
+		} else {
+			headroom = util + (util >> 3);
+		}
+	} else {
+		headroom = util;
+	}
 	return headroom;
 }
 
@@ -478,7 +443,7 @@ unsigned long sugov_effective_cpu_perf(int cpu, unsigned long actual,
 				 unsigned long max)
 {
 	/* Add dvfs headroom to actual utilization */
-	actual = apply_dvfs_headroom(cpu, actual);
+	actual = apply_dvfs_headroom2(cpu, actual, max);
 	/* Actually we don't need to target the max performance */
 	if (actual < max)
 		max = actual;
@@ -1150,8 +1115,8 @@ static int sugov_init(struct cpufreq_policy *policy)
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
-		tunables->up_rate_limit_us = 1000;
-		tunables->down_rate_limit_us = 2000;
+		tunables->up_rate_limit_us = 4700;
+		tunables->down_rate_limit_us = 1000;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
