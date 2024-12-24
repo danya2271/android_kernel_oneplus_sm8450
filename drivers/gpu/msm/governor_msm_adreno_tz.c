@@ -19,6 +19,14 @@
 
 #include "../../devfreq/governor.h"
 #include "msm_adreno_devfreq.h"
+#include <drm/drm_refresh_rate.h>
+#ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
+#include "../../drivers/cpuidle/governors/qcom-lpm.h"
+#else
+#ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
+#include "../../drivers/cpuidle/governors/qcom-simple-lpm.h"
+#endif
+#endif
 
 static DEFINE_SPINLOCK(tz_lock);
 static DEFINE_SPINLOCK(sample_lock);
@@ -348,6 +356,8 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 	struct devfreq_dev_status *stats = &devfreq->last_status;
 	int val, level = 0;
 	int context_count = 0;
+	int fps = msm_panel_fps;
+	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
 	u64 busy_time;
 
 	if (!priv)
@@ -421,7 +431,15 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 		level = min_t(int, level, devfreq->profile->max_state - 1);
 	}
 
-switch (boost_adjust_notify()) {
+	if (level == 11 || level == 10) {
+		if (refresh_rate <= 60) {
+			level = 11;
+		} else {
+			level = 10;
+		}
+	}
+
+	switch (boost_adjust_notify()) {
     case 1:
         if (level > input_boost_level) {
             level = input_boost_level;
