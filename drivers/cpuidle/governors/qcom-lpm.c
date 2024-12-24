@@ -26,6 +26,7 @@
 #include <trace/events/power.h>
 #include <trace/hooks/cpuidle.h>
 #include <linux/rcupdate.h>
+#include <drm/drm_refresh_rate.h>
 
 #include "qcom-lpm.h"
 #define CREATE_TRACE_POINTS
@@ -587,6 +588,8 @@ static int lpm_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	u64 reason = 0;
 	uint64_t duration_ns, htime = 0;
 	int i = 0;
+	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
+	int fps = msm_panel_fps;
 
 	if (!cpu_gov)
 		return 0;
@@ -599,6 +602,13 @@ static int lpm_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	if (duration_ns <= 0)
 		duration_ns = S64_MAX;
 	update_cpu_history(cpu_gov);
+
+	// force idlest state
+	if ((refresh_rate <= 60) && (fps < 45)) {
+		i = drv->state_count - 1;
+		RCU_NONIDLE(trace_lpm_gov_select(i, latency_req, duration_ns, reason));
+		return i;
+	}
 
 	if (lpm_disallowed(duration_ns, dev->cpu))
 		goto done;
