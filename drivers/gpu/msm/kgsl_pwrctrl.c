@@ -648,6 +648,7 @@ static ssize_t gpu_available_frequencies_show(struct device *dev,
 static ssize_t gpu_clock_stats_show(struct device *dev,
                                     struct device_attribute *attr, char *buf)
 {
+#ifdef CONFIG_KGSL_SHOW_GPUSTATS
     struct kgsl_device *device = dev_get_drvdata(dev);
     struct kgsl_pwrctrl *pwr = &device->pwrctrl;
     int index, num_chars = 0;
@@ -677,6 +678,9 @@ static ssize_t gpu_clock_stats_show(struct device *dev,
         buf[num_chars++] = '\n';
 
     return num_chars;
+#else
+	return 0;
+#endif
 }
 
 static ssize_t reset_count_show(struct device *dev,
@@ -2339,6 +2343,7 @@ EXPORT_SYMBOL(kgsl_gpu_num_freqs);
 
 int kgsl_gpu_stat(struct kgsl_gpu_freq_stat *stats, u32 numfreq)
 {
+#ifdef CONFIG_KGSL_SHOW_GPUSTATS
 	struct kgsl_device *device = kgsl_get_device(0);
 	struct kgsl_pwrctrl *pwr;
 	int i;
@@ -2360,7 +2365,7 @@ int kgsl_gpu_stat(struct kgsl_gpu_freq_stat *stats, u32 numfreq)
 		stats[i].idle_time = pwr->time_in_pwrlevel[i] - pwr->clock_times[i];
 	}
 	mutex_unlock(&device->mutex);
-
+#endif
 	return 0;
 }
 EXPORT_SYMBOL(kgsl_gpu_stat);
