@@ -24,7 +24,7 @@
 
 #define IOWAIT_BOOST_MIN	(SCHED_CAPACITY_SCALE / 8)
 
-static unsigned int default_efficient_freq_lp[] = {1478200};
+static unsigned int default_efficient_freq_lp[] = {1171200};
 static u64 default_up_delay_lp[] = {30 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_hp[] = {1113200, 2227400};
