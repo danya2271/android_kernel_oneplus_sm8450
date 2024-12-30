@@ -2736,13 +2736,13 @@ static int ufs_qcom_set_cur_therm_state(struct thermal_cooling_device *tcd,
 
 		if (host->irq_affinity_support)
 			atomic_set(&host->therm_mitigation, 0);
-		/* Set the default auto-hiberate idle timer to 5 ms */
-		ufshcd_auto_hibern8_update(hba, ufs_qcom_us_to_ahit(5000));
+		/* Set the default auto-hiberate idle timer to 0.5 ms */
+		ufshcd_auto_hibern8_update(hba, ufs_qcom_us_to_ahit(500));
 
-		/* Set the default auto suspend delay to 3000 ms */
+		/* Set the default auto suspend delay to 350 ms */
 		shost_for_each_device(sdev, hba->host)
 			pm_runtime_set_autosuspend_delay(&sdev->sdev_gendev,
-						UFS_QCOM_AUTO_SUSPEND_DELAY);
+						350);
 		break;
 	case UFS_QCOM_LVL_AGGR_THERM:
 	case UFS_QCOM_LVL_MAX_THERM:
@@ -2753,13 +2753,13 @@ static int ufs_qcom_set_cur_therm_state(struct thermal_cooling_device *tcd,
 			atomic_set(&host->therm_mitigation, 1);
 			ufs_qcom_toggle_pri_affinity(hba, false);
 		}
-		/* Set the default auto-hiberate idle timer to 1 ms */
-		ufshcd_auto_hibern8_update(hba, ufs_qcom_us_to_ahit(1000));
+		/* Set the default auto-hiberate idle timer to 0.3 ms */
+		ufshcd_auto_hibern8_update(hba, ufs_qcom_us_to_ahit(300));
 
-		/* Set the default auto suspend delay to 100 ms */
+		/* Set the default auto suspend delay to 50 ms */
 		shost_for_each_device(sdev, hba->host)
 			pm_runtime_set_autosuspend_delay(&sdev->sdev_gendev,
-							 100);
+							 50);
 		break;
 	default:
 		dev_err(tcd->devdata, "Invalid UFS thermal state (%d)\n", data);
