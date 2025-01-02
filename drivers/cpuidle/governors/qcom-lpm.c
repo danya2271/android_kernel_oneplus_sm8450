@@ -71,9 +71,6 @@ static bool lpm_disallowed(s64 sleep_ns, int cpu)
 	if (!check_cpu_isactive(cpu))
 		return false;
 
-	if ((sleep_disabled || sleep_ns < 0))
-		return true;
-
 	if (!sched_lpm_disallowed_time(cpu, &bias_time)) {
 		cpu_gov->last_idx = 0;
 		cpu_gov->bias = bias_time;
@@ -591,7 +588,7 @@ static int lpm_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
 	int fps = msm_panel_fps;
 
-	if (!cpu_gov)
+	if (!cpu_gov || sleep_disabled)
 		return 0;
 
 	do_div(latency_req, NSEC_PER_USEC);
@@ -690,6 +687,11 @@ static void lpm_idle_enter(void *unused, int *state, struct cpuidle_device *dev)
 	struct lpm_cpu *cpu_gov = this_cpu_ptr(&lpm_cpu_data);
 	u64 reason = 0;
 	unsigned long flags;
+
+	if (sleep_disabled) {
+		cpu_do_idle();
+		return;
+	}
 
 	if (*state == 0)
 		return;
