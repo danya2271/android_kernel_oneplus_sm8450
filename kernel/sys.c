@@ -1250,8 +1250,9 @@ static void override_custom_release(char __user *release, size_t len)
 		return;
 
 	if (strstr(buf, CONFIG_UNAME_OVERRIDE_TARGET)) {
-		copy_to_user(release, CONFIG_UNAME_OVERRIDE_STRING,
-			       strlen(CONFIG_UNAME_OVERRIDE_STRING) + 1);
+		if (copy_to_user(release, CONFIG_UNAME_OVERRIDE_STRING,
+			       strlen(CONFIG_UNAME_OVERRIDE_STRING) + 1))
+				   return;
 	}
 
 	kfree(buf);
