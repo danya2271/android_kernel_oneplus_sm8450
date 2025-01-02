@@ -1205,7 +1205,8 @@ static ssize_t proc_hall_debug_info_write(struct file *file, const char __user *
 
 	if (count > 2)
 		return count;
-	copy_from_user(buf, buffer, count);
+	if (copy_from_user(buf, buffer, count))
+    	return -EFAULT;
 	if (!kstrtoint(buf, 0, &tmp))
 		tri_key_debug = tmp;
 	else
@@ -1244,7 +1245,8 @@ static ssize_t proc_hall_enable_irq_write(struct file *file, const char __user *
 
 	if (count > 2)
 		return count;
-	copy_from_user(buf, buffer, count);
+	if (copy_from_user(buf, buffer, count))
+    	return -EFAULT;
 	if (!kstrtoint(buf, 0, &tmp)) {
 		oplus_hall_enable_irq(0, tmp);
 		oplus_hall_enable_irq(1, tmp);
