@@ -7234,7 +7234,8 @@ static ssize_t proc_vibration_style_write(struct file *filp, const char __user *
 	}
 
 	dev_err(aw8697->dev,"buffer=%s", buffer);
-	kstrtoint(buffer, 0, &val);
+	if (kstrtoint(buffer, 0, &val))
+        return -EFAULT;
 	dev_err(aw8697->dev,"val = %d", val);
 
 	if (val == 0) {
