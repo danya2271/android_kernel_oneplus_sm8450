@@ -10747,10 +10747,6 @@ static inline int find_new_ilb(void)
 
 	hk_mask = housekeeping_cpumask(HK_FLAG_MISC);
 	for_each_cpu_and(ilb, nohz.idle_cpus_mask, hk_mask) {
-
-		if (ilb == smp_processor_id())
-			continue;
-
 		if (idle_cpu(ilb))
 			return ilb;
 	}
