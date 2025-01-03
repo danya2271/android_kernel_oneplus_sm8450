@@ -57,7 +57,7 @@ unsigned int sysctl_fps_threshold_low __read_mostly = 25;
 unsigned int sysctl_headroom_big __read_mostly = 18;
 unsigned int sysctl_util_low __read_mostly = 200;
 
-const_debug unsigned int sysctl_sched_migration_cost	= 0UL;
+const_debug unsigned int sysctl_sched_migration_cost	= 1500000UL;
 
 int sched_thermal_decay_shift;
 static int __init setup_sched_thermal_decay_shift(char *str)
