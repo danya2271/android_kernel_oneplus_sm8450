@@ -295,11 +295,11 @@ bool __init topology_parse_cpu_capacity(struct device_node *cpu_node, int cpu)
 	static bool cap_parsing_failed;
 	int ret;
 	u32 cpu_capacity;
+	u32 hardcoded_capacities[] = {1224, 1224, 1224, 1224, 2253, 2253, 2253, 2293};
 
 	if (cap_parsing_failed)
 		return false;
 
-	u32 hardcoded_capacities[] = {1224, 1224, 1224, 1224, 2253, 2253, 2253, 2293};
 	cpu_capacity = hardcoded_capacities[cpu];
 
 	ret = 0;
