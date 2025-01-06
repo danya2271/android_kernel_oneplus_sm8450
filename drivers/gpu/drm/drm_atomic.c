@@ -978,9 +978,7 @@ drm_atomic_get_connector_state(struct drm_atomic_state *state,
 			memcpy(c, state->connectors,
 			       sizeof(*state->connectors) * state->num_connector);
 		} else {
-			c = krealloc_array(state->connectors,
-				     alloc, sizeof(*state->connectors),
-				     GFP_KERNEL);
+			c = krealloc(state->connectors, alloc * sizeof(*state->connectors), GFP_KERNEL);
 			if (!c)
 				return ERR_PTR(-ENOMEM);
 		}
