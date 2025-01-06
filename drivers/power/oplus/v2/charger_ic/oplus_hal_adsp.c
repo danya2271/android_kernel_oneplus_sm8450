@@ -5170,8 +5170,6 @@ static int oplus_chg_8350_exit(struct oplus_chg_ic_dev *ic_dev)
 
 static int oplus_chg_8350_reg_dump(struct oplus_chg_ic_dev *ic_dev)
 {
-	struct battery_chg_dev *bcdev;
-	const int extra_num = 16;
 	bool chg_en = false;
 	int chg_type;
 
