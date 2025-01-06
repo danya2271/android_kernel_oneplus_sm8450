@@ -49,7 +49,7 @@ struct gh_acl_desc *sde_vm_populate_acl(enum gh_vm_names vm_name)
 	return acl_desc;
 }
 
-int __mem_sort_cmp(void *priv, struct list_head *a, struct list_head *b)
+int __mem_sort_cmp(void *priv, const struct list_head *a, const struct list_head *b)
 {
 	struct msm_io_mem_entry *left =
 		container_of(a, struct msm_io_mem_entry, list);

@@ -2634,7 +2634,6 @@ int oplus_display_pwm_turbo_kickoff(void)
 
 int oplus_panel_tx_cmd_update(struct dsi_panel *panel, enum dsi_cmd_set_type *type)
 {
-	int last_type = *type;
 	if (!panel || !panel->cur_mode)
 		return -EINVAL;
 

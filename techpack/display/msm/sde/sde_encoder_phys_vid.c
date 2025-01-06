@@ -1041,8 +1041,6 @@ static void sde_encoder_phys_vid_single_vblank_wait(
 		struct sde_encoder_phys *phys_enc)
 {
 	int ret;
-	struct sde_encoder_phys_vid *vid_enc
-					= to_sde_encoder_phys_vid(phys_enc);
 
 	/*
 	 * Wait for a vsync so we know the ENABLE=0 latched before
