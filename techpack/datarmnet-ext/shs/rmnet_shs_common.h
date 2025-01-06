@@ -38,12 +38,12 @@ u64 DATARMNETfc888b4d3e(u16 cpu);
 u32 DATARMNETeb3978575d(u8 DATARMNET42a992465f);
 u32 DATARMNETeea3cef5b6(u8 DATARMNET42a992465f);
 u8 DATARMNET928c931df9(struct rps_map *map);
-int DATARMNET3c489db64a(void *priv, struct list_head *DATARMNET9cf7d31274,
-			struct list_head *DATARMNET5444bd3b6f);
-int DATARMNETd5c15f1ff3(void *priv, struct list_head *DATARMNET9cf7d31274,
-			struct list_head *DATARMNET5444bd3b6f);
-int DATARMNET85af86a36d(void *priv, struct list_head *DATARMNET9cf7d31274,
-			struct list_head *DATARMNET5444bd3b6f);
+int DATARMNET3c489db64a(void *priv, const struct list_head *DATARMNET9cf7d31274,
+			const struct list_head *DATARMNET5444bd3b6f);
+int DATARMNETd5c15f1ff3(void *priv, const struct list_head *DATARMNET9cf7d31274,
+			const struct list_head *DATARMNET5444bd3b6f);
+int DATARMNET85af86a36d(void *priv, const struct list_head *DATARMNET9cf7d31274,
+			const struct list_head *DATARMNET5444bd3b6f);
 int DATARMNETf181a18009(struct net_device *dev);
 int DATARMNET98b2a0ce62(struct net_device *dev);
 void DATARMNET7f1d9480cb(void *port);

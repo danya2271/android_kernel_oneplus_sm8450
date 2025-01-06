@@ -381,7 +381,7 @@ void cam_smmu_util_iommu_custom(struct device *dev,
 }
 
 int cam_req_mgr_ordered_list_cmp(void *priv,
-	struct list_head *head_1, struct list_head *head_2)
+	const struct list_head *head_1, const struct list_head *head_2)
 {
 	return cam_subdev_list_cmp(list_entry(head_1, struct cam_subdev, list),
 		list_entry(head_2, struct cam_subdev, list));
