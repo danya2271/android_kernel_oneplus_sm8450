@@ -2730,7 +2730,6 @@ int oplus_adfr_temperature_detection_handle(void *dsi_display, int ntc_temp, int
 	static bool last_oplus_adfr_skip_min_fps_cmd = false;
 	unsigned int refresh_rate = 120;
 	unsigned int h_skew = SDC_ADFR;
-	unsigned int temp_min_fps = OPLUS_ADFR_AUTO_MIN_FPS_MAX;
 	struct dsi_display *display = dsi_display;
 
 	if (!oplus_adfr_temperature_detection_is_enable()) {

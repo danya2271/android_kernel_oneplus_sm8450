@@ -2040,8 +2040,6 @@ static void _sde_encoder_autorefresh_disable_seq1(
 {
 	int trial = 0;
 	u32 timeout_ms = phys_enc->kickoff_timeout_ms;
-	struct sde_encoder_phys_cmd *cmd_enc =
-				to_sde_encoder_phys_cmd(phys_enc);
 
 	/*
 	 * If autorefresh is enabled, disable it and make sure it is safe to
