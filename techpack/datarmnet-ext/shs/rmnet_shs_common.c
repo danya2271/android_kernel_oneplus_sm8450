@@ -207,8 +207,8 @@ u32 DATARMNETeea3cef5b6(u8 DATARMNET42a992465f)
 			    (0x16e8 + 787 - 0xc0c), NULL, NULL);
 	return ret;
 }
-int DATARMNET3c489db64a(void *priv, struct list_head *DATARMNET9cf7d31274,
-			struct list_head *DATARMNET5444bd3b6f)
+int DATARMNET3c489db64a(void *priv, const struct list_head *DATARMNET9cf7d31274,
+			const struct list_head *DATARMNET5444bd3b6f)
 {
 	struct DATARMNET13c47d154e *DATARMNET40e125212a;
 	struct DATARMNET13c47d154e *DATARMNETdcaff77beb;
@@ -228,8 +228,8 @@ int DATARMNET3c489db64a(void *priv, struct list_head *DATARMNET9cf7d31274,
 		return (0xd26 + 209 - 0xdf6);
 	return (0xd2d + 202 - 0xdf7);
 }
-int DATARMNETd5c15f1ff3(void *priv, struct list_head *DATARMNET9cf7d31274,
-			struct list_head *DATARMNET5444bd3b6f)
+int DATARMNETd5c15f1ff3(void *priv, const struct list_head *DATARMNET9cf7d31274,
+			const struct list_head *DATARMNET5444bd3b6f)
 {
 	struct DATARMNET09a412b1c6 *DATARMNET40e125212a;
 	struct DATARMNET09a412b1c6 *DATARMNETdcaff77beb;
@@ -249,8 +249,8 @@ int DATARMNETd5c15f1ff3(void *priv, struct list_head *DATARMNET9cf7d31274,
 		return (0xd26 + 209 - 0xdf6);
 	return (0xd2d + 202 - 0xdf7);
 }
-int DATARMNET85af86a36d(void *priv, struct list_head *DATARMNET9cf7d31274,
-			struct list_head *DATARMNET5444bd3b6f)
+int DATARMNET85af86a36d(void *priv, const struct list_head *DATARMNET9cf7d31274,
+			const struct list_head *DATARMNET5444bd3b6f)
 {
 	struct DATARMNET47a6995138 *DATARMNETdad817a72a;
 	struct DATARMNET47a6995138 *DATARMNET11d167e92b;
