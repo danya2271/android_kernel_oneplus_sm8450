@@ -2864,7 +2864,7 @@ static void sde_connector_early_unregister(struct drm_connector *connector)
 }
 
 #ifdef OPLUS_FEATURE_DISPLAY
-static int drm_mode_compare_for_adfr(void *priv, struct list_head *lh_a, struct list_head *lh_b)
+static int drm_mode_compare_for_adfr(void *priv, const struct list_head *lh_a, const struct list_head *lh_b)
 {
 	struct drm_display_mode *a = list_entry(lh_a, struct drm_display_mode, head);
 	struct drm_display_mode *b = list_entry(lh_b, struct drm_display_mode, head);
