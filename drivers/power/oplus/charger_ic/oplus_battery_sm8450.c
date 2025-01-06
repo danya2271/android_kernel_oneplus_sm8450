@@ -7102,7 +7102,6 @@ static void dump_regs(void)
 	static int dump_count = 0;
 	struct oplus_chg_chip *chip = g_oplus_chip;
 	struct battery_chg_dev *bcdev = NULL;
-	const int extra_num = 16;
 
 	if(!chip) {
 		chg_err("g_oplus_chip is not ready\n");
