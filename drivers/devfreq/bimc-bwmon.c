@@ -881,10 +881,12 @@ int __suspend_bw_hwmon(struct bw_hwmon *hw, enum mon_reg_type type)
 {
 	struct bwmon *m = to_bwmon(hw);
 
-	mon_irq_disable(m, type);
-	free_irq(m->irq, m);
-	mon_disable(m, type);
-	mon_irq_clear(m, type);
+	if (m->irq) {
+		mon_irq_disable(m, type);
+		free_irq(m->irq, m);
+		mon_disable(m, type);
+		mon_irq_clear(m, type);
+	}
 
 	return 0;
 }
