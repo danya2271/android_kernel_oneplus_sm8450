@@ -450,7 +450,7 @@ unsigned long calculate_headroom_low(unsigned long headroom, int cpu, unsigned l
 		(fps < sysctl_fps_threshold_low) ? (util >> 3) :
 		(util >> 2);
 	} else {
-		return util + (util >> 1);
+		return util;
 	}
 }
 
