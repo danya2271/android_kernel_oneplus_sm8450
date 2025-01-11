@@ -5,11 +5,6 @@
 # 15 Sep 2000, Christoph Hellwig <hch@infradead.org>
 # Rewritten to use lists instead of if-statements.
 #
-
-# Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=7800
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=7500
-
 obj-y				+= irqchip/
 obj-y				+= bus/
 
