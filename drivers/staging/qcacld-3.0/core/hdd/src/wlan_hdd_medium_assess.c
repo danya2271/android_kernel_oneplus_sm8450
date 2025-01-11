@@ -373,8 +373,6 @@ void hdd_medium_assess_ssr_enable_flag(void)
 
 void hdd_medium_assess_stop_timer(uint8_t pdev_id, struct hdd_context *hdd_ctx)
 {
-	struct request_info info = {0};
-	bool pending = false;
 	uint8_t i, interval = 0;
 
 	if (ssr_flag)

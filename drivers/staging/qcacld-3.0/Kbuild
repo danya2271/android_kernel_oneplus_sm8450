@@ -3016,8 +3016,7 @@ INCS +=		$(COAP_DISPATCHER_INC)
 INCS +=		$(COAP_CORE_INC)
 INCS +=		$(COAP_WMI_INC)
 
-ccflags-y += $(INCS) \
-		-Wno-unused-variable -Wno-unused-function
+ccflags-y += $(INCS)
 
 cppflags-y +=	-Wall
 
