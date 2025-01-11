@@ -171,7 +171,7 @@ typedef struct {
 	int reset_task_pending;
 } islpci_private;
 
-static inline islpci_state_t
+static inline int islpci_state_t
 islpci_get_state(islpci_private *priv)
 {
 	/* lock */
