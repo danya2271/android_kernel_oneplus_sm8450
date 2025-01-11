@@ -4,12 +4,6 @@
 #
 
 # Object files in subdirectories
-# Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=1
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=1
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=1
-KBUILD_CFLAGS  += -Oz
-
 obj-$(CONFIG_USB_COMMON)	+= common/
 obj-$(CONFIG_USB)		+= core/
 obj-$(CONFIG_USB_SUPPORT)	+= phy/
