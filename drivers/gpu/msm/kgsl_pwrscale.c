@@ -652,34 +652,6 @@ static void pwrscale_of_ca_aware(struct kgsl_device *device)
  */
 static int thermal_max_notifier_call(struct notifier_block *nb, unsigned long val, void *data)
 {
-	struct kgsl_pwrctrl *pwr = container_of(nb, struct kgsl_pwrctrl, nb_max);
-	struct kgsl_device *device = container_of(pwr, struct kgsl_device, pwrctrl);
-	u32 max_freq = val * 1000;
-	int level;
-
-	if (!device->pwrscale.devfreq_enabled)
-		return NOTIFY_DONE;
-
-	for (level = pwr->num_pwrlevels - 1; level >= 0; level--) {
-		/* get nearest power level with a maximum delta of 5MHz */
-		if (abs(pwr->pwrlevels[level].gpu_freq - max_freq) < 5000000)
-			break;
-	}
-
-	if (level < 0)
-		return NOTIFY_DONE;
-
-	if (level == pwr->thermal_pwrlevel)
-		return NOTIFY_OK;
-
-	pwr->thermal_pwrlevel = level;
-
-	mutex_lock(&device->mutex);
-
-	/* Update the current level using the new limit */
-	kgsl_pwrctrl_pwrlevel_change(device, pwr->active_pwrlevel);
-
-	mutex_unlock(&device->mutex);
 	return NOTIFY_OK;
 }
 
