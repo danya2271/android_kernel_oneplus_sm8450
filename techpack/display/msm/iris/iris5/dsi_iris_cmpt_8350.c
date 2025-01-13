@@ -13,7 +13,7 @@
 
 #include "dsi_iris5_def.h"
 #include "dsi_iris5_lightup.h"
-#include "dsi_iris_cmpt.h"
+#include "../dsi_iris_cmpt.h"
 
 
 bool iris_is_read_cmd(struct dsi_cmd_desc *pdesc)

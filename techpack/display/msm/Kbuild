@@ -162,26 +162,25 @@ msm_drm-$(CONFIG_DRM_OPLUS) += ../oplus/oplus_adfr.o
 
 msm_drm-$(CONFIG_DRM_OPLUS_NOTIFY) += ../oplus/oplus_notify.o
 
-ifeq ($(findstring OPLUS_FEATURE_PXLW_IRIS5,$(KBUILD_CFLAGS)),OPLUS_FEATURE_PXLW_IRIS5)
-msm_drm-$(CONFIG_DRM_MSM_DSI) += dsi/iris/dsi_iris5_ioctl.o \
-                               dsi/iris/dsi_iris5_lightup.o \
-                               dsi/iris/dsi_iris5_lightup_ocp.o \
-                               dsi/iris/dsi_iris5_lp.o \
-                               dsi/iris/dsi_iris5_lut.o \
-                               dsi/iris/dsi_iris5_pq.o \
-                               dsi/iris/dsi_iris5_mode_switch.o \
-                               dsi/iris/dsi_iris5_cmds.o \
-                               dsi/iris/dsi_iris5_i3c.o \
-                               dsi/iris/dsi_iris5_i2c.o \
-                               dsi/iris/dsi_iris5_loop_back.o \
-                               dsi/iris/dsi_iris5_gpio.o \
-                               dsi/iris/dsi_iris5_frc.o \
-                               dsi/iris/dsi_iris5_timing_switch.o \
-                               dsi/iris/dsi_iris5_dbg.o \
-                               dsi/iris/msm_iris5_extended.o \
-                               dsi/iris/sde_iris5_extended.o \
-                               dsi/iris/dsi_iris5_extended.o
-endif #/* OPLUS_FEATURE_PXLW_IRIS5 */
+msm_drm-$(OPLUS_FEATURE_PXLW_IRIS5) += iris/iris5/dsi_iris5_ioctl.o \
+				iris/iris5/dsi_iris_cmpt_8450.o \
+				iris/iris5/dsi_iris5_lightup.o \
+				iris/iris5/dsi_iris5_lightup_ocp.o \
+				iris/iris5/dsi_iris5_lp.o \
+				iris/iris5/dsi_iris5_lut.o \
+				iris/iris5/dsi_iris5_pq.o \
+				iris/iris5/dsi_iris5_mode_switch.o \
+				iris/iris5/dsi_iris5_cmds.o \
+				iris/iris5/dsi_iris5_i3c.o \
+				iris/iris5/dsi_iris5_i2c.o \
+				iris/iris5/dsi_iris5_loop_back.o \
+				iris/iris5/dsi_iris5_gpio.o \
+				iris/iris5/dsi_iris5_frc.o \
+				iris/iris5/dsi_iris5_timing_switch.o \
+				iris/iris5/dsi_iris5_dbg.o \
+				iris/iris5/msm_iris5_extended.o \
+				iris/iris5/sde_iris5_extended.o \
+				iris/iris5/dsi_iris5_extended.o
 
 #endif /*OPLUS_BUG_STABILITY*/
 

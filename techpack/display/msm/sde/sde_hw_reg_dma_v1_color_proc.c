@@ -16,7 +16,7 @@
 #include "sde_hw_util.h"
 
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
-#include "dsi_iris_api.h"
+#include "../iris/dsi_iris_api.h"
 #endif
 /* Reserve space of 128 words for LUT dma payload set-up */
 #define REG_DMA_HEADERS_BUFFER_SZ (sizeof(u32) * 128)

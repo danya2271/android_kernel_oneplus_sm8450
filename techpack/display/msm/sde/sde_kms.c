@@ -65,7 +65,7 @@
 #include <linux/gunyah/gh_irq_lend.h>
 #endif
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
-#include "dsi_iris_api.h"
+#include "../iris/dsi_iris_api.h"
 #endif
 
 #define CREATE_TRACE_POINTS

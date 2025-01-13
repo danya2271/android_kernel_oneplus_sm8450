@@ -13,7 +13,7 @@
 #include "sde_dbg.h"
 #include "sde_kms.h"
 #if defined(CONFIG_PXLW_IRIS)
-#include "dsi_iris_api.h"
+#include "../iris/dsi_iris_api.h"
 #endif
 
 #define PP_TEAR_CHECK_EN                0x000
