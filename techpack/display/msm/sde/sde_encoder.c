@@ -57,7 +57,7 @@
 #endif /* OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT */
 
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
-#include "dsi_iris_api.h"
+#include "../iris/dsi_iris_api.h"
 extern u32 iris_pq_disable;
 #endif
 

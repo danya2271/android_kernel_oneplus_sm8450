@@ -11,7 +11,7 @@
 #include "sde_formats.h"
 #include "sde_trace.h"
 #if defined(CONFIG_PXLW_IRIS)
-#include "dsi_iris_api.h"
+#include "../iris/dsi_iris_api.h"
 #endif
 
 #ifdef OPLUS_FEATURE_DISPLAY

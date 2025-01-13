@@ -11,7 +11,7 @@
 #include <sde_encoder_phys.h>
 #include <sde_trace.h>
 #include "dsi_parser.h"
-#include "dsi_iris_api.h"
+#include "../dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lightup_ocp.h"
 #include "dsi_iris5_lp.h"
@@ -19,12 +19,12 @@
 #include "dsi_iris5_ioctl.h"
 #include "dsi_iris5_lut.h"
 #include "dsi_iris5_mode_switch.h"
-#include "dsi_iris_loop_back.h"
+#include "../dsi_iris_loop_back.h"
 #include "dsi_iris5_gpio.h"
 #include "dsi_iris5_frc.h"
 #include "dsi_iris5_timing_switch.h"
 #include "dsi_iris5_log.h"
-#include "dsi_iris_cmpt.h"
+#include "../dsi_iris_cmpt.h"
 
 #define IRIS_OCP_HEADER_ADDR_LEN  8
 

@@ -21,7 +21,7 @@
 #include <linux/ktime.h>
 #include <linux/time.h>
 #include "dsi_iris5_i2c.h"
-#include "dsi_iris_api.h"
+#include "../dsi_iris_api.h"
 
 #define IRIS_COMPATIBLE_NAME  "pixelworks,iris-i2c"
 #define IRIS_I2C_DRIVER_NAME  "pixelworks-i2c"

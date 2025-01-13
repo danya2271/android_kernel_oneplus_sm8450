@@ -9,10 +9,10 @@
 
 #include "dsi_display.h"
 #include "dsi_panel.h"
-#include "dsi_iris_api.h"
+#include "../dsi_iris_api.h"
 #include "dsi_iris5.h"
 #include "dsi_iris5_log.h"
-#include "dsi_iris_cmpt.h"
+#include "../dsi_iris_cmpt.h"
 #include <soc/oplus/system/oplus_project.h>
 
 static uint32_t iris_enable_dsi_cmd_log;

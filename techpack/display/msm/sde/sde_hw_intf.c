@@ -10,7 +10,7 @@
 #include "sde_hw_intf.h"
 #include "sde_dbg.h"
 #if defined(CONFIG_PXLW_IRIS)
-#include "dsi_iris_api.h"
+#include "../iris/dsi_iris_api.h"
 #endif
 
 #define INTF_TIMING_ENGINE_EN           0x000
