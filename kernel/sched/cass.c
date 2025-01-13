@@ -265,10 +265,6 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 		/* Clamp the utilization to the minimum performance threshold */
 		if (curr->util < uc_min)
 			curr->util = uc_min;
-		
-		/* Calculate the relative utilization for this CPU candidate */
-		curr->util = min_t(unsigned long, SCHED_CAPACITY_SCALE,
-				   curr->util * SCHED_CAPACITY_SCALE / curr->cap);
 
 		/*
 		 * Calculate the relative utilization for this CPU candidate
