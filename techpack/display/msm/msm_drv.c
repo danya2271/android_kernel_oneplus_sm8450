@@ -56,7 +56,7 @@
 #include "sde_wb.h"
 #include "sde_dbg.h"
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
-#include "dsi_iris_api.h"
+#include "iris/dsi_iris_api.h"
 #endif
 
 #ifdef OPLUS_FEATURE_DISPLAY

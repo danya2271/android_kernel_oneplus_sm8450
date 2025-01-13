@@ -5,7 +5,7 @@
  *
  * These files contain modifications made by Pixelworks, Inc., in 2019-2020.
  */
-#include "dsi_iris_api.h"
+#include "../dsi_iris_api.h"
 #include "dsi_iris5.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lightup_ocp.h"
@@ -15,10 +15,10 @@
 #include "dsi_iris5_mode_switch.h"
 #include "dsi_iris5_ioctl.h"
 #include "dsi_iris5_i3c.h"
-#include "dsi_iris_loop_back.h"
+#include "../dsi_iris_loop_back.h"
 #include "dsi_iris5_frc.h"
 #include "dsi_iris5_log.h"
-#include "dsi_iris_cmpt.h"
+#include "../dsi_iris_cmpt.h"
 
 // for game station settings via i2c
 uint32_t CM_CNTL[14] = {

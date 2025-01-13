@@ -28,7 +28,7 @@
 #endif
 
 #if defined(CONFIG_PXLW_IRIS)
-#include "dsi_iris_api.h"
+#include "../msm/iris/dsi_iris_api.h"
 #endif
 
 /* -------------------- macro -------------------- */

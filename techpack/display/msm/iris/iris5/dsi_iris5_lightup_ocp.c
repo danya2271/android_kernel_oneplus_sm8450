@@ -7,12 +7,12 @@
  */
 #include <linux/vmalloc.h>
 #include <video/mipi_display.h>
-#include "dsi_iris_api.h"
+#include "../dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lightup_ocp.h"
 #include "dsi_iris5_lp.h"
 #include "dsi_iris5_log.h"
-#include "dsi_iris_cmpt.h"
+#include "../dsi_iris_cmpt.h"
 
 #define IRIS_TX_HV_PAYLOAD_LEN   120
 #define IRIS_TX_PAYLOAD_LEN 124
