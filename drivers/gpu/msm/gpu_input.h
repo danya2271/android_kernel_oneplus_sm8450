@@ -2,11 +2,11 @@
 /*
  * Copyright (C) 2024 danya2271 <danya2271@yandex.ru>.
  */
-static unsigned char max_input_boost_level __read_mostly =
+static unsigned int max_input_boost_level __read_mostly =
 CONFIG_MAX_INPUT_BOOST_LEVEL;
-static unsigned char mid_input_boost_level __read_mostly =
+static unsigned int mid_input_boost_level __read_mostly =
 CONFIG_MID_INPUT_BOOST_LEVEL;
-static unsigned char input_boost_level __read_mostly =
+static unsigned int input_boost_level __read_mostly =
 CONFIG_INPUT_BOOST_LEVEL;
 static unsigned short input_boost_duration __read_mostly =
 CONFIG_INPUT_BOOST_DURATION_MS;
