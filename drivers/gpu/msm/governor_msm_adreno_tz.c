@@ -356,7 +356,6 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 	struct devfreq_dev_status *stats = &devfreq->last_status;
 	int val, level = 0;
 	int context_count = 0;
-	int fps = msm_panel_fps;
 	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
 	u64 busy_time;
 
