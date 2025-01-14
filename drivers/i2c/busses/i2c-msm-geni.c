@@ -117,9 +117,9 @@ void i2c_trace_log(struct device *dev, const char *fmt, ...)
 	va_end(args);
 }
 #else
-#define I2C_LOG_DBG(log_ctx, print, dev, x...) do {} while (0)
+#define I2C_LOG_DBG(log_ctx, print, dev, x...) ((void)0)
 
-#define I2C_LOG_ERR(log_ctx, print, dev, x...) do {} while (0)
+#define I2C_LOG_ERR(log_ctx, print, dev, x...) ((void)0)
 
 #define CREATE_TRACE_POINTS
 #include "i2c-qup-trace.h"

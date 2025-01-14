@@ -12,9 +12,9 @@
 #define BTFMSLIM_DBG(fmt, arg...)  pr_debug("%s: " fmt "\n", __func__, ## arg)
 #define BTFMSLIM_ERR(fmt, arg...)  pr_err("%s: " fmt "\n", __func__, ## arg)
 #else
-#define BTFMSLIM_INFO(fmt, arg...) do {} while (0)
-#define BTFMSLIM_DBG(fmt, arg...)  do {} while (0)
-#define BTFMSLIM_ERR(fmt, arg...)  do {} while (0)
+#define BTFMSLIM_INFO(fmt, arg...) ((void)0)
+#define BTFMSLIM_DBG(fmt, arg...)  ((void)0)
+#define BTFMSLIM_ERR(fmt, arg...)  ((void)0)
 #endif
 #define BTFMSLIM_ERR(fmt, arg...)  pr_err("%s: " fmt "\n", __func__, ## arg)
 
