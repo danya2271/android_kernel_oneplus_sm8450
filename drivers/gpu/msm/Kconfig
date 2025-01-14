@@ -29,7 +29,7 @@ config GPU_INPUT_BOOST
 
 if GPU_INPUT_BOOST
 
-config INPUT_BOOST_DURATION_MS
+config GPU_INPUT_BOOST_DURATION_MS
 	int "Input boost duration"
 	default "100"
 	help
