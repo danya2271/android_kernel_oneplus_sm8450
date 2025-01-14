@@ -431,6 +431,24 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 		level = min_t(int, level, devfreq->profile->max_state - 1);
 	}
 
+	switch (boost_adjust_notify()) {
+		case 1:
+			if (level > input_boost_level) {
+				level = input_boost_level;
+			}
+			break;
+		case 2:
+			if (level > max_input_boost_level) {
+				level = max_input_boost_level;
+			}
+			break;
+		case 3:
+			if (level > mid_input_boost_level) {
+				level = mid_input_boost_level;
+			}
+			break;
+	}
+
 	if (level == 11 || level == 10) {
 		if (refresh_rate <= 60) {
 			level = 11;
@@ -438,24 +456,6 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 			level = 10;
 		}
 	}
-
-	switch (boost_adjust_notify()) {
-    case 1:
-        if (level > input_boost_level) {
-            level = input_boost_level;
-        }
-        break;
-    case 2:
-		if (level > max_input_boost_level) {
-			level = max_input_boost_level;
-		}
-        break;
-    case 3:
-        if (level > mid_input_boost_level) {
-            level = mid_input_boost_level;
-        }
-        break;
-}
 
 	*freq = devfreq->profile->freq_table[level];
 	return 0;
