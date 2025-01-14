@@ -9,7 +9,7 @@ CONFIG_MID_INPUT_BOOST_LEVEL;
 static unsigned int input_boost_level __read_mostly =
 CONFIG_INPUT_BOOST_LEVEL;
 static unsigned short input_boost_duration __read_mostly =
-CONFIG_INPUT_BOOST_DURATION_MS;
+CONFIG_GPU_INPUT_BOOST_DURATION_MS;
 static unsigned short wake_boost_duration __read_mostly =
 CONFIG_WAKE_BOOST_DURATION_MS;
 
