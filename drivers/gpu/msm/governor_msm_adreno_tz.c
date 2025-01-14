@@ -448,12 +448,13 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 			}
 			break;
 	}
-
-	if (level == 11 || level == 10) {
+#define HIGHEST_LEVEL CONFIG_HIGHEST_LEVEL
+#define HIGH_LEVEL (CONFIG_HIGHEST_LEVEL - 1)
+	if (level == HIGHEST_LEVEL || level == HIGH_LEVEL) {
 		if (refresh_rate <= 60) {
-			level = 11;
+			level = HIGHEST_LEVEL;
 		} else {
-			level = 10;
+			level = HIGH_LEVEL;
 		}
 	}
 
