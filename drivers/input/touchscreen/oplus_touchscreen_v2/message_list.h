@@ -16,11 +16,11 @@
 
 
 
-#define MESSAGE_LIST_DEBUG
+//#define MESSAGE_LIST_DEBUG
 
 #ifndef MESSAGE_LIST_DEBUG
-#define MESSAGE_DBG(fmt, arg...) do {} while (0)
-#define MESSAGE_LOG(fmt, arg...) do {} while (0)
+#define MESSAGE_DBG(fmt, arg...) ((void)0)
+#define MESSAGE_LOG(fmt, arg...) ((void)0)
 #else
 #define MESSAGE_DBG(fmt, arg...) pr_info("[MSG_LIST]"fmt, ##arg)
 #define MESSAGE_LOG(fmt, arg...) pr_err("[MSG_LIST]"fmt, ##arg)
