@@ -139,9 +139,9 @@ void spi_trace_log(struct device *dev, const char *fmt, ...)
 	va_end(args);
 }
 #else
-#define SPI_LOG_DBG(log_ctx, print, dev, x...) do {} while (0)
+#define SPI_LOG_DBG(log_ctx, print, dev, x...) ((void)0)
 
-#define SPI_LOG_ERR(log_ctx, print, dev, x...) do {} while (0)
+#define SPI_LOG_ERR(log_ctx, print, dev, x...) ((void)0)
 
 #define CREATE_TRACE_POINTS
 #include "spi-qup-trace.h"

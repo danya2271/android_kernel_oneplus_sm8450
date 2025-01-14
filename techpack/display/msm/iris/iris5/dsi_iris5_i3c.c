@@ -30,7 +30,7 @@
 #ifdef IRIS_I2C_DBG
 #define iris_i2c_dbg(fmt, args...)		pr_debug(I2C_DBG_TAG "[%s:%d]" fmt, __func__, __LINE__, args)
 #else
-#define iris_i2c_dbg(fmt, args...)        do {} while (0)
+#define iris_i2c_dbg(fmt, args...)        ((void)0)
 #endif
 
 #define MAX_TRANSFER_MSG_LEN   32
