@@ -59,6 +59,12 @@ config MAX_INPUT_BOOST_LEVEL
 	help
 	  Max Input boost level for GPU.
 
+config HIGHEST_LEVEL
+	int "Highest GPU level"
+	default "11"
+	help
+		Highest level for GPU (means level with lowest frequency)
+
 endif
 
 config DEVFREQ_GOV_QCOM_ADRENO_TZ
