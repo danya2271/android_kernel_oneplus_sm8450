@@ -5,11 +5,6 @@
 # 2 Sep 2000, Christoph Hellwig <hch@infradead.org>
 # Rewritten to use lists instead of if-statements.
 #
-# Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=225
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=325
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=60
-KBUILD_CFLAGS  += -Oz
 
 obj-$(CONFIG_NET)		:= devres.o socket.o core/
 

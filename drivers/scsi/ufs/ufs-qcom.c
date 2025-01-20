@@ -53,8 +53,7 @@
 
 /* Max number of log pages */
 #define UFS_QCOM_MAX_LOG_SZ	10
-#define ufs_qcom_log_str(host, fmt, ...)	\
-	do {} while (0)
+#define ufs_qcom_log_str(host, fmt, ...)	((void)0)
 
 #define UFS_BOOT_DEVICE  0x1
 static u32 is_bootdevice_ufs = UFS_BOOT_DEVICE;

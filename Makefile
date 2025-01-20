@@ -847,24 +847,6 @@ endif
 
 # Additional optimizations for better kernel speed
 KBUILD_CFLAGS +=  -fno-semantic-interposition -fno-signed-zeros  -ffinite-math-only -freciprocal-math -fcf-protection=none -fno-trapping-math -fno-math-errno -ffast-math -funroll-loops
-# Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=12480
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=10350
-KBUILD_CFLAGS  += -mllvm -inline-savings-multiplier=12
-KBUILD_CFLAGS  += -mllvm -inline-cold-callsite-threshold=55
-KBUILD_CFLAGS  += -mllvm -ignore-tti-inline-compatible
-KBUILD_CFLAGS  += -mllvm -inline-savings-profitable-multiplier=6
-KBUILD_CFLAGS  += -mllvm -inline-size-allowance=30
-KBUILD_CFLAGS  += -mllvm -inlinecold-threshold=130
-KBUILD_CFLAGS  += -mllvm -locally-hot-callsite-threshold=750
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=12
-KBUILD_CFLAGS  += -mllvm -inline-call-penalty=5
-KBUILD_CFLAGS  += -mllvm -hot-callsite-rel-freq=100
-KBUILD_CFLAGS  += -mllvm -cold-callsite-rel-freq=5
-KBUILD_CFLAGS  += -mllvm -inline-enable-cost-benefit-analysis
-
-KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined -Wno-unneeded-internal-declaration
-
 #Enable MLGO
 ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 180000; echo $$?),0)
 KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
@@ -872,10 +854,8 @@ KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
 KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
 endif
 
-ifeq ($(cc-name),clang)
 #Enable fast FMA optimizations
 KBUILD_CFLAGS   += -ffp-contract=fast
-endif
 
 ifdef CONFIG_LLVM_POLLY
 KBUILD_CFLAGS	+= -mllvm -polly \
@@ -899,6 +879,7 @@ KBUILD_CFLAGS	+= -mllvm -polly-loopfusion-greedy=1 \
 		   -mllvm -polly-num-threads=0 \
 		   -mllvm -polly-omp-backend=LLVM \
 		   -mllvm -polly-scheduling=dynamic \
+		   -mllvm -polly-isl-arg=--no-schedule-serialize-sccs \
 		   -mllvm -polly-scheduling-chunksize=1
 else
 KBUILD_CFLAGS	+= -mllvm -polly-opt-fusion=max
@@ -1100,9 +1081,9 @@ endif
 KBUILD_LDFLAGS		+= --plugin-opt=O3
 KBUILD_LDFLAGS      += --lto-O3
 endif
-
+ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 180000; echo $$?),0)
 KBUILD_LDFLAGS      += --error-limit=0
-KBUILD_CFLAGS += -Wno-visibility -Wno-implicit-int -Wno-enum-conversion -Wno-unused-function
+endif
 
 ifdef CONFIG_LTO
 KBUILD_CFLAGS	+= $(CC_FLAGS_LTO)

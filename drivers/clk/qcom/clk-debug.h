@@ -151,14 +151,11 @@ static void clk_debug_exit(void)
 static void clk_debug_print_hw(struct clk_hw *hw, struct seq_file *f)
 {}
 
-#define WARN_CLK(hw, cond, fmt, ...)						\
-do {} while (0)
+#define WARN_CLK(hw, cond, fmt, ...)	((void)0)
 
-#define clock_debug_output(m, fmt, ...)			\
-do {} while (0)
+#define clock_debug_output(m, fmt, ...)		((void)0)
 
-#define clock_debug_output_cont(s, fmt, ...)			\
-do {} while (0)
+#define clock_debug_output_cont(s, fmt, ...)	((void)0)
 
 #endif
 
