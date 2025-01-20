@@ -74,14 +74,13 @@ void msm_mmrm_debugfs_deinit(struct dentry *dir);
 static int msm_mmrm_debug;
 static u8 msm_mmrm_allow_multiple_register;
 
-#define dprintk(__level, __fmt, ...) \
-do {} while (0)
+#define dprintk(__level, __fmt, ...) ((void)0)
 
-#define d_mpr_e(__fmt, ...) do {} while (0)
-#define d_mpr_h(__fmt, ...) do {} while (0)
-#define d_mpr_l(__fmt, ...) do {} while (0)
-#define d_mpr_w(__fmt, ...) do {} while (0)
-#define d_mpr_p(__fmt, ...) do {} while (0)
+#define d_mpr_e(__fmt, ...) ((void)0)
+#define d_mpr_h(__fmt, ...) ((void)0)
+#define d_mpr_l(__fmt, ...) ((void)0)
+#define d_mpr_w(__fmt, ...) ((void)0)
+#define d_mpr_p(__fmt, ...) ((void)0)
 
 static inline char *get_debug_level_str(int level)
 {

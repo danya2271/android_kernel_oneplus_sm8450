@@ -67,7 +67,7 @@ enum vidc_msg_prio {
 };
 #define FW_LOGSHIFT    16
 #define FW_LOGMASK     0x0FFF0000
-
+#ifdef CONFIG_DEBUG_KERNEL
 #define dprintk_inst(__level, __level_str, inst, __fmt, ...) \
 	do {} while (0)
 
@@ -109,6 +109,37 @@ enum vidc_msg_prio {
 			BUG_ON(value); \
 		} \
 	} while (0)
+
+#else
+
+#define dprintk_inst(__level, __level_str, inst, __fmt, ...) ((void)0)
+
+#define i_vpr_e(inst, __fmt, ...) ((void)0)
+#define i_vpr_i(inst, __fmt, ...) ((void)0)
+#define i_vpr_h(inst, __fmt, ...) ((void)0)
+#define i_vpr_l(inst, __fmt, ...) ((void)0)
+#define i_vpr_p(inst, __fmt, ...) ((void)0)
+#define i_vpr_t(inst, __fmt, ...) ((void)0)
+#define i_vpr_b(inst, __fmt, ...) ((void)0)
+
+#define i_vpr_hp(inst, __fmt, ...) ((void)0)
+
+#define dprintk_core(__level, __level_str, __fmt, ...) ((void)0)
+
+#define d_vpr_e(__fmt, ...) ((void)0)
+#define d_vpr_h(__fmt, ...) ((void)0)
+#define d_vpr_l(__fmt, ...) ((void)0)
+#define d_vpr_p(__fmt, ...) ((void)0)
+#define d_vpr_t(__fmt, ...) ((void)0)
+#define d_vpr_b(__fmt, ...) ((void)0)
+
+#define dprintk_ratelimit(__level, __level_str, __fmt, ...) ((void)0)
+
+#define dprintk_firmware(__level, __fmt, ...)	((void)0)
+
+#define MSM_VIDC_FATAL(value)	((void)0)
+
+#endif
 
 enum msm_vidc_debugfs_event {
 	MSM_VIDC_DEBUGFS_EVENT_ETB,

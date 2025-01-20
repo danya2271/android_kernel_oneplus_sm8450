@@ -109,27 +109,20 @@ extern unsigned int oplus_display_trace_enable;
 extern const char *cmd_set_prop_map[DSI_CMD_SET_MAX];
 
 /* debug log */
-#define OFP_ERR(fmt, arg...)	\
-	do {} while (0)
+#define OFP_ERR(fmt, arg...)	((void)0)
 
-#define OFP_WARN(fmt, arg...)	\
-	do {} while (0)
+#define OFP_WARN(fmt, arg...)	((void)0)
 
-#define OFP_INFO(fmt, arg...)	\
-	do {} while (0)
+#define OFP_INFO(fmt, arg...)	((void)0)
 
-#define OFP_DEBUG(fmt, arg...)	\
-	do {} while (0)
+#define OFP_DEBUG(fmt, arg...)	((void)0)
 
 /* debug trace */
-#define OPLUS_OFP_TRACE_BEGIN(name)	\
-	do {} while (0)
+#define OPLUS_OFP_TRACE_BEGIN(name)	((void)0)
 
-#define OPLUS_OFP_TRACE_END(name)	\
-	do {} while (0)
+#define OPLUS_OFP_TRACE_END(name)	((void)0)
 
-#define OPLUS_OFP_TRACE_INT(name, value)	\
-	do {} while (0)
+#define OPLUS_OFP_TRACE_INT(name, value)	((void)0)
 
 /* -------------------- oplus_ofp_params -------------------- */
 int oplus_ofp_update_display_id(void);
