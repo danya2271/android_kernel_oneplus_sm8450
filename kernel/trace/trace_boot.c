@@ -238,8 +238,8 @@ trace_boot_init_events(struct trace_array *tr, struct xbc_node *node)
 			trace_boot_init_one_event(tr, gnode, enode);
 }
 #else
-#define trace_boot_enable_events(tr, node) do {} while (0)
-#define trace_boot_init_events(tr, node) do {} while (0)
+#define trace_boot_enable_events(tr, node) ((void)0)
+#define trace_boot_init_events(tr, node) ((void)0)
 #endif
 
 #ifdef CONFIG_DYNAMIC_FTRACE

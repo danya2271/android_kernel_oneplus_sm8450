@@ -30,8 +30,8 @@ static u64 default_up_delay_lp[] = {30 * NSEC_PER_MSEC};
 static unsigned int default_efficient_freq_hp[] = {1113200, 2227400};
 static u64 default_up_delay_hp[] = {3 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
 
-static unsigned int default_efficient_freq_pr[] = {2054400, 2630200};
-static u64 default_up_delay_pr[] = {15 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
+static unsigned int default_efficient_freq_pr[] = {1286400, 2630200};
+static u64 default_up_delay_pr[] = {6 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
 
 struct sugov_tunables {
 	struct gov_attr_set	attr_set;
@@ -430,12 +430,10 @@ EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
 static __always_inline
 unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
-	if (cpumask_test_cpu(cpu, cpu_prime_mask))
-		return util; // we don't want to boost prime cluster if there is no touchboost
 	if (sleep_disabled) { // check for touchboost
-		return util + util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : sysctl_headroom_big);
+		return util + util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
 	} else {
-		return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (sysctl_headroom_big/2 + util));
+		return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? (sysctl_headroom_prime/2 + util) : (sysctl_headroom_big/2 + util)));
 	}
 }
 
@@ -1140,18 +1138,18 @@ static int sugov_init(struct cpufreq_policy *policy)
 
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
-		tunables->up_rate_limit_us = 2500;
+		tunables->up_rate_limit_us = 3000;
         tunables->down_rate_limit_us = 2000;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
-		tunables->up_rate_limit_us = 3000;
+		tunables->up_rate_limit_us = 4000;
 		tunables->down_rate_limit_us = 2000;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
-		tunables->up_rate_limit_us = 3500;
-		tunables->down_rate_limit_us = 1000;
+		tunables->up_rate_limit_us = 2000;
+		tunables->down_rate_limit_us = 2000;
 	}
 
 	if (cpumask_test_cpu(sg_policy->policy->cpu, cpu_lp_mask)) {
