@@ -4711,7 +4711,7 @@ static void __sched notrace __schedule(bool preempt)
 
 	schedule_debug(prev, preempt);
 
-	if (sched_feat(HRTICK) || sched_feat(HRTICK_DL))
+	if (sched_feat(HRTICK))
 		hrtick_clear(rq);
 
 	local_irq_disable();
