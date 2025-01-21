@@ -6959,68 +6959,6 @@ static unsigned long cpu_util_next(int cpu, struct task_struct *p, int dst_cpu)
 }
 
 /*
- * Predicts what cpu_util(@cpu) would return if @p was removed from @cpu
- * (@dst_cpu = -1) or migrated to @dst_cpu.
- */
-static unsigned long cpu_util_next(int cpu, struct task_struct *p, int dst_cpu)
-{
-	struct cfs_rq *cfs_rq = &cpu_rq(cpu)->cfs;
-	unsigned long util = READ_ONCE(cfs_rq->avg.util_avg);
-
-	/*
-	 * If @dst_cpu is -1 or @p migrates from @cpu to @dst_cpu remove its
-	 * contribution. If @p migrates from another CPU to @cpu add its
-	 * contribution. In all the other cases @cpu is not impacted by the
-	 * migration so its util_avg is already correct.
-	 */
-	if (task_cpu(p) == cpu && dst_cpu != cpu)
-		lsub_positive(&util, task_util(p));
-	else if (task_cpu(p) != cpu && dst_cpu == cpu)
-		util += task_util(p);
-
-	if (sched_feat(UTIL_EST)) {
-		unsigned long util_est;
-
-		util_est = READ_ONCE(cfs_rq->avg.util_est.enqueued);
-
-		/*
-		 * During wake-up @p isn't enqueued yet and doesn't contribute
-		 * to any cpu_rq(cpu)->cfs.avg.util_est.enqueued.
-		 * If @dst_cpu == @cpu add it to "simulate" cpu_util after @p
-		 * has been enqueued.
-		 *
-		 * During exec (@dst_cpu = -1) @p is enqueued and does
-		 * contribute to cpu_rq(cpu)->cfs.util_est.enqueued.
-		 * Remove it to "simulate" cpu_util without @p's contribution.
-		 *
-		 * Despite the task_on_rq_queued(@p) check there is still a
-		 * small window for a possible race when an exec
-		 * select_task_rq_fair() races with LB's detach_task().
-		 *
-		 *   detach_task()
-		 *     deactivate_task()
-		 *       p->on_rq = TASK_ON_RQ_MIGRATING;
-		 *       -------------------------------- A
-		 *       dequeue_task()                    \
-		 *         dequeue_task_fair()              + Race Time
-		 *           util_est_dequeue()            /
-		 *       -------------------------------- B
-		 *
-		 * The additional check "current == p" is required to further
-		 * reduce the race window.
-		 */
-		if (dst_cpu == cpu)
-			util_est += _task_util_est(p);
-		else if (unlikely(task_on_rq_queued(p) || current == p))
-			lsub_positive(&util_est, _task_util_est(p));
-
-		util = max(util, util_est);
-	}
-
-	return min(util, capacity_orig_of(cpu));
-}
-
-/*
  * cpu_util_without: compute cpu utilization without any contributions from *p
  * @cpu: the CPU which utilization is requested
  * @p: the task which utilization should be discounted
