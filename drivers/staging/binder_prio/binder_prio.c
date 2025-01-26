@@ -31,6 +31,8 @@ static bool set_binder_rt_task(struct binder_transaction *t) {
 
 	if (t && t->from && t->from->task && t->to_proc && t->to_proc->tsk && (!(t->flags & TF_ONE_WAY)) &&
 	    rt_policy(t->from->task->policy)) {
+		#define from_task_comm    t->from->task->comm
+		#define from_task_gl_comm t->from->task->group_leader->comm
 		if (!strncmp(t->from->task->group_leader->comm, "com.miui.home", strlen("com.miui.home")) &&
 		    !strncmp(t->from->task->comm, "RenderThread", strlen("RenderThread")) &&
 		    !strncmp(t->to_proc->tsk->comm, "surfaceflinger", strlen("surfaceflinger")))
