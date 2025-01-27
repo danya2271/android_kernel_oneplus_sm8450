@@ -226,9 +226,7 @@ static void sde_encoder_override_tearcheck_rd_ptr(struct sde_encoder_phys *phys_
 
 	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
 	SDE_EVT32_VERBOSE(phys_enc->hw_intf->idx - INTF_0, mode->vdisplay,
-		cmd_enc->qsync_threshold_lines, adjusted_tear_rd_ptr_line_cnt,
-		info[0].rd_ptr_line_count, info[0].rd_ptr_frame_count, info[0].wr_ptr_line_count,
-		info[1].rd_ptr_line_count, info[1].rd_ptr_frame_count, info[1].wr_ptr_line_count);
+		cmd_enc->qsync_threshold_lines, adjusted_tear_rd_ptr_line_cnt);
 }
 
 static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
@@ -267,9 +265,9 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0,
 		phys_enc->hw_pp->idx - PINGPONG_0, event, scheduler_status,
 		info[0].pp_idx, info[0].intf_idx, info[0].intf_frame_count,
-		info[0].wr_ptr_line_count, info[0].rd_ptr_line_count,
+		info[0].wr_ptr_line_count,
 		info[1].pp_idx, info[1].intf_idx, info[1].intf_frame_count,
-		info[1].wr_ptr_line_count, info[1].rd_ptr_line_count);
+		info[1].wr_ptr_line_count);
 
 #ifdef OPLUS_FEATURE_DISPLAY
 	if (oplus_adfr_is_support()) {
@@ -384,9 +382,9 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent), scheduler_status, info[0].pp_idx,
 		info[0].intf_idx, info[0].intf_frame_count,
-		info[0].wr_ptr_line_count, info[0].rd_ptr_line_count,
+		info[0].wr_ptr_line_count,
 		info[1].pp_idx, info[1].intf_idx, info[1].intf_frame_count,
-		info[1].wr_ptr_line_count, info[1].rd_ptr_line_count);
+		info[1].wr_ptr_line_count);
 
 	if (phys_enc->parent_ops.handle_vblank_virt)
 		phys_enc->parent_ops.handle_vblank_virt(phys_enc->parent,
@@ -458,9 +456,8 @@ static void sde_encoder_phys_cmd_wr_ptr_irq(void *arg, int irq_idx)
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0, event,
 		qsync_mode, info[0].pp_idx, info[0].intf_idx,
 		info[0].intf_frame_count, info[0].wr_ptr_line_count,
-		info[0].rd_ptr_line_count, info[1].pp_idx, info[1].intf_idx,
-		info[1].intf_frame_count, info[1].wr_ptr_line_count,
-		info[1].rd_ptr_line_count);
+		info[1].pp_idx, info[1].intf_idx,
+		info[1].intf_frame_count, info[1].wr_ptr_line_count);
 
 	if (qsync_mode)
 		sde_encoder_override_tearcheck_rd_ptr(phys_enc);
@@ -2201,9 +2198,9 @@ static void sde_encoder_phys_cmd_trigger_start(
 	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
 	SDE_EVT32(DRMID(phys_enc->parent), frame_cnt, info[0].pp_idx,
 		info[0].intf_idx, info[0].intf_frame_count,
-		info[0].wr_ptr_line_count, info[0].rd_ptr_line_count,
+		info[0].wr_ptr_line_count,
 		info[1].pp_idx, info[1].intf_idx, info[1].intf_frame_count,
-		info[1].wr_ptr_line_count, info[1].rd_ptr_line_count);
+		info[1].wr_ptr_line_count);
 
 	/* wr_ptr_wait_success is set true when wr_ptr arrives */
 	cmd_enc->wr_ptr_wait_success = false;
