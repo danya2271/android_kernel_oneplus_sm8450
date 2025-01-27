@@ -20,7 +20,6 @@
 #define DATARMNET81fe789d21 INT_MAX
 #define MIN_FREQ (0xd2d + 202 - 0xdf7)
 #define DATARMNET59b491fbc9 DATARMNET81fe789d21
-#define DATARMNET03d51cb126 (0xd1f + 216 - 0xdf5)
 struct cpu_freq {
 	unsigned int DATARMNET103c8d34fe;
 	unsigned int DATARMNET1159aa2cb6;
@@ -93,7 +92,7 @@ void DATARMNETfb7007f025(void)
 	if (work_pending(&DATARMNETbfcbb4b8ac))
 		return;
 	if (DATARMNETde8f350999) {
-		queue_work_on(DATARMNET03d51cb126, DATARMNETde8f350999,
+		queue_work(DATARMNETde8f350999,
 			      &DATARMNETbfcbb4b8ac);
 	}
 }
@@ -111,7 +110,7 @@ void DATARMNET371703c28d(void)
 	if (work_pending(&DATARMNETbfcbb4b8ac))
 		return;
 	if (DATARMNETde8f350999)
-		queue_work_on(DATARMNET03d51cb126, DATARMNETde8f350999,
+		queue_work(DATARMNETde8f350999,
 			      &DATARMNETbfcbb4b8ac);
 }
 static void DATARMNET009d37d173(void)
