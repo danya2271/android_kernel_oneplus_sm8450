@@ -430,11 +430,7 @@ EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
 static __always_inline
 unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
-	if (sleep_disabled) { // check for touchboost
-		return util + util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
-	} else {
-		return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? (sysctl_headroom_prime/2 + util) : (sysctl_headroom_big/2 + util)));
-	}
+	return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? (sysctl_headroom_prime >> 1) : (sysctl_headroom_big >> 1)));
 }
 
 static __always_inline
