@@ -6,7 +6,7 @@
  */
 #include <sde_hw_mdss.h>
 #include <sde_hw_sspp.h>
-#include "../dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #include "dsi_iris5.h"
 #include "dsi_iris5_log.h"
 

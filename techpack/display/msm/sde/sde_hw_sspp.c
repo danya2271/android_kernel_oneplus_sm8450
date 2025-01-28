@@ -14,7 +14,7 @@
 #include "sde_hw_reg_dma_v1_color_proc.h"
 #include "sde_hw_vbif.h"
 #if defined(PXLW_IRIS_DUAL)
-#include "../iris/dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #endif
 
 #define SDE_FETCH_CONFIG_RESET_VALUE   0x00000087

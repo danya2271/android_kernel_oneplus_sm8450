@@ -7,7 +7,7 @@
  */
 #include <drm/drm_mipi_dsi.h>
 #include <video/mipi_display.h>
-#include "../dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 
 //#define IRIS_DSC

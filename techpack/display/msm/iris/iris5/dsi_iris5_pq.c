@@ -7,7 +7,7 @@
  */
 #include <video/mipi_display.h>
 #include <sde_encoder_phys.h>
-#include "../dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lightup_ocp.h"
 #include "dsi_iris5_lp.h"
