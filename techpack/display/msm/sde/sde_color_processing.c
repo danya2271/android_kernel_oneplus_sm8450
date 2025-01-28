@@ -25,7 +25,7 @@
 #endif /* OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT */
 
 #if defined(CONFIG_PXLW_IRIS)
-#include "../iris/dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #endif
 
 struct sde_cp_node {

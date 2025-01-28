@@ -7,7 +7,7 @@
  */
 #include <linux/firmware.h>
 #include <linux/debugfs.h>
-#include "../dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lut.h"
 #include "dsi_iris5_pq.h"

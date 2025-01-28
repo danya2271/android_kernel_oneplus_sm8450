@@ -10,7 +10,7 @@
 #include <linux/of_gpio.h>
 #include <dsi_drm.h>
 #include <sde_encoder_phys.h>
-#include "../dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lightup_ocp.h"
 #include "dsi_iris5_lp.h"
@@ -20,7 +20,7 @@
 #include "dsi_iris5_mode_switch.h"
 #include "dsi_iris5_gpio.h"
 #include "dsi_iris5_frc.h"
-#include "../dsi_iris_loop_back.h"
+#include "dsi_iris_loop_back.h"
 #include "dsi_iris5_log.h"
 
 static u32 iris_loopback_flag = 0xffffff3d;

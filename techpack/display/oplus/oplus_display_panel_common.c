@@ -19,7 +19,7 @@
 #include "oplus_onscreenfingerprint.h"
 #endif /* OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT */
 #if defined(CONFIG_PXLW_IRIS)
-#include "../msm/iris/dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #endif
 
 #define DSI_PANEL_OPLUS_DUMMY_VENDOR_NAME  "PanelVendorDummy"

@@ -5,7 +5,7 @@
  *
  * These files contain modifications made by Pixelworks, Inc., in 2019-2020.
  */
-#include "../dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lightup_ocp.h"
 #include "dsi_iris5_pq.h"

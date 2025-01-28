@@ -11,7 +11,7 @@
 #include <sde_encoder.h>
 #include <sde_encoder_phys.h>
 #include <sde_trace.h>
-#include "../dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #include "dsi_iris5_lightup.h"
 #include "dsi_iris5_lightup_ocp.h"
 #include "dsi_iris5_mode_switch.h"

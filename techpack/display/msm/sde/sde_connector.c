@@ -51,7 +51,7 @@ static DEFINE_SPINLOCK(g_bk_lock);
 
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
 #include <asm/div64.h>
-#include "../iris/dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #endif
 
 #define BL_NODE_NAME_SIZE 32

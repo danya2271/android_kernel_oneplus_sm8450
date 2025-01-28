@@ -23,7 +23,7 @@
 #include "dsi_parser.h"
 
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
-#include "../iris/dsi_iris_api.h"
+#include "dsi_iris_api.h"
 #endif
 
 #ifdef OPLUS_FEATURE_DISPLAY_TEMP_COMPENSATION

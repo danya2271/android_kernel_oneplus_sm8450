@@ -14,9 +14,7 @@
 #include <linux/notifier.h>
 #include <linux/module.h>
 #include "dsi_display.h"
-#if defined(OPLUS_FEATURE_PXLW_IRIS5)
-#include "../msm/iris/dsi_iris_api.h"
-#endif
+
 #ifdef OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT
 #include "oplus_onscreenfingerprint.h"
 #endif /* OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT */
