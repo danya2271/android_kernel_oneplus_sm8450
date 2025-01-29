@@ -27,7 +27,7 @@
 static unsigned int default_efficient_freq_lp[] = {1267200};
 static u64 default_up_delay_lp[] = {30 * NSEC_PER_MSEC};
 
-static unsigned int default_efficient_freq_hp[] = {1113200, 2227400};
+static unsigned int default_efficient_freq_hp[] = {1209200, 2227400};
 static u64 default_up_delay_hp[] = {3 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_pr[] = {1286400, 2630200};
@@ -430,7 +430,7 @@ EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
 static __always_inline
 unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
-	return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? (sysctl_headroom_prime >> 1) : (sysctl_headroom_big >> 1)));
+	return util + util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
 }
 
 static __always_inline
@@ -1134,17 +1134,17 @@ static int sugov_init(struct cpufreq_policy *policy)
 
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
-		tunables->up_rate_limit_us = 4500;
+		tunables->up_rate_limit_us = 5500;
         tunables->down_rate_limit_us = 2000;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
-		tunables->up_rate_limit_us = 4500;
+		tunables->up_rate_limit_us = 1000;
 		tunables->down_rate_limit_us = 2000;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
-		tunables->up_rate_limit_us = 4500;
+		tunables->up_rate_limit_us = 2500;
 		tunables->down_rate_limit_us = 2000;
 	}
 
