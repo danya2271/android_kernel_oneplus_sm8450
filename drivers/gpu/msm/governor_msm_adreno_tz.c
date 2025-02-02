@@ -434,29 +434,39 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 		case 1:
 			if (level > input_boost_level) {
 				level = input_boost_level;
+				goto set_frequency;
 			}
 			break;
 		case 2:
 			if (level > max_input_boost_level) {
 				level = max_input_boost_level;
+				goto set_frequency;
 			}
 			break;
 		case 3:
 			if (level > mid_input_boost_level) {
 				level = mid_input_boost_level;
+				goto set_frequency;
 			}
 			break;
 	}
 #define HIGHEST_LEVEL CONFIG_HIGHEST_LEVEL
 #define HIGH_LEVEL (CONFIG_HIGHEST_LEVEL - 1)
-	if (level == HIGHEST_LEVEL || level == HIGH_LEVEL) {
-		if (refresh_rate <= 60) {
+	if (refresh_rate <= 60) {
+		if (level == HIGHEST_LEVEL || level == HIGH_LEVEL) {
 			level = HIGHEST_LEVEL;
-		} else {
-			level = HIGH_LEVEL;
+			goto set_frequency;
+		}
+	} else {
+		if (level > input_boost_level) {
+			level = input_boost_level;
+			goto set_frequency;
 		}
 	}
 
+	goto set_frequency;
+
+set_frequency:
 	*freq = devfreq->profile->freq_table[level];
 	return 0;
 }

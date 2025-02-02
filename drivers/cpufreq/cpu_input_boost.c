@@ -12,6 +12,7 @@
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/version.h>
+#include <drm/drm_refresh_rate.h>
 
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
 #include "../cpuidle/governors/qcom-lpm.h"
@@ -159,8 +160,8 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
-		prediction_disabled = false;
 		sleep_disabled = false;
+		sleep_disabled_by_cib = false;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
 		simple_sleep_disabled = false;
@@ -175,8 +176,8 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	/* Boost CPU to max frequency for max boost */
 	if (test_bit(MAX_BOOST, &b->state)) {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
-		prediction_disabled = true;
 		sleep_disabled = true;
+		sleep_disabled_by_cib = true;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
 		simple_sleep_disabled = true;
@@ -197,6 +198,7 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	if (test_bit(INPUT_BOOST, &b->state)) {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
 		sleep_disabled = true;
+		sleep_disabled_by_cib = true;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
 		simple_sleep_disabled = true;
@@ -205,8 +207,11 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 		policy->min = get_input_boost_freq(policy);
 	} else {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
-		prediction_disabled = false;
-		sleep_disabled = false;
+		if (dsi_panel_get_refresh_rate() > 60)
+			sleep_disabled = true;
+		else
+			sleep_disabled = false;
+		sleep_disabled_by_cib = false;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
 		simple_sleep_disabled = false;
