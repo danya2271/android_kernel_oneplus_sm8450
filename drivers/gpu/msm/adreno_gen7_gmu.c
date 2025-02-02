@@ -2244,9 +2244,9 @@ static int gen7_gmu_clk_probe(struct adreno_device *adreno_dev)
 default_gmu_freq:
 	/* The GMU frequency table is missing or invalid. Go with a default */
 	gmu->freqs[0] = GMU_FREQ_MIN;
-	gmu->vlvls[0] = RPMH_REGULATOR_LEVEL_LOW_SVS;
+	gmu->vlvls[0] = 16;
 	gmu->freqs[1] = GMU_FREQ_MAX;
-	gmu->vlvls[1] = RPMH_REGULATOR_LEVEL_SVS;
+	gmu->vlvls[1] = 16;
 
 	return 0;
 }
