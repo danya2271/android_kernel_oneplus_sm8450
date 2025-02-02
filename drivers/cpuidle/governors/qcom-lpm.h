@@ -12,10 +12,11 @@
 #define PRED_TIMER_ADD		100
 #define PRED_PREMATURE_CNT	3
 #define PRED_REF_STDDEV		500
-#define CLUST_SMPL_INVLD_TIME	40000
+#define CLUST_SMPL_INVLD_TIME	20000
 #define MAX_CLUSTER_STATES	4
 
 extern bool sleep_disabled;
+static bool sleep_disabled_by_cib = true;
 extern bool prediction_disabled;
 
 struct qcom_cluster_node {

@@ -22,6 +22,14 @@
 #include "sde_dbg.h"
 #include "dsi_parser.h"
 
+#ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
+#include "../../../../drivers/cpuidle/governors/qcom-lpm.h"
+#else
+#ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
+#include "../../../../drivers/cpuidle/governors/qcom-simple-lpm.h"
+#endif
+#endif
+
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
 #include "dsi_iris_api.h"
 #endif
@@ -8833,7 +8841,7 @@ static void dsi_display_panel_id_notification(struct dsi_display *display)
 
 unsigned int dsi_panel_get_refresh_rate(void)
 {
-	return READ_ONCE(cur_refresh_rate);
+	return cur_refresh_rate;
 }
 
 int dsi_display_enable(struct dsi_display *display)
@@ -8884,7 +8892,9 @@ int dsi_display_enable(struct dsi_display *display)
 	mutex_lock(&display->display_lock);
 
 	mode = display->panel->cur_mode;
-	WRITE_ONCE(cur_refresh_rate, mode->timing.refresh_rate);
+	cur_refresh_rate = mode->timing.refresh_rate;
+	if (cur_refresh_rate <= 60)
+		sleep_disabled = false;
 
 	if (mode->dsi_mode_flags & DSI_MODE_FLAG_DMS) {
 		rc = dsi_panel_post_switch(display->panel);
