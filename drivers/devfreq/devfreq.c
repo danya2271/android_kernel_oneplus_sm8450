@@ -417,10 +417,10 @@ int update_devfreq(struct devfreq *devfreq)
 		freq = min_freq;
 		flags &= ~DEVFREQ_FLAG_LEAST_UPPER_BOUND; /* Use GLB */
 	}
-	if (freq > max_freq) {
-		freq = max_freq;
-		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND; /* Use LUB */
-	}
+	//if (freq > max_freq) {
+	//	freq = max_freq;
+	//	flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND; /* Use LUB */
+	//}
 
 	return devfreq_set_target(devfreq, freq, flags);
 
