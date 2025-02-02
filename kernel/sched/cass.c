@@ -25,6 +25,14 @@
  * satisfy the overall load at any given moment.
  */
 
+#ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
+#include "../../drivers/cpuidle/governors/qcom-lpm.h"
+#else
+#ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
+#include "../../drivers/cpuidle/governors/qcom-simple-lpm.h"
+#endif
+#endif
+
 struct cass_cpu_cand {
 	int cpu;
 	unsigned int exit_lat;
@@ -118,7 +126,7 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 		goto done;
 
 	/* Prefer the CPU that isn't the single fastest one in the system */
-	if (cass_cmp(cass_prime_cpu(b), cass_prime_cpu(a)))
+	if ((cass_cmp(cass_prime_cpu(b), cass_prime_cpu(a))) && !sleep_disabled)
 		goto done;
 
 	/* Prefer the CPU with lower relative utilization */
@@ -213,7 +221,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 			 * only idle candidate found so far is the prime CPU.
 			 * Otherwise, prefer idle candidates.
 			 */
-			if (!uc_min && !cass_prime_cpu(curr)) {
+			if (!uc_min && (!cass_prime_cpu(curr) && sleep_disabled)) {
 				/* Discard any previous non-idle candidate */
 				if (!has_idle)
 					best = curr;
