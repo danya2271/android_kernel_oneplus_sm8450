@@ -879,18 +879,15 @@ endif
 
 ifdef CONFIG_LLVM_POLLY
 KBUILD_CFLAGS	+= -mllvm -polly \
-		   -mllvm -polly-parallel \
-		   -mllvm -polly-parallel-force \
-		   -mllvm -polly-ast-detect-parallel \
-		   -mllvm -polly-detect-track-failures=0 \
-		   -mllvm -polly-detect-full-functions \
-		   -mllvm -polly-ignore-aliasing \
-		   -mllvm -polly-run-inliner \
-		   -mllvm -polly-parallel \
 		   -mllvm -polly-ast-use-context \
-		   -mllvm -polly-detect-keep-going \
 		   -mllvm -polly-invariant-load-hoisting \
-		   -mllvm -polly-vectorizer=stripmine
+		   -mllvm -polly-run-inliner \
+		   -mllvm -polly-vectorizer=stripmine \
+		   -mllvm -polly-parallel \
+       	   -mllvm -polly-parallel-force \
+		   -mllvm -polly-detect-track-failures=0 \
+		   -mllvm -polly-ignore-aliasing \
+		   -mllvm -polly-detect-keep-going
 
 ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 130000; echo $$?),0)
 KBUILD_CFLAGS	+= -mllvm -polly-loopfusion-greedy=1 \
