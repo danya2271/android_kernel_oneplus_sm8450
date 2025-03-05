@@ -9577,7 +9577,7 @@ find_idlest_group(struct sched_domain *sd, struct task_struct *p, int this_cpu)
 
 	return idlest;
 }
-
+#ifndef CONFIG_SCHED_CASS
 static void update_idle_cpu_scan(struct lb_env *env,
 				 unsigned long sum_util)
 {
@@ -9653,7 +9653,7 @@ static void update_idle_cpu_scan(struct lb_env *env,
 	if ((int)y != sd_share->nr_idle_scan)
 		WRITE_ONCE(sd_share->nr_idle_scan, (int)y);
 }
-
+#endif
 /**
  * update_sd_lb_stats - Update sched_domain's statistics for load balancing.
  * @env: The load balancing environment.
@@ -9666,7 +9666,9 @@ static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sd
 	struct sched_group *sg = env->sd->groups;
 	struct sg_lb_stats *local = &sds->local_stat;
 	struct sg_lb_stats tmp_sgs;
+#ifndef CONFIG_SCHED_CASS
 	unsigned long sum_util = 0;
+#endif
 	int sg_status = 0;
 
 	do {
@@ -9695,8 +9697,9 @@ next_group:
 		/* Now, start updating sd_lb_stats */
 		sds->total_load += sgs->group_load;
 		sds->total_capacity += sgs->group_capacity;
-
+#ifndef CONFIG_SCHED_CASS
 		sum_util += sgs->group_util;
+#endif
 		sg = sg->next;
 	} while (sg != env->sd->groups);
 
@@ -9722,8 +9725,9 @@ next_group:
 		WRITE_ONCE(rd->overutilized, SG_OVERUTILIZED);
 		trace_sched_overutilized_tp(rd, SG_OVERUTILIZED);
 	}
-
+#ifndef CONFIG_SCHED_CASS
 	update_idle_cpu_scan(env, sum_util);
+#endif
 }
 
 static inline long adjust_numa_imbalance(int imbalance, int nr_running)
