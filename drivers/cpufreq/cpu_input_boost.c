@@ -209,8 +209,6 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
 		if (dsi_panel_get_refresh_rate() > 60)
 			sleep_disabled = true;
-		else
-			sleep_disabled = false;
 		sleep_disabled_by_cib = false;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
@@ -299,7 +297,7 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 	if (!test_bit(INPUT_BOOST, &b->state)) {
-		__cpu_input_boost_kick_high(50);
+		__cpu_input_boost_kick_high(25);
 		set_bit(INPUT_BOOST, &b->state);
 		return;
 	}
