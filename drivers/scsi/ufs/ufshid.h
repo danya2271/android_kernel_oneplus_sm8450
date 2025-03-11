@@ -48,7 +48,7 @@
 #include "../../../block/blk.h"
 
 #define UFSHID_VER					0x0303
-#define UFSHID_DD_VER					0x030202
+#define UFSHID_DD_VER					0x030203
 #define UFSHID_DD_VER_POST				""
 
 #define UFS_FEATURE_SUPPORT_HID_BIT			0x400

@@ -3114,7 +3114,7 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
 	dequeue_load_avg(cfs_rq, se);
 
 	update_load_set(&se->load, weight);
-	
+
 	if (!entity_is_task(se) && (stop_fair_group & (0x1)) == 1) {
 		unsigned long group_weight = clamp(group_cfs_rq(se)->load.weight,
 			scale_load(MIN_SHARES), scale_load(MAX_SHARES));
