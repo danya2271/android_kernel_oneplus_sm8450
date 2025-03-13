@@ -449,7 +449,7 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 			level = HIGHEST_LEVEL;
 			goto set_frequency;
 		}
-	} else {
+	} else if (msm_panel_fps > 70) {
 		if (level > input_boost_level) {
 			level = input_boost_level;
 			goto set_frequency;
