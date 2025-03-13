@@ -207,7 +207,7 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 		policy->min = get_input_boost_freq(policy);
 	} else {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
-		if (dsi_panel_get_refresh_rate() > 60)
+		if ((dsi_panel_get_refresh_rate() > 60) && (msm_panel_fps > 70))
 			sleep_disabled = true;
 		sleep_disabled_by_cib = false;
 #else
