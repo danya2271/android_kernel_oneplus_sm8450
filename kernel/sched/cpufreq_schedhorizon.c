@@ -27,8 +27,8 @@
 static unsigned int default_efficient_freq_lp[] = {1267200};
 static u64 default_up_delay_lp[] = {30 * NSEC_PER_MSEC};
 
-static unsigned int default_efficient_freq_hp[] = {1209200, 2227400};
-static u64 default_up_delay_hp[] = {3 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
+static unsigned int default_efficient_freq_hp[] = {1555400};
+static u64 default_up_delay_hp[] = {30 * NSEC_PER_MSEC};
 
 static unsigned int default_efficient_freq_pr[] = {1286400, 2630200};
 static u64 default_up_delay_pr[] = {6 * NSEC_PER_MSEC, 30 * NSEC_PER_MSEC};
@@ -165,7 +165,7 @@ static bool sugov_should_update_freq(struct sugov_policy *sg_policy, u64 time)
 
 	if (unlikely(sg_policy->limits_changed)) {
 		sg_policy->limits_changed = false;
-		sg_policy->need_freq_update = cpufreq_driver_test_flags(CPUFREQ_NEED_UPDATE_LIMITS);
+		sg_policy->need_freq_update = true;
 		return true;
 	}
 
@@ -220,10 +220,24 @@ static bool sugov_update_next_freq(struct sugov_policy *sg_policy, u64 time,
 	 * because unconditionally rechecking the rate limit is cheaper.
 	 */
 	if (!sg_policy->need_freq_update) {
+		sg_policy->need_freq_update = false;
+		/*
+		 * The policy limits have changed, but if the return value of
+		 * cpufreq_driver_resolve_freq() after applying the new limits
+		 * is still equal to the previously selected frequency, the
+		 * driver callback need not be invoked unless the driver
+		 * specifically wants that to happen on every update of the
+		 * policy limits.
+		 */
+		if (sg_policy->next_freq == next_freq &&
+		    !cpufreq_driver_test_flags(CPUFREQ_NEED_UPDATE_LIMITS))
+			return false;
 		if (next_freq == sg_policy->next_freq ||
 			(next_freq < sg_policy->next_freq &&
 			sugov_should_rate_limit(sg_policy, time)))
 			return false;
+	} else if (sg_policy->next_freq == next_freq) {
+		return false;
 	} else {
 		sg_policy->need_freq_update = false;
 	}
@@ -430,21 +444,19 @@ EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
 static __always_inline
 unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
-	return util + util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
+	return util + (util >> 1) + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util + 10 : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
 }
 
 static __always_inline
 unsigned long calculate_headroom_low(unsigned long headroom, int cpu, unsigned long util, int fps) {
-	if (sleep_disabled) { // check for touchboost
-		return util + (util >> 1);
-	} else if (util <= sysctl_util_low) { // check if util is way too high for decreasing headroom
+	if (util <= sysctl_util_low) { // check if util is way too high for decreasing headroom
 		if (cpumask_test_cpu(cpu, cpu_prime_mask))
 			return (util >> 3); // we want to reduce headroom of prime cluster if phone is idling with screen on
-		return (fps > sysctl_fps_threshold_high) ? (util - (util >> 1)) :
+		return (fps > sysctl_fps_threshold_high) ? (util >> 1) :
 		(fps < sysctl_fps_threshold_low) ? (util >> 3) :
 		(util >> 2);
 	} else {
-		return util + (util >> 1);
+		return util;
 	}
 }
 
@@ -454,7 +466,7 @@ unsigned long apply_dvfs_headroom(int cpu, unsigned long util)
 	unsigned long headroom = util;
 	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
 	int fps = msm_panel_fps;
-	if (refresh_rate > 60)
+	if ((refresh_rate > 60) && (fps > 70))
 		headroom = calculate_headroom_high(headroom, cpu, util);
 	else
 		headroom = calculate_headroom_low(headroom, cpu, util, fps);
@@ -1133,17 +1145,17 @@ static int sugov_init(struct cpufreq_policy *policy)
 
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
-		tunables->up_rate_limit_us = 5000;
-        tunables->down_rate_limit_us = 1000;
+		tunables->up_rate_limit_us = 3500;
+        tunables->down_rate_limit_us = 1500;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
 		tunables->up_rate_limit_us = 2500;
-		tunables->down_rate_limit_us = 1000;
+		tunables->down_rate_limit_us = 4000;
 	}
 
 	if (cpumask_test_cpu(policy->cpu, cpu_prime_mask)) {
-		tunables->up_rate_limit_us = 2500;
+		tunables->up_rate_limit_us = 8500;
 		tunables->down_rate_limit_us = 1000;
 	}
 
