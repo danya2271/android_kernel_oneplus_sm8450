@@ -86,7 +86,7 @@ static LIST_HEAD(idle_notif_list);
 static DEFINE_SPINLOCK(idle_list_lock);
 static struct cpucp_hlos_map cpucp_map[MAX_CPUCP_EVT];
 static struct kobject pmu_kobj;
-static bool pmu_counters_enabled = true;
+static bool pmu_counters_enabled = false;
 static unsigned int pmu_enable_trace;
 
 /*
