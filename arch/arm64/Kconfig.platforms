@@ -198,6 +198,21 @@ config ARCH_QCOM
 	bool "Qualcomm Platforms"
 	select GPIOLIB
 	select PINCTRL
+	select REGMAP_SPMI
+	select V4L2_MEM2MEM_DEV
+	select DMA_VIRTUAL_CHANNELS
+	select RPMSG
+	select RPMSG_CHAR
+	select QCOM_WCNSS_CTRL
+	select QCOM_CDSP_RM
+	select GENERIC_IRQ_CHIP
+	select WIRELESS_EXT
+	select WEXT_CORE
+	select WEXT_PROC
+	select WEXT_SPY
+	select WEXT_PRIV
+	select REGMAP_IRQ
+	select QCOM_GDSC
 	help
 	  This enables support for the ARMv8 based Qualcomm chipsets.
 

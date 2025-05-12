@@ -49,6 +49,24 @@ int populate_l3_table(struct device *dev, u32 **freq_table)
 	void __iomem *ftbl_base;
 	unsigned int ftbl_row_size = FTBL_ROW_SIZE;
 	u32 *tmp_l3_table;
+	// Array for frequency on each idx
+	unsigned long freq_array[MAX_L3_ENTRIES] = {
+		307200,
+		422400,
+		537600,
+		633600,
+		729600,
+		825600,
+		921600,
+		998400,
+		1094400,
+		1190400,
+		1267200,
+		1363200,
+		1459200,
+		1555200,
+		1651200
+	};
 
 	idx = of_property_match_string(dev->of_node, "reg-names", "l3tbl-base");
 	if (idx < 0) {
@@ -80,8 +98,11 @@ int populate_l3_table(struct device *dev, u32 **freq_table)
 		/* Two of the same frequencies means end of table */
 		if (idx > 0 && prev_freq == freq)
 			break;
-
-		tmp_l3_table[idx] = freq / 1000UL;
+		if (freq_array[idx])
+			tmp_l3_table[idx] = freq_array[idx];
+		else
+			tmp_l3_table[idx] = freq / 1000UL;
+		pr_info("idx: %d, old_freq: %d, new_freq: %d\n", idx, freq/1000,freq_array[idx]);
 		prev_freq = freq;
 	}
 	len = idx;
