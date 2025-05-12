@@ -20,7 +20,7 @@ void cam_actuator_poll_setting_update(struct cam_actuator_ctrl_t *a_ctrl) {
                         a_ctrl->poll_register.reg_addr = i2c_list->i2c_settings.reg_setting[0].reg_addr;
                         a_ctrl->poll_register.reg_data = i2c_list->i2c_settings.reg_setting[0].reg_data;
                         a_ctrl->poll_register.data_mask = i2c_list->i2c_settings.reg_setting[0].data_mask;
-                        a_ctrl->poll_register.delay = 100; //i2c_list->i2c_settings.reg_setting[0].delay; // The max delay should be 100
+                        a_ctrl->poll_register.delay = 70; //i2c_list->i2c_settings.reg_setting[0].delay; // The max delay should be 100
                         a_ctrl->addr_type = i2c_list->i2c_settings.addr_type;
                         a_ctrl->data_type = i2c_list->i2c_settings.data_type;
                 }

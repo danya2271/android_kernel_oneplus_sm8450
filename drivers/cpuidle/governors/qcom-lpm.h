@@ -16,7 +16,6 @@
 #define MAX_CLUSTER_STATES	4
 
 extern bool sleep_disabled;
-static bool sleep_disabled_by_cib = true;
 extern bool prediction_disabled;
 
 struct qcom_cluster_node {

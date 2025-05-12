@@ -21,6 +21,7 @@
 #include "dsi_pwr.h"
 #include "sde_dbg.h"
 #include "dsi_parser.h"
+#include <linux/cpu_input_boost.h>
 
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
 #include "../../../../drivers/cpuidle/governors/qcom-lpm.h"
@@ -8892,6 +8893,7 @@ int dsi_display_enable(struct dsi_display *display)
 	mutex_lock(&display->display_lock);
 
 	mode = display->panel->cur_mode;
+	cpu_input_boost_kick_max(1);
 	cur_refresh_rate = mode->timing.refresh_rate;
 	if (cur_refresh_rate <= 60)
 		sleep_disabled = false;

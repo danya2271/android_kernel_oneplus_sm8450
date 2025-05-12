@@ -25,6 +25,8 @@
  * satisfy the overall load at any given moment.
  */
 
+#include <drm/drm_refresh_rate.h>
+
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
 #include "../../drivers/cpuidle/governors/qcom-lpm.h"
 #else
@@ -86,6 +88,16 @@ void cass_cpu_util(struct cass_cpu_cand *c, int this_cpu, bool sync)
 }
 
 /*
+ * Returns true if @c is a little CPU.
+ */
+ static __always_inline
+ bool cass_little_cpu(const struct cass_cpu_cand *c)
+ {
+	 // Assuming little cores are the first NR_LITTLE_CORES cores in the system
+	 return c->cpu >= 4;
+ }
+
+/*
  * Returns true if @c is a CPU with the maximum possible original capacity and
  * there's only one such CPU in the system (i.e., if @c is the prime CPU).
  */
@@ -126,7 +138,7 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 		goto done;
 
 	/* Prefer the CPU that isn't the single fastest one in the system */
-	if ((cass_cmp(cass_prime_cpu(b), cass_prime_cpu(a))) && !sleep_disabled)
+	if ((msm_panel_fps <= 20) ? (cass_cmp(cass_little_cpu(b), cass_little_cpu(a))) : (cass_cmp(cass_prime_cpu(b), cass_prime_cpu(a))))
 		goto done;
 
 	/* Prefer the CPU with lower relative utilization */
@@ -138,8 +150,10 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 		goto done;
 
 	/* Prefer the current CPU for sync wakes */
-	if (sync && (cass_eq(a->cpu, this_cpu) || !cass_cmp(b->cpu, this_cpu)))
-		goto done;
+	if (sync) {
+		if (cass_cmp( (a->cpu == this_cpu), (b->cpu == this_cpu) ))
+			goto done;
+	}
 
 	/* Prefer the CPU with higher capacity */
 	if (cass_cmp(a->cap, b->cap))
@@ -150,8 +164,8 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 		goto done;
 
 	/* Prefer the previous CPU */
-	if (cass_eq(a->cpu, prev_cpu) || !cass_cmp(b->cpu, prev_cpu))
-		goto done;
+	if (cass_cmp( (a->cpu == prev_cpu), (b->cpu == prev_cpu) ))
+    	goto done;
 
 	/* Prefer the CPU that shares a cache with the previous CPU */
 	if (cass_cmp(cpus_share_cache(a->cpu, prev_cpu),
@@ -224,7 +238,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 			 */
 			if (!has_idle &&
 			    uc_min <= arch_scale_min_freq_capacity(cpu) &&
-			    (!cass_prime_cpu(curr) && sleep_disabled)) {
+			    ((msm_panel_fps > 20) ? (!cass_little_cpu(curr)) : (!cass_prime_cpu(curr)))) {
 				/* Discard any previous non-idle candidate */
 				best = curr;
 				has_idle = true;
