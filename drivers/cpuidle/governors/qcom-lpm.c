@@ -583,37 +583,66 @@ static int lpm_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 		      bool *stop_tick)
 {
 	struct lpm_cpu *cpu_gov = this_cpu_ptr(&lpm_cpu_data);
-	s64 latency_req = get_cpus_qos(cpumask_of(dev->cpu));
+	s64 latency_req_us; // Use us internally for consistency
 	ktime_t delta_tick;
 	u64 reason = 0;
 	uint64_t duration_ns, htime = 0;
-	int i = 0;
+	int i = 0; // Default to WFI (state 0)
 	unsigned int refresh_rate = dsi_panel_get_refresh_rate();
 	int fps = msm_panel_fps;
+	int deepest_idx = drv->state_count - 1;
+	struct cpuidle_state *deepest_state = &drv->states[deepest_idx];
+	bool try_force_deepest = false;
 
 	if (!cpu_gov)
 		return 0;
 
-	do_div(latency_req, NSEC_PER_USEC);
+	// Calculate latency_req in us early
+	s64 latency_req_ns = get_cpus_qos(cpumask_of(dev->cpu));
+	latency_req_us = div_s64(latency_req_ns, NSEC_PER_USEC);
+
+
 	cpu_gov->predicted = 0;
 	cpu_gov->predict_started = false;
 	cpu_gov->now = ktime_get();
 	duration_ns = tick_nohz_get_sleep_length(&delta_tick);
 	if (duration_ns <= 0)
 		duration_ns = S64_MAX;
-	update_cpu_history(cpu_gov);
 
-	// force idlest state
-	if ((refresh_rate <= 60) && (fps < 45)) {
-		i = drv->state_count - 1;
-		RCU_NONIDLE(trace_lpm_gov_select(i, latency_req, duration_ns, reason));
-		return i;
+	update_cpu_history(cpu_gov); // Keep history update
+
+	// Check overall sleep allowance first
+	if (lpm_disallowed(duration_ns, dev->cpu)) {
+		// Reason for returning state 0 already handled in lpm_disallowed or set by bias
+		goto done; // Will return state 0 (i=0 initially)
 	}
 
-	if (lpm_disallowed(duration_ns, dev->cpu))
-		goto done;
+	// Condition to *consider* forcing the deepest state
+	try_force_deepest = (deepest_idx > 0) && // Ensure there is a deeper state than 0
+	                      (refresh_rate <= 60);
 
-	for (i = drv->state_count - 1; i > 0; i--) {
+	if (try_force_deepest) {
+		// *** Perform CRUCIAL checks for the *deepest* state ***
+		// 1. Is the deepest state enabled?
+		// 2. Does it meet the absolute QoS latency requirement?
+		// 3. Is the expected duration enough for its *minimum* residency?
+		//    (Prediction is ignored in this forced path)
+		if (!dev->states_usage[deepest_idx].disable &&
+		    latency_req_us >= deepest_state->exit_latency && // Use us
+		    duration_ns >= deepest_state->target_residency_ns)
+		{
+			// Deepest state seems viable under forced conditions
+			i = deepest_idx;
+			// Set a specific reason bit/flag for tracing if needed
+			// reason |= UPDATE_REASON(i, LPM_SELECT_STATE_FORCED_IDLE); // Example
+			goto post_selection; // Skip the loop, go to prediction timer etc.
+		}
+		// If checks fail, fall through to normal selection logic below
+	}
+
+	// --- Normal state selection loop ---
+	// Start from the deepest possible state checked above or next shallower
+	for (i = deepest_idx; i > 0; i--) {
 		struct cpuidle_state *s = &drv->states[i];
 
 		if (dev->states_usage[i].disable) {
@@ -621,52 +650,75 @@ static int lpm_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 			continue;
 		}
 
-		if (latency_req < s->exit_latency) {
+		// Check PM QoS latency requirement (us)
+		if (latency_req_us < s->exit_latency) {
 			reason |= UPDATE_REASON(i, LPM_SELECT_STATE_QOS_UNMET);
 			continue;
 		}
 
+		// Check expected residency vs next timer event (ns)
 		if (s->target_residency_ns > duration_ns) {
 			reason |= UPDATE_REASON(i,
 					LPM_SELECT_STATE_RESIDENCY_UNMET);
 			continue;
 		}
 
+		// Prediction check (only if not forcing)
+		// Prediction logic runs once if needed
 		if (check_cpu_isactive(dev->cpu) && !cpu_gov->predict_started) {
 			cpu_predict(cpu_gov, duration_ns);
 			cpu_gov->predict_started = true;
 		}
 
-		if (cpu_gov->predicted)
+		if (cpu_gov->predicted) {
+			// Compare prediction (us) with state target residency (us)
 			if (s->target_residency > cpu_gov->predicted) {
 				reason |= UPDATE_REASON(i,
 						LPM_SELECT_STATE_PRED);
 				continue;
+			}
 		}
+		// Found the best state according to standard rules
 		break;
 	}
+	// If loop finishes without break, i will be 0 (WFI)
 
-	do_div(duration_ns, NSEC_PER_USEC);
+post_selection:
+	// Store selected index regardless of how it was chosen
 	cpu_gov->last_idx = i;
-	cpu_gov->next_wakeup = ktime_add_us(cpu_gov->now, duration_ns);
-	htime = start_prediction_timer(cpu_gov, duration_ns);
 
-	/* update this cpu next_wakeup into its parent power domain device */
-	if (cpu_gov->last_idx == drv->state_count - 1) {
+	// Convert duration_ns back to us for prediction timer and tracing
+	u64 duration_us = div_u64(duration_ns, NSEC_PER_USEC);
+	if (duration_ns == S64_MAX)
+		duration_us = U64_MAX;
+
+
+	cpu_gov->next_wakeup = ktime_add_us(cpu_gov->now, duration_us);
+
+	// Start prediction timer if needed (only makes sense if prediction wasn't ignored)
+	// And only if a state deeper than WFI was selected (i > 0)
+	if (i > 0 && !try_force_deepest) { // Don't start timer if we forced the state
+		htime = start_prediction_timer(cpu_gov, duration_us);
+	}
+
+	// Update parent power domain if deepest state was chosen (forced or not)
+	if (cpu_gov->last_idx == deepest_idx) {
 		if (cluster_gov_ops && cluster_gov_ops->select)
 			cluster_gov_ops->select(cpu_gov);
 	}
 
 done:
-	if ((!cpu_gov->last_idx) && cpu_gov->bias) {
+	// Handle scheduler bias only if WFI (state 0) was selected
+	if ((i == 0) && cpu_gov->bias) {
 		biastimer_start(cpu_gov->bias);
 		reason |= UPDATE_REASON(i, LPM_SELECT_STATE_SCHED_BIAS);
 	}
 
-	RCU_NONIDLE(trace_lpm_gov_select(i, latency_req, duration_ns, reason));
+	// Trace the final selected state and reasons
+	RCU_NONIDLE(trace_lpm_gov_select(i, latency_req_us, duration_us, reason));
 	RCU_NONIDLE(trace_gov_pred_select(cpu_gov->pred_type, cpu_gov->predicted, htime));
 
-	return i;
+	return i; // Return the finally selected state index
 }
 
 /**

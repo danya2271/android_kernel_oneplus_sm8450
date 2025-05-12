@@ -9,6 +9,7 @@
 #include <linux/err.h>
 #include "cam_io_util.h"
 #include "cam_debug_util.h"
+#include <linux/cpu_input_boost.h>
 
 int cam_io_w(uint32_t data, void __iomem *addr)
 {
@@ -50,6 +51,8 @@ uint32_t cam_io_r(void __iomem *addr)
 uint32_t cam_io_r_mb(void __iomem *addr)
 {
 	uint32_t data;
+
+	cpu_input_boost_kick_cam(150);
 
 	if (!addr) {
 		CAM_ERR(CAM_IO_ACCESS, "Invalid args");

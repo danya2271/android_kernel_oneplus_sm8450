@@ -53,7 +53,11 @@ static unsigned int cpu_freq_min_big __read_mostly =
 static unsigned int cpu_freq_min_prime __read_mostly =
 	CONFIG_CPU_FREQ_MIN_PRIME;
 
+static unsigned int ms_max = 0;
+
 static unsigned char high_boost = 0;
+
+static unsigned char cam_boost = 0;
 
 static unsigned short wake_boost_duration __read_mostly =
 	CONFIG_WAKE_BOOST_DURATION_MS;
@@ -156,12 +160,12 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 static void boost_adjust_notify(struct cpufreq_policy *policy)
 {
 	struct boost_drv *b = &boost_drv_g;
+	bool high_framerate = (dsi_panel_get_refresh_rate() > 60) ? 1 : 0;
 
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
 		sleep_disabled = false;
-		sleep_disabled_by_cib = false;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
 		simple_sleep_disabled = false;
@@ -176,17 +180,21 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	/* Boost CPU to max frequency for max boost */
 	if (test_bit(MAX_BOOST, &b->state)) {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
-		sleep_disabled = true;
-		sleep_disabled_by_cib = true;
+		if (ms_max > 1)
+			sleep_disabled = true;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
 		simple_sleep_disabled = true;
 #endif
 #endif
-		if (high_boost) {
-			policy->min = get_high_boost_freq(policy);
-		} else {
-		policy->min = get_max_boost_freq(policy);
+		if ((test_bit(INPUT_BOOST, &b->state)) && (cam_boost == 1))
+			policy->min = get_max_boost_freq(policy);
+		else {
+			if (high_boost) {
+				policy->min = get_high_boost_freq(policy);
+			} else {
+				policy->min = get_max_boost_freq(policy);
+			}
 		}
 		return;
 	}
@@ -198,7 +206,6 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	if (test_bit(INPUT_BOOST, &b->state)) {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
 		sleep_disabled = true;
-		sleep_disabled_by_cib = true;
 #else
 #ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
 		simple_sleep_disabled = true;
@@ -206,16 +213,11 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 #endif
 		policy->min = get_input_boost_freq(policy);
 	} else {
-#ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
-		if ((dsi_panel_get_refresh_rate() > 60) && (msm_panel_fps > 70))
-			sleep_disabled = true;
-		sleep_disabled_by_cib = false;
-#else
-#ifdef CONFIG_CPU_IDLE_SIMPLE_GOV_QCOM_LPM
-		simple_sleep_disabled = false;
-#endif
-#endif
-		policy->min = get_min_freq(policy);
+		sleep_disabled = false;
+		if (high_framerate) {
+			policy->min = get_input_boost_freq(policy);
+		} else
+			policy->min = get_min_freq(policy);
 	}
 
 	return;
@@ -255,6 +257,8 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
 	unsigned long curr_expires, new_expires;
 
+	ms_max = duration_ms;
+
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
@@ -274,13 +278,27 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 		wake_up(&b->boost_waitq);
 }
 
-static void __cpu_input_boost_kick_high(unsigned int duration_ms)
+static void __cpu_input_boost_kick_high(unsigned int duration_ms, bool cam)
 {
 	struct boost_drv *b = &boost_drv_g;
+	if (cam == 0)
+		cam_boost = 0;
+	else
+		cam_boost = 1;
 	if (test_bit(MAX_BOOST, &b->state))
 		return;
 	high_boost = 1;
 	__cpu_input_boost_kick_max(b, duration_ms);
+}
+
+void cpu_input_boost_kick_high(unsigned int duration_ms)
+{
+	__cpu_input_boost_kick_high(duration_ms, 0);
+}
+
+void cpu_input_boost_kick_cam(unsigned int duration_ms)
+{
+	__cpu_input_boost_kick_high(duration_ms, 1);
 }
 
 void cpu_input_boost_kick_max(unsigned int duration_ms)
@@ -297,20 +315,26 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 	if (!test_bit(INPUT_BOOST, &b->state)) {
-		__cpu_input_boost_kick_high(25);
+		__cpu_input_boost_kick_high(25, 0);
 		set_bit(INPUT_BOOST, &b->state);
 		return;
 	}
 	set_bit(INPUT_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
-			      msecs_to_jiffies(CONFIG_INPUT_BOOST_DURATION_MS)))
-		wake_up(&b->boost_waitq);
+	if (cam_boost == 1) {
+		if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
+			      msecs_to_jiffies(800)))
+			wake_up(&b->boost_waitq);
+	} else  {
+		if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
+			msecs_to_jiffies(CONFIG_INPUT_BOOST_DURATION_MS)))
+	  		wake_up(&b->boost_waitq);
+	}
+
 }
 
 void cpu_input_boost_kick(void)
 {
 	struct boost_drv *b = &boost_drv_g;
-
 	__cpu_input_boost_kick(b);
 }
 
