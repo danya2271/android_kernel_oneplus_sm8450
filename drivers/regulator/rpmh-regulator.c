@@ -6,6 +6,8 @@
 
 #include <linux/bitops.h>
 #include <linux/err.h>
+#include <linux/device.h>
+#include <linux/kobject.h>
 #include <linux/ipc_logging.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -1190,11 +1192,11 @@ static int rpmh_regulator_vrm_set_voltage(struct regulator_dev *rdev,
 	int rc = 0;
 
 	mv = DIV_ROUND_UP(min_uv, 1000);
-	if (mv * 1000 > max_uv) {
-		vreg_err(vreg, "no set points available in range %d-%d uV\n",
-			min_uv, max_uv);
-		return -EINVAL;
-	}
+//	if (mv * 1000 > max_uv) {
+//		vreg_err(vreg, "no set points available in range %d-%d uV\n",
+//			min_uv, max_uv);
+//		return -EINVAL;
+//	}
 
 	mutex_lock(&vreg->aggr_vreg->lock);
 
@@ -1702,6 +1704,9 @@ done:
  *
  * Return: 0 on success, errno on failure
  */
+ 
+static void rpmh_add_uv_override_sysfs(struct rpmh_vreg *vreg);
+
 static int rpmh_regulator_allocate_vreg(struct rpmh_aggr_vreg *aggr_vreg)
 {
 	struct device_node *node;
@@ -2047,6 +2052,8 @@ static int rpmh_regulator_init_vreg(struct rpmh_vreg *vreg)
 		vreg_err(vreg, "devm_regulator_register() failed, rc=%d\n", rc);
 		return rc;
 	}
+	
+rpmh_add_uv_override_sysfs(vreg); // vreg はその場で使ってる構造体
 
 	rc = devm_regulator_proxy_consumer_register(dev, vreg->of_node);
 	if (rc)
@@ -2283,6 +2290,45 @@ static struct platform_driver rpmh_regulator_driver = {
 	},
 	.probe = rpmh_regulator_probe,
 };
+
+
+static ssize_t uv_override_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct regulator_dev *rdev = dev_get_drvdata(dev);
+	int uv, rc;
+
+	if (kstrtoint(buf, 10, &uv))
+		return -EINVAL;
+
+	rc = rpmh_regulator_vrm_set_voltage(rdev, uv, uv, NULL);
+	if (rc)
+		return rc;
+
+	return count;
+}
+
+static ssize_t uv_override_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct regulator_dev *rdev = dev_get_drvdata(dev);
+	int uv = rpmh_regulator_vrm_get_voltage(rdev);
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n", uv);
+}
+
+static DEVICE_ATTR_RW(uv_override);
+
+static void rpmh_add_uv_override_sysfs(struct rpmh_vreg *vreg)
+{
+	if (vreg->aggr_vreg->regulator_type != RPMH_REGULATOR_TYPE_VRM)
+		return;
+
+	// `rdev->dev` に sysfs ノード作成
+	device_create_file(&vreg->rdev->dev, &dev_attr_uv_override);
+}
 
 static int rpmh_regulator_init(void)
 {

@@ -549,9 +549,9 @@ static const struct clk_rpmh_desc clk_rpmh_sm8250 = {
 };
 
 DEFINE_CLK_RPMH_ARC(waipio, bi_tcxo, bi_tcxo_ao, "xo.lvl", 0x3, 4);
-DEFINE_CLK_RPMH_VRM(waipio, ln_bb_clk1, ln_bb_clk1_ao, "lnbclka1", 4);
-DEFINE_CLK_RPMH_VRM(waipio, ln_bb_clk2, ln_bb_clk2_ao, "lnbclka2", 4);
-DEFINE_CLK_RPMH_VRM(waipio, ln_bb_clk3, ln_bb_clk3_ao, "lnbclka3", 4);
+DEFINE_CLK_RPMH_VRM(waipio, ln_bb_clk1, ln_bb_clk1_ao, "lnbclka1", 3);
+DEFINE_CLK_RPMH_VRM(waipio, ln_bb_clk2, ln_bb_clk2_ao, "lnbclka2", 3);
+DEFINE_CLK_RPMH_VRM(waipio, ln_bb_clk3, ln_bb_clk3_ao, "lnbclka3", 3);
 DEFINE_CLK_RPMH_VRM_OPT(waipio, rf_clk5, rf_clk5_ao, "rfclka5", 1);
 
 static struct clk_hw *waipio_rpmh_clocks[] = {

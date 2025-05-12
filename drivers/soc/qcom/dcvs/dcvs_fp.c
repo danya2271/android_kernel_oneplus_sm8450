@@ -119,7 +119,7 @@ static int populate_bcm_data(struct device *dev, struct bcm_data *bcm,
 	bcm->unit = le32_to_cpu(data->unit) / 1000UL;
 	bcm->width = le16_to_cpu(data->width);
 	bcm->vcd = data->vcd;
-	dev_dbg(dev, "Got BCM %s: addr=%lu, unit=%lu, width=%lu, vcd=%lu\n",
+	pr_info("Got BCM %s: addr=%lu, unit=%lu, width=%lu, vcd=%lu\n",
 			bcm_name, bcm->addr, bcm->unit, bcm->width, bcm->vcd);
 
 	return 0;
