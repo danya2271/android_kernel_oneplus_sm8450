@@ -787,7 +787,6 @@ void profile_task_exit(struct task_struct *tsk)
 }
 #endif
 
-void dead_special_task(void);
 void __noreturn do_exit(long code)
 {
 	struct task_struct *tsk = current;
@@ -796,8 +795,6 @@ void __noreturn do_exit(long code)
 	/* Trigger probing of device drivers when, e.g., modprobe exits */
 	if (IS_ENABLED(CONFIG_INTEGRATE_MODULES))
 		integrated_module_load_end();
-	
-	dead_special_task();
 
 	/*
 	 * We can get here from a kernel oops, sometimes with preemption off.
