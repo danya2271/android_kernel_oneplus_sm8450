@@ -56,7 +56,7 @@ unsigned int sysctl_fps_threshold_high __read_mostly = 45;
 unsigned int sysctl_fps_threshold_low __read_mostly = 25;
 unsigned int sysctl_headroom_big __read_mostly = 3;
 unsigned int sysctl_headroom_prime __read_mostly = 3;
-unsigned int sysctl_util_low __read_mostly = 200;
+unsigned int sysctl_util_low __read_mostly = 25;
 
 const_debug unsigned int sysctl_sched_migration_cost	= 0UL;
 
