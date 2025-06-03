@@ -873,8 +873,10 @@ KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overf
 #Enable MLGO
 ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 180000; echo $$?),0)
 KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
+KBUILD_CFLAGS   += -mllvm -enable-machine-outliner
 KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
 KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
+KBUILD_LDFLAGS  += -mllvm -enable-machine-outliner
 endif
 
 ifeq ($(cc-name),clang)
