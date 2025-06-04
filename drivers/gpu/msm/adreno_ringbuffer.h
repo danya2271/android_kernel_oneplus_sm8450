@@ -137,6 +137,8 @@ struct adreno_ringbuffer {
 	 * enough.
 	 */
 	u32 profile_index;
+	u32 *cmd_scratch_buffer;
+	size_t cmd_scratch_buffer_size_dwords;
 };
 
 /* Returns the current ringbuffer */
