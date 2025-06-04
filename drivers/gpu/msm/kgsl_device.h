@@ -295,7 +295,7 @@ struct kgsl_device {
 	/** @event_groups: List of event groups for this device */
 	struct list_head event_groups;
 	/** @event_groups_lock: A R/W lock for the events group list */
-	rwlock_t event_groups_lock;
+	spinlock_t event_groups_lock;
 	/** @speed_bin: Speed bin for the GPU device if applicable */
 	u32 speed_bin;
 	/** @gmu_fault: Set when a gmu or rgmu fault is encountered */
