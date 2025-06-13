@@ -444,7 +444,7 @@ EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
 static __always_inline
 unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
-	return util + (util >> 1) + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util + 10 : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
+	return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util + (util >> 1) + 10 : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
 }
 
 static __always_inline
