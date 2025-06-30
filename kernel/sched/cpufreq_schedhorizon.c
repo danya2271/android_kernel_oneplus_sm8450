@@ -444,7 +444,39 @@ EXPORT_SYMBOL_GPL(schedhorizon_cpu_util);
 
 static __always_inline
 unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned long util) {
-	return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? util + (util >> 1) + 10 : (cpumask_test_cpu(cpu, cpu_prime_mask) ? sysctl_headroom_prime : sysctl_headroom_big));
+	unsigned long capacity = capacity_orig_of(cpu);
+	unsigned long delta, max_boost, min_boost;
+	/* There's no need of headroom at high utilization. The same goes
+	 * for very low utilization as well. Consider 6.25% (capacity / 16)
+	 * as the minimum utilization required.
+	 */
+	if (unlikely(util >= capacity) || likely(util < (capacity >> 4)))
+		return util;
+
+	/*
+	 * Quadratically taper the boosting at the top end as these are
+	 * expensive and we don't need that much of a big headroom as we
+	 * approach max capacity.
+	 */
+	delta = capacity - util;
+	headroom = (delta * delta * 6) >> 15;
+
+        /* Limit the headroom within a valid range to avoid excessive or
+	 * negligible boosts.
+	 * Cap the maximum headroom at 10% (capacity / 10) to prevent
+	 * unnecessary over-boosting.
+	 * If the calculated headroom is below 0.39% (capacity / 256),
+	 * skip boosting as it is unlikely to trigger a frequency change.
+         */
+	max_boost = capacity / 10;
+	min_boost = capacity >> 8;
+
+	if (headroom > max_boost)
+		headroom = max_boost;
+	else if (headroom < min_boost)
+		return util;
+
+	return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? headroom + (headroom >> 1) + 10 : headroom);
 }
 
 static __always_inline
