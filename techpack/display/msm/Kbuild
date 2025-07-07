@@ -61,13 +61,6 @@ CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 KBUILD_CPPFLAGS += $(CDEFINES)
 
 ccflags-y += $(LINUX_INC)
-ccflags-y += -Ofast
-ccflags-y  += -mllvm -inline-threshold=18480
-ccflags-y  += -mllvm -inlinehint-threshold=18350
-ccflags-y  += -mllvm -unroll-threshold=20000
-ccflags-y  += -mllvm -vectorize-memory-check-threshold=1
-ccflags-y  += -mllvm -aggressive-ext-opt
-ccflags-y  += -fno-strict-overflow
 
 ifeq ($(call cc-option-yn, -Wmaybe-uninitialized),y)
 EXTRA_CFLAGS += -Wmaybe-uninitialized

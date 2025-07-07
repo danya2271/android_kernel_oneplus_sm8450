@@ -3968,7 +3968,7 @@ __maybe_unused static int fg_sm8350_get_battery_mvolts(void)
 	return volt;
 }
 
-static int fg_sm8350_get_battery_temperature(void)
+int fg_sm8350_get_battery_temperature(void)
 {
 	int rc = 0;
 	int prop_id = 0;

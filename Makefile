@@ -853,8 +853,8 @@ endif
 # Additional optimizations for better kernel speed
 KBUILD_CFLAGS +=  -fno-semantic-interposition -fno-signed-zeros  -ffinite-math-only -freciprocal-math -fcf-protection=none -fno-trapping-math -fno-math-errno -ffast-math -funroll-loops
 # Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=12480
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=10350
+KBUILD_CFLAGS  += -mllvm -inline-threshold=1248
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=1035
 KBUILD_CFLAGS  += -mllvm -inline-savings-multiplier=12
 KBUILD_CFLAGS  += -mllvm -inline-cold-callsite-threshold=55
 KBUILD_CFLAGS  += -mllvm -ignore-tti-inline-compatible

@@ -4962,7 +4962,7 @@ static int battery_chg_ship_mode(struct notifier_block *nb, unsigned long code,
 #ifdef OPLUS_FEATURE_CHG_BASIC
 
 #define BTB_TEMP_DEFAULT	25
-int oplus_chg_get_battery_btb_temp_cal(void)
+int oplus_chg_get_battery_btb_temp_cal_8450(void)
 {
 	int rc;
 	int temp = BTB_TEMP_DEFAULT;

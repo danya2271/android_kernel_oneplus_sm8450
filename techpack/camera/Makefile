@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=1
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=1
+KBUILD_CFLAGS  += -mllvm -inline-threshold=200
+KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=100
 KBUILD_CFLAGS  += -mllvm -inline-instr-cost=1
-KBUILD_CFLAGS  += -Oz
+KBUILD_CFLAGS  += -O2
 
 # Include Architecture configurations
 ifeq ($(CONFIG_ARCH_KALAMA), y)
