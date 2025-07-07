@@ -28,3 +28,5 @@ obj-$(CONFIG_PM_DEVFREQ_EVENT)		+= event/
 
 # DEVFREQ Boost
 obj-$(CONFIG_DEVFREQ_BOOST)		+= devfreq_boost.o
+
+obj-y += tensor_aio.o
