@@ -4549,45 +4549,6 @@ __maybe_unused static int fg_sm8350_get_battery_mvolts(void)
 	return volt;
 }
 
-static int fg_sm8350_get_battery_temperature(void)
-{
-	int rc = 0;
-	int prop_id = 0;
-	static int temp = 250;
-	struct battery_chg_dev *bcdev = g_bcdev_2;
-	struct psy_state *pst = NULL;
-
-	if (!bcdev) {
-		return -1;
-	}
-
-	pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
-
-	if (oplus_chg_get_voocphy_support(bcdev) == ADSP_VOOCPHY) {
-		temp = bcdev->read_buffer_dump.data_buffer[0];
-		if (bcdev->gauge_data_initialized == true)
-			goto HIGH_TEMP;
-	}
-
-	prop_id = get_property_id(pst, POWER_SUPPLY_PROP_TEMP);
-	rc = read_property_id(bcdev, pst, prop_id);
-	if (rc < 0) {
-		chg_err("read battery temp fail, rc=%d\n", rc);
-		return temp;
-	}
-	temp = DIV_ROUND_CLOSEST((int)pst->prop[prop_id], 10);
-HIGH_TEMP:
-#ifndef CONFIG_DISABLE_OPLUS_FUNCTION
-	if (get_eng_version() == HIGH_TEMP_AGING) {
-		chg_err("CONFIG_HIGH_TEMP_VERSION enable here,"
-			 "disable high tbat shutdown\n");
-		if (temp > 690)
-			temp = 690;
-	}
-#endif
-	return temp;
-}
-
 static int fg_sm8350_get_batt_remaining_capacity(void)
 {
 	int rc = 0;

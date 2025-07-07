@@ -2,10 +2,6 @@
 # Makefile for the Linux sound card driver
 #
 # Inlining optimization
-KBUILD_CFLAGS  += -mllvm -inline-threshold=100
-KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=100
-KBUILD_CFLAGS  += -mllvm -inline-instr-cost=100
-KBUILD_CFLAGS  += -Oz
 obj-$(CONFIG_SOUND) += soundcore.o
 obj-$(CONFIG_DMASOUND) += oss/dmasound/
 obj-$(CONFIG_SND) += core/ i2c/ drivers/ arm/ usb/ spi/ soc/
