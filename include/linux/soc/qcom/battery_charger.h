@@ -19,6 +19,9 @@ enum bc_hboost_event {
 	VMAX_CLAMP,
 };
 
+extern int fg_sm8350_get_battery_temperature(void);
+extern int oplus_chg_get_battery_btb_temp_cal_8450(void);
+
 #if IS_ENABLED(CONFIG_QTI_BATTERY_CHARGER)
 int qti_battery_charger_get_prop(const char *name,
 				enum battery_charger_prop prop_id, int *val);
