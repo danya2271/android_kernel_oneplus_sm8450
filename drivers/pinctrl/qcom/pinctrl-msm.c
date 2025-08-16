@@ -1247,6 +1247,8 @@ static void msm_gpio_irq_relres(struct irq_data *d)
 static int msm_gpio_irq_set_affinity(struct irq_data *d,
 				const struct cpumask *dest, bool force)
 {
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct msm_pinctrl *pctrl = gpiochip_get_data(gc);
 	if (!IS_ENABLED(CONFIG_IRQ_SBALANCE)) {
 		if (d->parent_data && test_bit(d->hwirq, pctrl->skip_wake_irqs))
 			return irq_chip_set_affinity_parent(d, dest, force);
