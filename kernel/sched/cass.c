@@ -56,7 +56,7 @@ void cass_cpu_util(struct cass_cpu_cand *c, int this_cpu, bool sync)
 
 	/* Get this CPU's utilization from CFS tasks */
 	c->util = READ_ONCE(cfs_rq->avg.util_avg);
-	if (sched_feat(UTIL_EST)) {
+	if (1) {
 		est = READ_ONCE(cfs_rq->avg.util_est.enqueued);
 		if (est > c->util) {
 			/* Don't deduct @current's util from estimated util */
@@ -138,7 +138,7 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 		goto done;
 
 	/* Prefer the CPU that isn't the single fastest one in the system */
-	if ((msm_panel_fps <= 20) ? (cass_cmp(cass_little_cpu(b), cass_little_cpu(a))) : (cass_cmp(cass_prime_cpu(b), cass_prime_cpu(a))))
+	if ((dsi_panel_get_refresh_rate() <= 90) ? (cass_cmp(cass_little_cpu(b), cass_little_cpu(a))) : (cass_cmp(cass_prime_cpu(b), cass_prime_cpu(a))))
 		goto done;
 
 	/* Prefer the CPU with lower relative utilization */
@@ -238,7 +238,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 			 */
 			if (!has_idle &&
 			    uc_min <= arch_scale_min_freq_capacity(cpu) &&
-			    ((msm_panel_fps > 20) ? (!cass_little_cpu(curr)) : (!cass_prime_cpu(curr)))) {
+			    ((dsi_panel_get_refresh_rate() <= 90) ? (!cass_little_cpu(curr)) : (!cass_prime_cpu(curr)))) {
 				/* Discard any previous non-idle candidate */
 				best = curr;
 				has_idle = true;
