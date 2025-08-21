@@ -466,7 +466,7 @@ unsigned long calculate_headroom_high(unsigned long headroom, int cpu, unsigned 
     	}
 
 
-	return util + (cpumask_test_cpu(cpu, cpu_lp_mask) ? headroom + (headroom >> 1) + 10 : headroom);
+	return util + headroom;
 }
 
 static __always_inline
