@@ -931,7 +931,7 @@ static struct sched_entity *pick_eevdf(struct cfs_rq *cfs_rq)
 	 * Once selected, run a task until it either becomes non-eligible or
 	 * until it gets a new slice. See the HACK in set_next_entity().
 	 */
-	if (sched_feat(RUN_TO_PARITY) && curr && curr->vlag == curr->deadline)
+	if (0 && curr && curr->vlag == curr->deadline)
 		return curr;
 
 	/* Pick the leftmost entity if it's eligible */
@@ -3834,7 +3834,7 @@ void set_task_rq_fair(struct sched_entity *se,
 	u64 p_last_update_time;
 	u64 n_last_update_time;
 
-	if (!sched_feat(ATTACH_AGE_LOAD))
+	if (!1)
 		return;
 
 	/*
@@ -4460,7 +4460,7 @@ static inline void util_est_enqueue(struct cfs_rq *cfs_rq,
 {
 	unsigned int enqueued;
 
-	if (!sched_feat(UTIL_EST))
+	if (!1)
 		return;
 
 	/* Update root cfs_rq's estimated utilization */
@@ -4476,7 +4476,7 @@ static inline void util_est_dequeue(struct cfs_rq *cfs_rq,
 {
 	unsigned int enqueued;
 
-	if (!sched_feat(UTIL_EST))
+	if (!1)
 		return;
 
 	/* Update root cfs_rq's estimated utilization */
@@ -4514,7 +4514,7 @@ static inline void util_est_update(struct cfs_rq *cfs_rq,
 	if (ret)
 		return;
 
-	if (!sched_feat(UTIL_EST))
+	if (!1)
 		return;
 
 	/*
@@ -4828,7 +4828,7 @@ place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
 	 *
 	 * EEVDF: placement strategy #1 / #2
 	 */
-	if (sched_feat(PLACE_LAG) && cfs_rq->nr_running && se->vlag) {
+	if (0 && cfs_rq->nr_running && se->vlag) {
 		struct sched_entity *curr = cfs_rq->curr;
 		unsigned long load;
 
@@ -4903,7 +4903,7 @@ place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
 	 * on average, halfway through their slice, as such start tasks
 	 * off with half a slice to ease into the competition.
 	 */
-	if (sched_feat(PLACE_DEADLINE_INITIAL) && (flags & ENQUEUE_INITIAL))
+	if (0 && (flags & ENQUEUE_INITIAL))
 		vslice /= 2;
 
 	/*
@@ -5108,7 +5108,7 @@ pick_next_entity(struct cfs_rq *cfs_rq)
 	/*
 	 * Enabling NEXT_BUDDY will affect latency but not fairness.
 	 */
-	if (sched_feat(NEXT_BUDDY) &&
+	if (0 &&
 	    cfs_rq->next && entity_eligible(cfs_rq, cfs_rq->next))
 		return cfs_rq->next;
 
@@ -5166,7 +5166,7 @@ entity_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr, int queued)
 	/*
 	 * don't let the period tick interfere with the hrtick preemption
 	 */
-	if (!sched_feat(DOUBLE_TICK) &&
+	if (!0 &&
 			hrtimer_active(&rq_of(cfs_rq)->hrtick_timer))
 		return;
 #endif
@@ -6439,13 +6439,13 @@ wake_affine_weight(struct sched_domain *sd, struct task_struct *p,
 	task_load = task_h_load(p);
 
 	this_eff_load += task_load;
-	if (sched_feat(WA_BIAS))
+	if (1)
 		this_eff_load *= 100;
 	this_eff_load *= capacity_of(prev_cpu);
 
 	prev_eff_load = cpu_load(cpu_rq(prev_cpu));
 	prev_eff_load -= task_load;
-	if (sched_feat(WA_BIAS))
+	if (1)
 		prev_eff_load *= 100 + (sd->imbalance_pct - 100) / 2;
 	prev_eff_load *= capacity_of(this_cpu);
 
@@ -6466,10 +6466,10 @@ static int wake_affine(struct sched_domain *sd, struct task_struct *p,
 {
 	int target = nr_cpumask_bits;
 
-	if (sched_feat(WA_IDLE))
+	if (1)
 		target = wake_affine_idle(this_cpu, prev_cpu, sync);
 
-	if (sched_feat(WA_WEIGHT) && target == nr_cpumask_bits)
+	if (1 && target == nr_cpumask_bits)
 		target = wake_affine_weight(sd, p, this_cpu, prev_cpu, sync);
 
 	schedstat_inc(p->se.statistics.nr_wakeups_affine_attempts);
@@ -6745,7 +6745,7 @@ static int select_idle_cpu(struct task_struct *p, struct sched_domain *sd, int t
 
 	cpumask_and(cpus, sched_domain_span(sd), p->cpus_ptr);
 
-	if (sched_feat(SIS_PROP)) {
+	if (1) {
 		u64 avg_cost, avg_idle, span_avg;
 
 		/*
@@ -6771,7 +6771,7 @@ static int select_idle_cpu(struct task_struct *p, struct sched_domain *sd, int t
 			break;
 	}
 
-	if (sched_feat(SIS_PROP)) {
+	if (1) {
 		time = cpu_clock(this) - time;
 		update_avg(&this_sd->avg_scan_cost, time);
 	}
@@ -6976,7 +6976,7 @@ static inline unsigned long cpu_util(int cpu)
 	cfs_rq = &cpu_rq(cpu)->cfs;
 	util = READ_ONCE(cfs_rq->avg.util_avg);
 
-	if (sched_feat(UTIL_EST))
+	if (1)
 		util = max(util, READ_ONCE(cfs_rq->avg.util_est.enqueued));
 
 	return min_t(unsigned long, util, capacity_orig_of(cpu));
@@ -7013,7 +7013,7 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
 	/* Discount task's util from CPU's util */
 	lsub_positive(&util, task_util(p));
 
-	if (sched_feat(UTIL_EST)) {
+	if (1) {
 		estimated = READ_ONCE(cfs_rq->avg.util_est.enqueued);
 
 		/*
@@ -7067,7 +7067,7 @@ static unsigned long cpu_util_next(int cpu, struct task_struct *p, int dst_cpu)
 	else if (task_cpu(p) != cpu && dst_cpu == cpu)
 		util += task_util(p);
 
-	if (sched_feat(UTIL_EST)) {
+	if (1) {
 		util_est = READ_ONCE(cfs_rq->avg.util_est.enqueued);
 
 		/*
@@ -7586,7 +7586,7 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	if (unlikely(throttled_hierarchy(cfs_rq_of(pse))))
 		return;
 
-	if (sched_feat(NEXT_BUDDY) && !(wake_flags & WF_FORK)) {
+	if (0 && !(wake_flags & WF_FORK)) {
 		set_next_buddy(pse);
 	}
 
@@ -7612,7 +7612,7 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	 * Batch and idle tasks do not preempt non-idle tasks (their preemption
 	 * is driven by the tick):
 	 */
-	if (unlikely(p->policy != SCHED_NORMAL) || !sched_feat(WAKEUP_PREEMPTION))
+	if (unlikely(p->policy != SCHED_NORMAL) || !1)
 		return;
 
 	find_matching_se(&se, &pse);
@@ -8120,7 +8120,7 @@ static int task_hot(struct task_struct *p, struct lb_env *env)
 	/*
 	 * Buddy candidates are cache hot:
 	 */
-	if (sched_feat(CACHE_HOT_BUDDY) && env->dst_rq->nr_running &&
+	if (0 && env->dst_rq->nr_running &&
 	    (&p->se == cfs_rq_of(&p->se)->next))
 		return 1;
 
@@ -8211,7 +8211,7 @@ static inline int task_is_ineligible_on_dst_cpu(struct task_struct *p, int dest_
 #else
 	dst_cfs_rq = &cpu_rq(dest_cpu)->cfs;
 #endif
-	if (sched_feat(PLACE_LAG) && dst_cfs_rq->nr_running &&
+	if (0 && dst_cfs_rq->nr_running &&
 	    !entity_eligible(task_cfs_rq(p), &p->se))
 		return 1;
 
@@ -8444,7 +8444,7 @@ static int detach_tasks(struct lb_env *env)
 			 */
 			load = max_t(unsigned long, task_h_load(p), 1);
 
-			if (sched_feat(LB_MIN) &&
+			if (0 &&
 			    load < 16 && !env->sd->nr_balance_failed)
 				goto next;
 
@@ -11633,7 +11633,7 @@ static void attach_entity_cfs_rq(struct sched_entity *se)
 #endif
 
 	/* Synchronize entity with its cfs_rq */
-	update_load_avg(cfs_rq, se, sched_feat(ATTACH_AGE_LOAD) ? 0 : SKIP_AGE_LOAD);
+	update_load_avg(cfs_rq, se, 1 ? 0 : SKIP_AGE_LOAD);
 	attach_entity_load_avg(cfs_rq, se);
 	update_tg_load_avg(cfs_rq);
 	propagate_entity_cfs_rq(se);

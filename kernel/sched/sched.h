@@ -2129,7 +2129,7 @@ extern unsigned int sysctl_numa_balancing_scan_size;
  */
 static inline int hrtick_enabled(struct rq *rq)
 {
-	if (!sched_feat(HRTICK))
+	if (!0)
 		return 0;
 	if (!cpu_active(cpu_of(rq)))
 		return 0;
@@ -2758,7 +2758,7 @@ static inline unsigned long cpu_util_cfs(int cpu)
 	cfs_rq = &cpu_rq(cpu)->cfs;
 	util = READ_ONCE(cfs_rq->avg.util_avg);
 
-	if (sched_feat(UTIL_EST)) {
+	if (1) {
 		util = max_t(unsigned long, util,
 			     READ_ONCE(cfs_rq->avg.util_est.enqueued));
 	}

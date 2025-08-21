@@ -310,7 +310,7 @@ static void update_rq_clock_task(struct rq *rq, s64 delta)
 	rq->clock_task += delta;
 
 #ifdef CONFIG_HAVE_SCHED_AVG_IRQ
-	if ((irq_delta + steal) && sched_feat(NONTASK_CAPACITY))
+	if ((irq_delta + steal) && 1)
 		update_irq_load_avg(rq, irq_delta + steal);
 #endif
 	update_rq_clock_pelt(rq, delta);
@@ -326,7 +326,7 @@ void update_rq_clock(struct rq *rq)
 		return;
 
 #ifdef CONFIG_SCHED_DEBUG
-	if (sched_feat(WARN_DOUBLE_CLOCK))
+	if (0)
 		SCHED_WARN_ON(rq->clock_update_flags & RQCF_UPDATED);
 	rq->clock_update_flags |= RQCF_UPDATED;
 #endif
@@ -2978,7 +2978,7 @@ static bool ttwu_queue_wakelist(struct task_struct *p, int cpu, int wake_flags)
 
 	trace_android_rvh_ttwu_cond(&cond);
 
-	if ((sched_feat(TTWU_QUEUE) && ttwu_queue_cond(cpu, wake_flags)) ||
+	if ((0 && ttwu_queue_cond(cpu, wake_flags)) ||
 			cond) {
 		if (WARN_ON_ONCE(cpu == smp_processor_id()))
 			return false;
@@ -4794,7 +4794,7 @@ static void __sched notrace __schedule(bool preempt)
 
 	schedule_debug(prev, preempt);
 
-	if (sched_feat(HRTICK))
+	if (0)
 		hrtick_clear(rq);
 
 	local_irq_disable();
