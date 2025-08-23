@@ -4,7 +4,7 @@
 KBUILD_CFLAGS  += -mllvm -inline-threshold=200
 KBUILD_CFLAGS  += -mllvm -inlinehint-threshold=100
 KBUILD_CFLAGS  += -mllvm -inline-instr-cost=1
-KBUILD_CFLAGS  += -O2
+KBUILD_CFLAGS  += -O3
 
 # Include Architecture configurations
 ifeq ($(CONFIG_ARCH_KALAMA), y)

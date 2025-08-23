@@ -866,7 +866,8 @@ INLINE_FLAGS   := -mllvm -inline-threshold=1248 \
 		-mllvm -inline-call-penalty=5 \
 		-mllvm -hot-callsite-rel-freq=100 \
 		-mllvm -cold-callsite-rel-freq=5 \
-		-mllvm -inline-enable-cost-benefit-analysis
+		-mllvm -inline-enable-cost-benefit-analysis \
+		-mllvm -import-instr-limit=10
 
 KBUILD_CFLAGS += $(INLINE_FLAGS)
 KBUILD_AFLAGS += $(INLINE_FLAGS)
