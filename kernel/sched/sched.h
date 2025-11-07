@@ -2,6 +2,7 @@
 /*
  * Scheduler internal types and methods:
  */
+#include <linux/prandom.h>
 #include <linux/sched.h>
 
 #include <linux/sched/autogroup.h>
@@ -1140,6 +1141,12 @@ static inline int cpu_of(struct rq *rq)
 #endif
 }
 
+DECLARE_PER_CPU(struct rnd_state, sched_rnd_state);
+
+static inline u32 sched_rng(void)
+{
+	return prandom_u32_state(this_cpu_ptr(&sched_rnd_state));
+}
 
 #ifdef CONFIG_SCHED_SMT
 extern void __update_idle_core(struct rq *rq);
