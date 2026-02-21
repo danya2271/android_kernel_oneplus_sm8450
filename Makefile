@@ -858,6 +858,12 @@ KBUILD_CFLAGS  += $(call cc-option,-mllvm -regalloc-enable-advisor=release)
 KBUILD_LDFLAGS += $(call cc-option,-mllvm -enable-ml-inliner=release)
 KBUILD_LDFLAGS += $(call cc-option,-mllvm -regalloc-enable-advisor=release)
 
+# Aggressive Inlining
+# Default is 225
+KBUILD_CFLAGS += -mllvm -inline-threshold=400
+KBUILD_CFLAGS += -mllvm -inlinehint-threshold=1000
+KBUILD_CFLAGS += -mllvm -inline-cold-callsite-threshold=25
+
 # Vectorization (Utilizing the NEON engine)
 KBUILD_CFLAGS += -O3
 KBUILD_CFLAGS += -fvectorize
@@ -875,25 +881,8 @@ KBUILD_CFLAGS += -mllvm -enable-load-pre
 # Loop-Distribute breaks large loops into smaller, cache-friendly ones
 KBUILD_CFLAGS += -mllvm -enable-loop-distribute
 
-INLINE_FLAGS   := -mllvm -inline-threshold=1248 \
-		-mllvm -inlinehint-threshold=1035 \
-		-mllvm -inline-savings-multiplier=12 \
-		-mllvm -inline-cold-callsite-threshold=55 \
-		-mllvm -ignore-tti-inline-compatible \
-		-mllvm -inline-savings-profitable-multiplier=6 \
-		-mllvm -inline-size-allowance=30 \
-		-mllvm -inlinecold-threshold=130 \
-		-mllvm -locally-hot-callsite-threshold=750 \
-		-mllvm -inline-instr-cost=12 \
-		-mllvm -inline-call-penalty=5 \
-		-mllvm -hot-callsite-rel-freq=100 \
-		-mllvm -cold-callsite-rel-freq=5 \
-		-mllvm -inline-enable-cost-benefit-analysis \
-		-mllvm -import-instr-limit=10
-
-KBUILD_CFLAGS += $(INLINE_FLAGS)
-KBUILD_AFLAGS += $(INLINE_FLAGS)
-KBUILD_LDFLAGS += $(INLINE_FLAGS)
+KBUILD_CFLAGS   += -march=armv9-a+lse+crypto+dotprod+rcpc+crc+sve+sve2+i8mm+bf16+fp16+memtag+sb+ssbs
+KBUILD_AFLAGS   += -march=armv9-a+lse+crypto+dotprod+rcpc+crc+sve+sve2+i8mm+bf16+fp16+memtag+sb+ssbs
 else
 # Inlining optimization
 KBUILD_CFLAGS	+= --param max-inline-insns-single=600
