@@ -244,8 +244,8 @@ ifdef KBUILD_MIXED_TREE
 # Need vmlinux.symvers for modpost and System.map for depmod, check whether they exist in KBUILD_MIXED_TREE
 required_mixed_files=vmlinux.symvers System.map
 $(if $(filter-out $(words $(required_mixed_files)), \
-		$(words $(wildcard $(add-prefix $(KBUILD_MIXED_TREE)/,$(required_mixed_files))))),,\
-	$(error KBUILD_MIXED_TREE=$(KBUILD_MIXED_TREE) doesn't contain $(required_mixed_files)))
+    $(words $(wildcard $(addprefix $(KBUILD_MIXED_TREE)/,$(required_mixed_files))))), \
+    $(error "KBUILD_MIXED_TREE=$(KBUILD_MIXED_TREE) doesn't contain $(required_mixed_files)"))
 endif
 
 mixed-build-prefix = $(if $(KBUILD_MIXED_TREE),$(KBUILD_MIXED_TREE)/)
@@ -850,9 +850,31 @@ KBUILD_CFLAGS += -Os
 KBUILD_LDFLAGS += -Os
 endif
 
-# Additional optimizations for better kernel speed
-KBUILD_CFLAGS +=  -fno-semantic-interposition -fno-signed-zeros  -ffinite-math-only -freciprocal-math -fcf-protection=none -fno-trapping-math -fno-math-errno -ffast-math -funroll-loops
-# Inlining optimization
+ifdef CONFIG_CC_IS_CLANG
+KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
+
+KBUILD_CFLAGS  += $(call cc-option,-mllvm -enable-ml-inliner=release)
+KBUILD_CFLAGS  += $(call cc-option,-mllvm -regalloc-enable-advisor=release)
+KBUILD_LDFLAGS += $(call cc-option,-mllvm -enable-ml-inliner=release)
+KBUILD_LDFLAGS += $(call cc-option,-mllvm -regalloc-enable-advisor=release)
+
+# Vectorization (Utilizing the NEON engine)
+KBUILD_CFLAGS += -O3
+KBUILD_CFLAGS += -fvectorize
+KBUILD_CFLAGS += -fslp-vectorize
+
+# Loop Unrolling (Reduces branch overhead in tight loops)
+KBUILD_CFLAGS += -mllvm -unroll-threshold=500
+KBUILD_CFLAGS += -mllvm -unroll-allow-partial
+KBUILD_CFLAGS += -mllvm -vectorize-loops
+
+# GVN-Hoist removes redundant code by moving it out of branches
+KBUILD_CFLAGS += -mllvm -enable-gvn-hoist
+# Load-PRE eliminates redundant memory loads
+KBUILD_CFLAGS += -mllvm -enable-load-pre
+# Loop-Distribute breaks large loops into smaller, cache-friendly ones
+KBUILD_CFLAGS += -mllvm -enable-loop-distribute
+
 INLINE_FLAGS   := -mllvm -inline-threshold=1248 \
 		-mllvm -inlinehint-threshold=1035 \
 		-mllvm -inline-savings-multiplier=12 \
@@ -872,6 +894,26 @@ INLINE_FLAGS   := -mllvm -inline-threshold=1248 \
 KBUILD_CFLAGS += $(INLINE_FLAGS)
 KBUILD_AFLAGS += $(INLINE_FLAGS)
 KBUILD_LDFLAGS += $(INLINE_FLAGS)
+else
+# Inlining optimization
+KBUILD_CFLAGS	+= --param max-inline-insns-single=600
+KBUILD_CFLAGS	+= --param max-inline-insns-auto=80
+
+# We limit inlining to 512B on the stack.
+KBUILD_CFLAGS	+= --param large-stack-frame=512
+
+KBUILD_CFLAGS	+= --param large-function-growth=150
+
+KBUILD_CFLAGS	+= --param inline-min-speedup=5
+KBUILD_CFLAGS	+= --param inline-unit-growth=60
+
+KBUILD_CFLAGS	+= -fgraphite-identity -floop-nest-optimize
+KBUILD_CFLAGS	+= -fipa-pta -fgcse-sm
+
+KBUILD_CFLAGS   += -mcpu=cortex-a76.cortex-a55
+KBUILD_AFLAGS   += -mcpu=cortex-a76.cortex-a55
+endif
+KBUILD_CFLAGS +=  -Wno-default-const-init-field-unsafe
 
 KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined -Wno-unneeded-internal-declaration
 
