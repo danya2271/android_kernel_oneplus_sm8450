@@ -2958,7 +2958,7 @@ int register_common_touch_device(struct touchpanel_data *pdata)
 	if (ret < 0) {
 		TP_INFO(ts->tp_index, "%s: ts_check_panel_dt failed.\n", __func__);
 		/*retry*/
-		return -EPROBE_DEFER;
+		//return -EPROBE_DEFER;
 	}
 #endif
 

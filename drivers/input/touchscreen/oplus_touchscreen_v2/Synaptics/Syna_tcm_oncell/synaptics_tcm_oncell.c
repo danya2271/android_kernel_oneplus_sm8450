@@ -6580,8 +6580,8 @@ static int __init tp_driver_init_syna_tcm(void)
 {
 	TPD_INFO("%s is called\n", __func__);
 
-	if (!tp_judge_ic_match(TPD_DEVICE))
-		return -1;
+//	if (!tp_judge_ic_match(TPD_DEVICE))
+//		return -1;
 
 	if (i2c_add_driver(&syna_i2c_driver) != 0) {
 		TPD_INFO("unable to add i2c driver.\n");

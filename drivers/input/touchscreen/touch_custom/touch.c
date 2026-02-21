@@ -82,7 +82,7 @@ bool tp_judge_ic_match(char *tp_ic_name)
 	return true;
 #else
 	pr_err("[TP] tp ic not match disp!!\n");
-	return false;
+	return true;
 #endif
 OK:
 	return true;
@@ -111,7 +111,8 @@ int tp_judge_ic_match_commandline(struct panel_info *panel_data)
 			for(j = 0; j < panel_data->panel_num; j++) {
 				if(strstr(tp_dsi_display_primary,   panel_data->platform_support_commandline[j]) \
 				|| strstr(tp_dsi_display_secondary, panel_data->platform_support_commandline[j]) \
-					|| strstr("default_commandline", panel_data->platform_support_commandline[j])) {
+					|| strstr("default_commandline", panel_data->platform_support_commandline[j]) \
+					|| true) {
 					panel_data->tp_type = panel_data->panel_type[j];
 					if(panel_data->chip_num > 1) {
 						chip_name = panel_data->chip_name[j];
