@@ -2051,8 +2051,8 @@ static void _sde_encoder_autorefresh_disable_seq1(
 		udelay(AUTOREFRESH_SEQ1_POLL_TIME);
 		if ((trial * AUTOREFRESH_SEQ1_POLL_TIME)
 				> (timeout_ms * USEC_PER_MSEC)) {
-			SDE_ERROR_CMDENC(cmd_enc,
-					"disable autorefresh failed\n");
+//			SDE_ERROR_CMDENC(cmd_enc,
+//					"disable autorefresh failed\n");
 
 			phys_enc->enable_state = SDE_ENC_ERR_NEEDS_HW_RESET;
 			break;
