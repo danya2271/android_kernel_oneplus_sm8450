@@ -304,7 +304,7 @@ extern int kptr_restrict;
 #ifndef pr_fmt
 #define pr_fmt(fmt) fmt
 #endif
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_KERNEL
 /**
  * pr_emerg - Print an emergency-level message
  * @fmt: format string
