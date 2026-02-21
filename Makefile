@@ -917,15 +917,6 @@ KBUILD_CFLAGS +=  -Wno-default-const-init-field-unsafe
 
 KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined -Wno-unneeded-internal-declaration
 
-#Enable MLGO
-ifeq ($(shell test $(CONFIG_CLANG_VERSION) -gt 180000; echo $$?),0)
-KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
-KBUILD_CFLAGS   += -mllvm -enable-machine-outliner
-KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
-KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
-KBUILD_LDFLAGS  += -mllvm -enable-machine-outliner
-endif
-
 ifeq ($(cc-name),clang)
 #Enable fast FMA optimizations
 KBUILD_CFLAGS   += -ffp-contract=fast
