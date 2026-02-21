@@ -914,6 +914,7 @@ KBUILD_CFLAGS   += -mcpu=cortex-a76.cortex-a55
 KBUILD_AFLAGS   += -mcpu=cortex-a76.cortex-a55
 endif
 KBUILD_CFLAGS +=  -Wno-default-const-init-field-unsafe
+KBUILD_CFLAGS +=  -Wno-default-const-init-var-unsafe
 
 KBUILD_CFLAGS += -Wno-unused-variable -Wno-int-conversion -Wno-shift-count-overflow -Wno-macro-redefined -Wno-unneeded-internal-declaration
 
