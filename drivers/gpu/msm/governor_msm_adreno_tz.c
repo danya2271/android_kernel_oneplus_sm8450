@@ -421,7 +421,18 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 		level = min_t(int, level, devfreq->profile->max_state - 1);
 	}
 
+#define HIGHEST_LEVEL CONFIG_HIGHEST_LEVEL
+#define HIGH_LEVEL (CONFIG_HIGHEST_LEVEL - 1)
+
 	switch (boost_adjust_notify()) {
+		case 0:
+			if (refresh_rate <= 60) {
+				if (level == HIGHEST_LEVEL || level == HIGH_LEVEL) {
+					level = HIGHEST_LEVEL;
+					goto set_frequency;
+				}
+			}
+			break;
 		case 1:
 			if (level > input_boost_level) {
 				level = input_boost_level;
@@ -441,20 +452,6 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 			}
 			break;
 	}
-#define HIGHEST_LEVEL CONFIG_HIGHEST_LEVEL
-#define HIGH_LEVEL (CONFIG_HIGHEST_LEVEL - 1)
-	if (refresh_rate <= 60) {
-		if (level == HIGHEST_LEVEL || level == HIGH_LEVEL) {
-			level = HIGHEST_LEVEL;
-			goto set_frequency;
-		}
-	} else {
-		if (level > input_boost_level) {
-			level = input_boost_level;
-			goto set_frequency;
-		}
-	}
-
 	goto set_frequency;
 
 set_frequency:
