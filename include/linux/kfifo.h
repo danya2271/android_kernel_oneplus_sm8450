@@ -36,15 +36,10 @@
  * to lock the reader.
  */
 
-#include <linux/array_size.h>
+#include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <linux/stddef.h>
-#include <linux/types.h>
-
-#include <asm/barrier.h>
-#include <asm/errno.h>
-
-struct scatterlist;
+#include <linux/scatterlist.h>
 
 struct __kfifo {
 	unsigned int	in;
