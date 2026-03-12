@@ -340,6 +340,8 @@ static inline int devfreq_get_freq_level(struct devfreq *devfreq,
 	return -EINVAL;
 }
 
+#define HIGHEST_LEVEL CONFIG_HIGHEST_LEVEL
+#define HIGH_LEVEL (CONFIG_HIGHEST_LEVEL - 1)
 static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 {
 	int result = 0;
@@ -387,7 +389,8 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 		(priv->bin.total_time < FLOOR) ||
 		(unsigned int) priv->bin.busy_time < MIN_BUSY ||
 		devfreq->profile->max_state == 1) {
-		return 0;
+		level = HIGHEST_LEVEL;
+		goto apply_boost;
 	}
 
 	level = devfreq_get_freq_level(devfreq, stats->current_frequency);
@@ -421,14 +424,17 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 		level = min_t(int, level, devfreq->profile->max_state - 1);
 	}
 
-#define HIGHEST_LEVEL CONFIG_HIGHEST_LEVEL
-#define HIGH_LEVEL (CONFIG_HIGHEST_LEVEL - 1)
-
+apply_boost:
 	switch (boost_adjust_notify()) {
 		case 0:
 			if (refresh_rate <= 60) {
 				if (level == HIGHEST_LEVEL || level == HIGH_LEVEL) {
 					level = HIGHEST_LEVEL;
+					goto set_frequency;
+				}
+			} else {
+				if (level == HIGHEST_LEVEL || level == HIGH_LEVEL) {
+					level = HIGH_LEVEL;
 					goto set_frequency;
 				}
 			}

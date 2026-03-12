@@ -37,6 +37,7 @@ struct boost_drv {
     atomic_long_t max_boost_expires;
     atomic_long_t mid_boost_expires;
     unsigned long state;
+    atomic_t touch_active;
 };
 
 void input_unboost_worker(struct work_struct *work);
@@ -50,7 +51,8 @@ struct boost_drv boost_drv_g __read_mostly = {
                                                                                           max_unboost_worker, 0),
                                                 .mid_unboost = __DELAYED_WORK_INITIALIZER(boost_drv_g.mid_unboost,
                                                                                           mid_unboost_worker, 0),
-                                                                                          .boost_waitq = __WAIT_QUEUE_HEAD_INITIALIZER(boost_drv_g.boost_waitq)
+                                                                                          .boost_waitq = __WAIT_QUEUE_HEAD_INITIALIZER(boost_drv_g.boost_waitq),
+                                                                                          .touch_active = ATOMIC_INIT(0)
 };
 
 module_param(max_input_boost_level, uint, 0644);
@@ -122,13 +124,14 @@ static void __gpu_input_boost_kick(struct boost_drv *b)
     if (!input_boost_duration)
         return;
 
+    /* If boost isn't active yet, kick the initial mid boost */
     if (!test_bit(INPUT_BOOST, &b->state)) {
-		gpu_input_boost_kick_mid(50);
-		set_bit(INPUT_BOOST, &b->state);
-		return;
-	}
+        gpu_input_boost_kick_mid(50);
+    }
 
     set_bit(INPUT_BOOST, &b->state);
+
+    /* Always schedule or reset the 100ms timer */
     if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
         msecs_to_jiffies(input_boost_duration)))
         wake_up(&b->boost_waitq);
@@ -177,6 +180,13 @@ void input_unboost_worker(struct work_struct *work)
 {
     struct boost_drv *b = container_of(to_delayed_work(work),
                                        typeof(*b), input_unboost);
+
+    /* If the user is still holding the touchscreen, keep the boost alive. */
+    if (atomic_read(&b->touch_active)) {
+        mod_delayed_work(system_unbound_wq, &b->input_unboost,
+                         msecs_to_jiffies(input_boost_duration));
+        return;
+    }
 
     clear_bit(INPUT_BOOST, &b->state);
     wake_up(&b->boost_waitq);
@@ -251,6 +261,13 @@ static void gpu_input_boost_input_event(struct input_handle *handle,
                                         int value)
 {
     struct boost_drv *b = handle->handler->private;
+
+    /* Track if a finger is touching or lifting off the screen */
+    if (type == EV_KEY && code == BTN_TOUCH) {
+        atomic_set(&b->touch_active, value > 0 ? 1 : 0);
+    } else if (type == EV_ABS && code == ABS_MT_TRACKING_ID) {
+        atomic_set(&b->touch_active, value >= 0 ? 1 : 0);
+    }
 
     __gpu_input_boost_kick(b);
 }

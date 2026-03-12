@@ -43,7 +43,7 @@ config WAKE_BOOST_DURATION_MS
 
 config INPUT_BOOST_LEVEL
 	int "GPU boost level"
-	default "4"
+	default "9"
 	help
 	  Input boost level for GPU.
 
