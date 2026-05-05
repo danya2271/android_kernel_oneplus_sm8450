@@ -44,8 +44,8 @@ enum sched_tunable_scaling sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_N
  *
  * (default: 0.5 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
-unsigned int sysctl_sched_base_slice			= 2800000ULL;
-static unsigned int normalized_sysctl_sched_base_slice	= 2800000ULL;
+unsigned int sysctl_sched_base_slice			= 4000000ULL;
+static unsigned int normalized_sysctl_sched_base_slice	= 4000000ULL;
 
 /*
  * After fork, child runs first. If set to 0 (default) then
@@ -58,7 +58,7 @@ unsigned int sysctl_headroom_big __read_mostly = 3;
 unsigned int sysctl_headroom_prime __read_mostly = 3;
 unsigned int sysctl_util_low __read_mostly = 25;
 
-const_debug unsigned int sysctl_sched_migration_cost	= 0UL;
+const_debug unsigned int sysctl_sched_migration_cost	= 500000UL;
 
 int sched_thermal_decay_shift;
 static int __init setup_sched_thermal_decay_shift(char *str)
@@ -87,7 +87,7 @@ int __weak arch_asym_cpu_priority(int cpu)
  *
  * (default: ~20%)
  */
-#define fits_capacity(cap, max)	((cap) * 1280 < (max) * 1024)
+#define fits_capacity(cap, max)	((cap) * 1150 < (max) * 1024)
 
 /*
  * The margin used when comparing CPU capacities.
