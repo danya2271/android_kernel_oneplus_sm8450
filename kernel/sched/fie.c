@@ -21,10 +21,9 @@
 
 /* Max frequencies for SM8550 (kHz) */
 static const u64 max_freqs[] = {
-	2016000, 2016000, 2016000,           /* Cores 0-2 (Silver/LITTLE) */
-	2803200, 2803200,                    /* Cores 3-4 (Gold/Big) */
-	2803200, 2803200,                    /* Cores 5-6 (Gold+/Big) */
-	3187200                              /* Core 7 (Prime) */
+	1785200, 1785200, 1785200, 1785200,          /* Cores 0-3 (Silver/LITTLE) */
+	2496000, 2496000, 2496000,                    /* Cores 4-6 (Gold+/Big) */
+	2995400                              /* Core 7 (Prime) */
 };
 
 /*
