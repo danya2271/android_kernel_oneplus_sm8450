@@ -141,6 +141,15 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 	if ((dsi_panel_get_refresh_rate() <= 90) ? (cass_cmp(cass_little_cpu(b), cass_little_cpu(a))) : (cass_cmp(cass_prime_cpu(b), cass_prime_cpu(a))))
 		goto done;
 
+	/*
+	 * If the task is very light, prefer an already active CPU
+	 * to prevent waking up deep-idle cores and paying the static leakage penalty.
+	 */
+	if (p_util < (SCHED_CAPACITY_SCALE / 8)) {
+		if (cass_cmp(!!b->exit_lat, !!a->exit_lat))
+			goto done;
+	}
+
 	/* Prefer the CPU with lower relative utilization */
 	if (cass_cmp(b->util, a->util))
 		goto done;
@@ -280,8 +289,11 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 			if (idle_state)
 				curr->exit_lat += idle_state->exit_latency;
 		} else {
-			/* Skip non-idle CPUs if there's an idle candidate */
-			if (has_idle)
+			/*
+			 * Skip non-idle CPUs if there's an idle candidate,
+			 * UNLESS we are trying to pack a light task.
+			 */
+			if (has_idle && p_util >= (SCHED_CAPACITY_SCALE / 8))
 				continue;
 
 			/* Zero exit latency indicates this CPU isn't idle */
