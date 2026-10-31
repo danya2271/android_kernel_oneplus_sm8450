@@ -10,17 +10,17 @@
 #include <linux/spinlock_types.h>
 #include <linux/cpumask.h>
 
+struct core_ctl_notif_data {
+	unsigned int nr_big;
+	unsigned int coloc_load_pct;
+	unsigned int ta_util_pct[3];
+	unsigned int cur_cap_pct[3];
+};
+
 #if IS_ENABLED(CONFIG_SCHED_WALT)
 
 #define MAX_CPUS_PER_CLUSTER 4
 #define MAX_CLUSTERS 3
-
-struct core_ctl_notif_data {
-	unsigned int nr_big;
-	unsigned int coloc_load_pct;
-	unsigned int ta_util_pct[MAX_CLUSTERS];
-	unsigned int cur_cap_pct[MAX_CLUSTERS];
-};
 
 enum task_boost_type {
 	TASK_BOOST_NONE = 0,
