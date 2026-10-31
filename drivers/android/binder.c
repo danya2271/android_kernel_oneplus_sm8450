@@ -54,6 +54,7 @@
 #include <linux/poll.h>
 #include <linux/debugfs.h>
 #include <linux/rbtree.h>
+#include <linux/sched/debug.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/mm.h>
 #include <linux/seq_file.h>
@@ -67,6 +68,7 @@
 #include <linux/task_work.h>
 #include <linux/sizes.h>
 #include <linux/android_vendor.h>
+#include <linux/workqueue.h>
 
 #include <uapi/linux/sched/types.h>
 #include <uapi/linux/android/binder.h>
@@ -93,6 +95,9 @@ static atomic_t binder_last_id;
 
 static int proc_show(struct seq_file *m, void *unused);
 DEFINE_SHOW_ATTRIBUTE(proc);
+
+static struct delayed_work binder_vold_diag_work;
+static unsigned int binder_vold_diag_stage;
 
 #define FORBIDDEN_MMAP_FLAGS                (VM_WRITE)
 
@@ -311,6 +316,84 @@ _binder_inner_proc_unlock(struct binder_proc *proc, int line)
 	binder_debug(BINDER_DEBUG_SPINLOCKS,
 		     "%s: line=%d\n", __func__, line);
 	spin_unlock(&proc->inner_lock);
+}
+
+static void binder_vold_diag_dump_proc(struct task_struct *task)
+{
+	struct binder_proc *proc;
+	struct binder_thread *thread;
+	struct binder_work *work;
+	struct rb_node *node;
+	unsigned int thread_count = 0;
+	unsigned int waiting_count = 0;
+	unsigned int todo_count = 0;
+
+	mutex_lock(&binder_procs_lock);
+	hlist_for_each_entry(proc, &binder_procs, proc_node) {
+		if (proc->tsk != task)
+			continue;
+
+		binder_inner_proc_lock(proc);
+		for (node = rb_first(&proc->threads); node;
+		     node = rb_next(node))
+			thread_count++;
+		list_for_each_entry(thread, &proc->waiting_threads,
+				    waiting_thread_node)
+			waiting_count++;
+		list_for_each_entry(work, &proc->todo, entry)
+			todo_count++;
+
+		pr_info("vold binder pid=%d threads=%u waiting=%u todo=%u "
+			"requested=%d started=%d max=%u outstanding=%d\n",
+			proc->pid, thread_count, waiting_count, todo_count,
+			proc->requested_threads, proc->requested_threads_started,
+			proc->max_threads, proc->outstanding_txns);
+		binder_inner_proc_unlock(proc);
+		break;
+	}
+	mutex_unlock(&binder_procs_lock);
+}
+
+static void binder_vold_diag_workfn(struct work_struct *work)
+{
+	struct task_struct *task;
+	struct task_struct *vold = NULL;
+	unsigned long wchan = 0;
+	char state;
+
+	rcu_read_lock();
+	for_each_process(task) {
+		if (strcmp(task->comm, "vold"))
+			continue;
+		get_task_struct(task);
+		vold = task;
+		break;
+	}
+	rcu_read_unlock();
+
+	pr_info("vold diagnostic t=%us stage=%u\n",
+		(binder_vold_diag_stage + 1) * 15, binder_vold_diag_stage + 1);
+
+	if (!vold) {
+		pr_info("vold diagnostic: process not found\n");
+		goto reschedule;
+	}
+
+	task_lock(vold);
+	state = task_state_to_char(vold);
+	wchan = get_wchan(vold);
+	task_unlock(vold);
+
+	pr_info("vold pid=%d state=%c wchan=%ps (%px) cpu=%d\n",
+		vold->tgid, state, (void *)wchan, (void *)wchan,
+		task_cpu(vold));
+	binder_vold_diag_dump_proc(vold);
+	show_stack(vold, NULL, KERN_INFO);
+	put_task_struct(vold);
+
+reschedule:
+	if (++binder_vold_diag_stage < 3)
+		schedule_delayed_work(&binder_vold_diag_work, 15 * HZ);
 }
 
 /**
@@ -6782,6 +6865,9 @@ static int __init binder_init(void)
 	ret = init_binderfs();
 	if (ret)
 		goto err_init_binder_device_failed;
+
+	INIT_DELAYED_WORK(&binder_vold_diag_work, binder_vold_diag_workfn);
+	schedule_delayed_work(&binder_vold_diag_work, 15 * HZ);
 
 	return ret;
 
