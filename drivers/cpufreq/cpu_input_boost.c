@@ -7,6 +7,7 @@
 
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
+#include <linux/delay.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
 #include <linux/moduleparam.h>
@@ -162,6 +163,9 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	struct boost_drv *b = &boost_drv_g;
 	bool high_framerate = (dsi_panel_get_refresh_rate() > 60) ? 1 : 0;
 
+	if (!policy)
+		return;
+
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
 #ifdef CONFIG_CPU_IDLE_GOV_QCOM_LPM
@@ -223,32 +227,40 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 	return;
 }
 
-static void update_online_cpu_policy(void)
+static bool update_online_cpu_policy(void)
 {
 	unsigned int cpu;
-        struct cpufreq_policy *policy;
+	struct cpufreq_policy *policy;
+	bool policies_ready = true;
 
 	get_online_cpus();
-	for_each_possible_cpu(cpu) {
-		if (cpu_online(cpu)) {
-			if (cpumask_intersects(cpumask_of(cpu), cpu_lp_mask)) {
-				cpufreq_update_policy(cpu);
-                                policy = cpufreq_cpu_get(cpu);
-                                boost_adjust_notify(policy);
-                        }
-			if (cpumask_intersects(cpumask_of(cpu), cpu_perf_mask)) {
-				cpufreq_update_policy(cpu);
-                                policy = cpufreq_cpu_get(cpu);
-                                boost_adjust_notify(policy);
-			}
-                        if (cpumask_intersects(cpumask_of(cpu), cpu_prime_mask)) {
-				cpufreq_update_policy(cpu);
-                                policy = cpufreq_cpu_get(cpu);
-                                boost_adjust_notify(policy);
-                        }
+	for_each_online_cpu(cpu) {
+		policy = cpufreq_cpu_get(cpu);
+		if (!policy) {
+			policies_ready = false;
+			break;
 		}
+		cpufreq_cpu_put(policy);
+	}
+
+	if (!policies_ready) {
+		put_online_cpus();
+		pr_warn_ratelimited("cpufreq policies are not ready; deferring boost\n");
+		return false;
+	}
+
+	for_each_online_cpu(cpu) {
+		cpufreq_update_policy(cpu);
+		policy = cpufreq_cpu_get(cpu);
+		if (!policy)
+			continue;
+
+		boost_adjust_notify(policy);
+		cpufreq_cpu_put(policy);
 	}
 	put_online_cpus();
+
+	return true;
 }
 
 static void __cpu_input_boost_kick_max(struct boost_drv *b,
@@ -377,8 +389,10 @@ static int cpu_boost_thread(void *data)
 		if (should_stop)
 			break;
 
-		old_state = curr_state;
-		update_online_cpu_policy();
+		if (update_online_cpu_policy())
+			old_state = curr_state;
+		else
+			msleep(20);
 	}
 
 	return 0;
