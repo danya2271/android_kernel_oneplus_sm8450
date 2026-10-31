@@ -4081,12 +4081,11 @@ void integrated_module_load_end(void)
 		list_del_init_careful(&mp->node);
 		kfree(mp);
 		/*
-		 * Wait for all deferred devices to finish probing now. Thus,
-		 * the process loading modules cannot continue or exit until the
-		 * modules it loaded are actually probed.
+		 * Do not wait for deferred probes here. vendor_modprobe runs before
+		 * late-fs, while some probes need services that start after it. A
+		 * synchronous wait creates a boot-order deadlock and prevents
+		 * vendor.all.modules.ready from being published.
 		 */
-		if (list_empty(&modloader_list))
-			wait_for_device_probe();
 	}
 	mutex_unlock(&modloader_lock);
 }
