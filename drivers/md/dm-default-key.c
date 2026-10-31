@@ -5,6 +5,7 @@
 
 #include <linux/blk-crypto.h>
 #include <linux/device-mapper.h>
+#include <linux/ktime.h>
 #include <linux/module.h>
 
 #define DM_MSG_PREFIX		"default-key"
@@ -148,11 +149,18 @@ static int default_key_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	unsigned int raw_key_size;
 	unsigned int dun_bytes;
 	unsigned long long tmpll;
+	u64 start_ns;
 	char dummy;
 	int err;
 
+	start_ns = ktime_get_ns();
+	pr_info("target start len=%llu argc=%u\n",
+		(unsigned long long)ti->len, argc);
+
 	if (argc < 5) {
 		ti->error = "Not enough arguments";
+		pr_info("target end ret=%d elapsed_us=%llu\n", -EINVAL,
+			div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 		return -EINVAL;
 	}
 
@@ -258,6 +266,8 @@ bad:
 	default_key_dtr(ti);
 out:
 	memzero_explicit(raw_key, sizeof(raw_key));
+	pr_info("target end ret=%d elapsed_us=%llu\n", err,
+		div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 	return err;
 }
 

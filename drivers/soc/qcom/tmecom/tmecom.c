@@ -9,6 +9,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/ktime.h>
 #include <linux/mailbox_client.h>
 #include <linux/seq_file.h>
 #include <linux/debugfs.h>
@@ -28,6 +29,7 @@ struct tmecom {
 	wait_queue_head_t waitq;
 	void *txbuf;
 	bool rx_done;
+	u64 request_start_ns;
 };
 
 #if IS_ENABLED(CONFIG_DEBUG_FS)
@@ -95,6 +97,7 @@ int tmecom_process_request(const void *reqbuf, size_t reqsize, void *respbuf,
 {
 	struct tmecom *tdev = tmedev;
 	long time_left = 0;
+	u64 elapsed_us;
 	int ret = 0;
 
 	/*
@@ -118,6 +121,8 @@ int tmecom_process_request(const void *reqbuf, size_t reqsize, void *respbuf,
 	mutex_lock(&tdev->lock);
 
 	tdev->rx_done = false;
+	tdev->request_start_ns = ktime_get_ns();
+	dev_info(tdev->dev, "request start size=%zu\n", reqsize);
 	tdev->pkt.size = tmecom_encode(tdev, reqbuf, reqsize);
 	/*
 	 * Controller expects a 4 byte aligned buffer
@@ -126,29 +131,35 @@ int tmecom_process_request(const void *reqbuf, size_t reqsize, void *respbuf,
 	tdev->pkt.data = tdev->txbuf;
 
 	pr_debug("tmecom encoded request size = %u\n", tdev->pkt.size);
-	print_hex_dump_bytes("tmecom sending bytes : ",
-			DUMP_PREFIX_ADDRESS, tdev->pkt.data, tdev->pkt.size);
 
 	if (mbox_send_message(tdev->chan, &tdev->pkt) < 0) {
 		dev_err(tdev->dev, "failed to send qmp message\n");
 		ret = -EAGAIN;
 		goto err_exit;
 	}
+	elapsed_us = div_u64(ktime_get_ns() - tdev->request_start_ns,
+			     NSEC_PER_USEC);
+	dev_info(tdev->dev, "request sent size=%u elapsed_us=%llu\n",
+		 tdev->pkt.size, elapsed_us);
 
 	time_left = wait_event_interruptible_timeout(tdev->waitq,
 			tmecom_check_rx_done(tdev), tdev->cl.tx_tout);
 
 	if (!time_left) {
-		dev_err(tdev->dev, "request timed out\n");
+		elapsed_us = div_u64(ktime_get_ns() - tdev->request_start_ns,
+				     NSEC_PER_USEC);
+		dev_err(tdev->dev, "request timed out elapsed_us=%llu\n",
+			elapsed_us);
 		ret = -ETIMEDOUT;
 		goto err_exit;
 	}
 
-	dev_info(tdev->dev, "response received\n");
+	elapsed_us = div_u64(ktime_get_ns() - tdev->request_start_ns,
+			     NSEC_PER_USEC);
+	dev_info(tdev->dev, "response received size=%u elapsed_us=%llu\n",
+		 tdev->pkt.size, elapsed_us);
 
 	pr_debug("tmecom received size = %u\n", tdev->pkt.size);
-	print_hex_dump_bytes("tmecom received bytes : ",
-			DUMP_PREFIX_ADDRESS, tdev->pkt.data, tdev->pkt.size);
 
 	if (tdev->pkt.size <= TMECOM_RX_HDR_SIZE) {
 		dev_err(tdev->dev, "invalid pkt.size received\n");
@@ -228,6 +239,10 @@ static void tmecom_receive_message(struct mbox_client *client, void *message)
 	tdev->pkt.size = pkt->size;
 	tdev->pkt.data = pkt->data;
 	tdev->rx_done = true;
+	dev_info(tdev->dev, "response callback size=%u elapsed_us=%llu\n",
+		 tdev->pkt.size,
+		 div_u64(ktime_get_ns() - tdev->request_start_ns,
+			 NSEC_PER_USEC));
 tmecom_receive_end:
 	wake_up_interruptible(&tdev->waitq);
 }

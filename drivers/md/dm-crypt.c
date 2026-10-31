@@ -13,6 +13,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/key.h>
+#include <linux/ktime.h>
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/mempool.h>
@@ -3151,23 +3152,34 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	unsigned int align_mask;
 	unsigned long long tmpll;
 	int ret;
+	u64 start_ns;
 	size_t iv_size_padding, additional_req_size;
 	char dummy;
 
+	start_ns = ktime_get_ns();
+	pr_info("target start dev=%s len=%llu argc=%u\n", devname,
+		(unsigned long long)ti->len, argc);
+
 	if (argc < 5) {
 		ti->error = "Not enough arguments";
+		pr_info("target end ret=%d elapsed_us=%llu\n", -EINVAL,
+			div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 		return -EINVAL;
 	}
 
 	key_size = get_key_size(&argv[1]);
 	if (key_size < 0) {
 		ti->error = "Cannot parse key size";
+		pr_info("target end ret=%d elapsed_us=%llu\n", -EINVAL,
+			div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 		return -EINVAL;
 	}
 
 	cc = kzalloc(struct_size(cc, key, key_size), GFP_KERNEL);
 	if (!cc) {
 		ti->error = "Cannot allocate encryption context";
+		pr_info("target end ret=%d elapsed_us=%llu\n", -ENOMEM,
+			div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 		return -ENOMEM;
 	}
 	cc->key_size = key_size;
@@ -3335,9 +3347,13 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	ti->num_flush_bios = 1;
 	ti->limit_swap_bios = true;
 
+	pr_info("target end ret=0 elapsed_us=%llu\n",
+		div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 	return 0;
 
 bad:
+	pr_info("target end ret=%d elapsed_us=%llu\n", ret,
+		div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 	crypt_dtr(ti);
 	return ret;
 }

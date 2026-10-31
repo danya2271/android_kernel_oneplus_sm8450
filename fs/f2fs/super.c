@@ -3856,6 +3856,8 @@ static int f2fs_fill_super(struct super_block *sb, void *data, int silent)
 	struct curseg_info *seg_i;
 	int retry_cnt = 1;
 
+	pr_info("f2fs: mount start dev=%s\n", sb->s_id);
+
 try_onemore:
 	err = -EINVAL;
 	raw_super = NULL;
@@ -4277,6 +4279,7 @@ reset_checkpoint:
 	clear_sbi_flag(sbi, SBI_CP_DISABLED_QUICK);
 
 	cleancache_init_fs(sb);
+	pr_info("f2fs: mount end dev=%s ret=0\n", sb->s_id);
 	return 0;
 
 sync_free_meta:

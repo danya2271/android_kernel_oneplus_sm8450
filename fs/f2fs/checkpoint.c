@@ -11,6 +11,7 @@
 #include <linux/writeback.h>
 #include <linux/blkdev.h>
 #include <linux/f2fs_fs.h>
+#include <linux/ktime.h>
 #include <linux/pagevec.h>
 #include <linux/swap.h>
 #include <linux/kthread.h>
@@ -917,13 +918,18 @@ int f2fs_get_valid_checkpoint(struct f2fs_sb_info *sbi)
 	unsigned long long cp_start_blk_no;
 	unsigned int cp_blks = 1 + __cp_payload(sbi);
 	block_t cp_blk_no;
+	u64 start_ns = ktime_get_ns();
 	int i;
 	int err;
 
 	sbi->ckpt = f2fs_kvzalloc(sbi, array_size(blk_size, cp_blks),
 				  GFP_KERNEL);
-	if (!sbi->ckpt)
+	if (!sbi->ckpt) {
+		pr_info("f2fs: checkpoint end dev=%s ret=%d elapsed_us=%llu\n",
+			sbi->sb->s_id, -ENOMEM,
+			div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 		return -ENOMEM;
+	}
 	/*
 	 * Finding out valid cp block involves read both
 	 * sets( cp pack 1 and cp pack 2)
@@ -987,6 +993,9 @@ int f2fs_get_valid_checkpoint(struct f2fs_sb_info *sbi)
 done:
 	f2fs_put_page(cp1, 1);
 	f2fs_put_page(cp2, 1);
+	pr_info("f2fs: checkpoint end dev=%s ret=0 version=%llx elapsed_us=%llu\n",
+		sbi->sb->s_id, cur_cp_version(F2FS_CKPT(sbi)),
+		div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 	return 0;
 
 free_fail_no_cp:
@@ -994,6 +1003,9 @@ free_fail_no_cp:
 	f2fs_put_page(cp2, 1);
 fail_no_cp:
 	kvfree(sbi->ckpt);
+	pr_info("f2fs: checkpoint end dev=%s ret=%d elapsed_us=%llu\n",
+		sbi->sb->s_id, err,
+		div_u64(ktime_get_ns() - start_ns, NSEC_PER_USEC));
 	return err;
 }
 
