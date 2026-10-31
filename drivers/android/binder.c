@@ -98,6 +98,7 @@ DEFINE_SHOW_ATTRIBUTE(proc);
 
 static struct delayed_work binder_vold_diag_work;
 static unsigned int binder_vold_diag_stage;
+static struct task_struct *binder_vold_task;
 
 #define FORBIDDEN_MMAP_FLAGS                (VM_WRITE)
 
@@ -354,6 +355,21 @@ static void binder_vold_diag_dump_proc(struct task_struct *task)
 	mutex_unlock(&binder_procs_lock);
 }
 
+static void binder_vold_diag_dump_candidates(void)
+{
+	struct binder_proc *proc;
+
+	mutex_lock(&binder_procs_lock);
+	hlist_for_each_entry(proc, &binder_procs, proc_node) {
+		if (proc->pid >= 1000 &&
+		    !strnstr(proc->tsk->comm, "vold", TASK_COMM_LEN))
+			continue;
+		pr_info("binder candidate pid=%d comm=%s\n",
+			proc->pid, proc->tsk->comm);
+	}
+	mutex_unlock(&binder_procs_lock);
+}
+
 static void binder_vold_diag_workfn(struct work_struct *work)
 {
 	struct task_struct *task;
@@ -361,21 +377,28 @@ static void binder_vold_diag_workfn(struct work_struct *work)
 	unsigned long wchan = 0;
 	char state;
 
-	rcu_read_lock();
-	for_each_process(task) {
-		if (strcmp(task->comm, "vold"))
-			continue;
+	task = READ_ONCE(binder_vold_task);
+	if (task) {
 		get_task_struct(task);
 		vold = task;
-		break;
+	} else {
+		rcu_read_lock();
+		for_each_process(task) {
+			if (!strnstr(task->comm, "vold", TASK_COMM_LEN))
+				continue;
+			get_task_struct(task);
+			vold = task;
+			break;
+		}
+		rcu_read_unlock();
 	}
-	rcu_read_unlock();
 
 	pr_info("vold diagnostic t=%us stage=%u\n",
 		(binder_vold_diag_stage + 1) * 15, binder_vold_diag_stage + 1);
 
 	if (!vold) {
 		pr_info("vold diagnostic: process not found\n");
+		binder_vold_diag_dump_candidates();
 		goto reschedule;
 	}
 
@@ -5918,6 +5941,13 @@ static int binder_open(struct inode *nodp, struct file *filp)
 		}
 	}
 	hlist_add_head(&proc->proc_node, &binder_procs);
+	if (!binder_vold_task &&
+	    strnstr(proc->tsk->comm, "vold", TASK_COMM_LEN)) {
+		get_task_struct(proc->tsk);
+		WRITE_ONCE(binder_vold_task, proc->tsk);
+		pr_info("vold binder open pid=%d comm=%s device=%s\n",
+			proc->pid, proc->tsk->comm, binder_dev->miscdev.name);
+	}
 	mutex_unlock(&binder_procs_lock);
 	trace_android_vh_binder_preset(&binder_procs, &binder_procs_lock);
 	if (binder_debugfs_dir_entry_proc && !existing_pid) {
