@@ -13,6 +13,14 @@ config SCHED_WALT
 	used to guide task placement as well as task frequency requirements
 	for cpufreq governors.
 
+config SCHED_WALT_COMPAT
+	tristate "Vendor WALT compatibility hooks"
+	depends on SMP
+	depends on !SCHED_WALT
+	help
+	  Provide the vendor-facing WALT module name and no-op hooks without
+	  enabling the WALT scheduler implementation.
+
 config SCHED_WALT_DEBUG
 	tristate "WALT debug module"
 	depends on SCHED_WALT
