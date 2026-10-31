@@ -3086,6 +3086,12 @@ static int binder_proc_transaction(struct binder_transaction *t,
 	if (!thread && !pending_async)
 		thread = binder_select_thread_ilocked(proc);
 
+	if (proc->tsk == READ_ONCE(binder_vold_task))
+		pr_info("vold binder txn from pid=%d comm=%s code=0x%x "
+			"flags=0x%x oneway=%d target_thread=%d\n",
+			current->tgid, current->comm, t->code, t->flags,
+			oneway, thread ? thread->pid : 0);
+
 	trace_android_vh_binder_proc_transaction(current, proc->tsk,
 		thread ? thread->task : NULL, node->debug_id, t->code,
 		pending_async);
