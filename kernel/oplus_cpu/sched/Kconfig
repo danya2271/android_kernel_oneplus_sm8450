@@ -13,6 +13,14 @@ config OPLUS_FEATURE_SCHED_ASSIST
 	help
 	  turning sched for ui, render and so on to improve UX
 
+config OPLUS_FEATURE_SCHED_ASSIST_COMPAT
+	tristate "sched assist compatibility module"
+	depends on SMP
+	depends on !OPLUS_FEATURE_SCHED_ASSIST
+	help
+	  Provide the vendor sched-assist module name without enabling the
+	  OPLUS scheduler implementation.
+
 config OPLUS_FEATURE_SF_BOOST
 	tristate "sf boost"
 	default n
