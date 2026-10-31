@@ -9,7 +9,8 @@
  * We can take this out if we could move the OSM cycle
  * counter to WALT scheduler?
  */
-#if IS_ENABLED(CONFIG_ARM_QCOM_CPUFREQ_HW)
+#if IS_ENABLED(CONFIG_ARM_QCOM_CPUFREQ_HW) || \
+	IS_ENABLED(CONFIG_ARM_QCOM_CPUFREQ_HW_COMPAT)
 extern u64 qcom_cpufreq_get_cpu_cycle_counter(int cpu);
 #else
 static inline u64 qcom_cpufreq_get_cpu_cycle_counter(int cpu)

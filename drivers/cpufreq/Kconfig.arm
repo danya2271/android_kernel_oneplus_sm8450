@@ -150,6 +150,14 @@ config ARM_QCOM_CPUFREQ_HW
 	  The driver implements the cpufreq interface for this HW engine.
 	  Say Y if you want to support CPUFreq HW.
 
+config ARM_QCOM_CPUFREQ_HW_COMPAT
+	tristate "QCOM CPUFreq HW compatibility module"
+	depends on ARCH_QCOM || COMPILE_TEST
+	depends on !ARM_QCOM_CPUFREQ_HW
+	help
+	  Provide the vendor qcom_cpufreq_hw module name and cycle-counter
+	  symbol without registering a CPUFreq HW driver.
+
 config ARM_QCOM_CPUFREQ_HW_DEBUG
 	tristate "QCOM CPUFreq HW debug"
 	depends on ARM_QCOM_CPUFREQ_HW
