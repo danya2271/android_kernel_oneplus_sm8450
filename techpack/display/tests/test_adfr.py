@@ -364,7 +364,7 @@ class AdfrTests(unittest.TestCase):
         struct fixture f;
         struct dsi_panel fresh = {.type = "primary"};
         oplus_adfr_panel_init(&fresh);
-        assert(fresh.adfr.kernel_idle_enabled && fresh.adfr.kernel_idle_min_fps == 119);
+        assert(fresh.adfr.kernel_idle_enabled && fresh.adfr.kernel_idle_min_fps == 11);
         for (config = 0; config < 64; config++)
             for (debug = 0; debug < 64; debug++) {
                 bool supported = (config & 1) && !(debug & 1);
@@ -615,18 +615,18 @@ class AdfrTests(unittest.TestCase):
             assert(f.panel.adfr.kernel_idle_enabled);
             before = attempts;
             assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
-            assert(attempts == before + 1 && sent_min == 119);
-            assert(f.panel.adfr.idle && f.panel.adfr.applied_min_fps == 119);
+            assert(attempts == before + 1 && sent_min == 11);
+            assert(f.panel.adfr.idle && f.panel.adfr.applied_min_fps == 11);
             assert(f.panel.adfr.min_fps == (rate == 60 ? 1U : 0U));
             assert(!strcmp(log_owner, "kernel") && !strcmp(log_action, "enter"));
-            assert(log_hz == 1 && log_code == 119);
+            assert(log_hz == 10 && log_code == 11);
             assert(!oplus_adfr_apply_idle(&f.display, &cmd, false));
             assert(sent_min == (rate == 60 ? 1U : 0U));
             assert(log_hz == (u32)rate && !strcmp(log_action, "exit"));
             assert(!dsi_display_auto_mode_update(&f.display));
             assert(!f.panel.adfr.has_request && !oplus_adfr_auto_update_counter);
         }
-        puts("autonomous: real reset -> idle 1Hz -> native FPS without any HWC request");
+        puts("autonomous: real reset -> idle 10Hz -> native FPS without any HWC request");
         """)
 
     def test_autonomous_target_sysfs_and_hwc_fallback(self):
@@ -685,7 +685,7 @@ class AdfrTests(unittest.TestCase):
         assert(!attempts && !f.panel.adfr.idle);
         ofp_hbm = false;
         assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
-        assert(sent_min == 119 && f.panel.adfr.idle);
+        assert(sent_min == 11 && f.panel.adfr.idle);
         ofp_hbm = true;
         assert(!oplus_adfr_apply_idle(&f.display, &cmd, false));
         assert(sent_min == 0 && !f.panel.adfr.idle);
@@ -847,7 +847,7 @@ class AdfrTests(unittest.TestCase):
         assert(!f.panel.adfr.idle && oplus_adfr_idle_delay_ms(&f.encoder) == 67);
         fake_now += 251 * NSEC_PER_MSEC;
         oplus_adfr_handle_idle_mode(&f.encoder, true);
-        assert(f.panel.adfr.idle && sent_min == 119);
+        assert(f.panel.adfr.idle && sent_min == 11);
         before = attempts;
         oplus_adfr_touch_event(&f.encoder);
         assert(attempts == before && !f.panel.adfr.kernel_active_min_fps);
@@ -860,7 +860,7 @@ class AdfrTests(unittest.TestCase):
         assert(attempts == before + 1);
         fake_now += 300 * NSEC_PER_MSEC;
         oplus_adfr_handle_idle_mode(&f.encoder, true);
-        assert(f.panel.adfr.idle && sent_min == 119);
+        assert(f.panel.adfr.idle && sent_min == 11);
         fake_now += NSEC_PER_SEC;
         oplus_adfr_frame_start(&f.encoder);
         oplus_adfr_handle_idle_mode(&f.encoder, false);
@@ -898,12 +898,12 @@ class AdfrTests(unittest.TestCase):
         fake_now = NSEC_PER_SEC;
         inject_touch = true;
         oplus_adfr_handle_idle_mode(&f.encoder, true);
-        assert(f.panel.adfr.idle && sent_min == 119);
+        assert(f.panel.adfr.idle && sent_min == 11);
         assert(oplus_adfr_idle_delay_ms(&f.encoder) == 250);
         fail_at = attempts + 1;
         oplus_adfr_touch_work(&f.encoder);
         assert(f.panel.adfr.restore_pending && !f.panel.adfr.min_fps_valid);
-        assert(f.panel.adfr.last_error == -EIO && sent_min == 119);
+        assert(f.panel.adfr.last_error == -EIO && sent_min == 11);
         fail_at = 0;
         oplus_adfr_touch_work(&f.encoder);
         assert(!sent_min && !f.panel.adfr.idle && !f.panel.adfr.restore_pending);
@@ -940,7 +940,7 @@ class AdfrTests(unittest.TestCase):
         assert(oplus_adfr_set_debug(NULL, NULL, "0", 1) == 1);
         assert(!dsi_display_auto_mode_update(&f.display));
         oplus_adfr_handle_idle_mode(&f.encoder, true);
-        assert(sent_min == 119 && f.panel.adfr.idle);
+        assert(sent_min == 11 && f.panel.adfr.idle);
         assert(oplus_adfr_set_debug(NULL, NULL, "16", 2) == 2);
         oplus_adfr_handle_idle_mode(&f.encoder, false);
         assert(!sent_min && !f.panel.adfr.idle && !f.panel.adfr.restore_pending);

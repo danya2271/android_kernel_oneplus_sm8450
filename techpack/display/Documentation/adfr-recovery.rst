@@ -37,7 +37,7 @@ Autonomous cadence and touch boost
 ---------------------------------
 
 On supported primary command-mode SDC panels with both GLOBAL and IDLE DT
-bits set, the kernel policy defaults to enabled with a 1-Hz idle minimum.
+bits set, the kernel policy defaults to enabled with a 10-Hz idle minimum.
 No Android/HWC minimum-FPS request is required. Explicit HWC AUTO_ON retains
 the existing auto-mode implementation; autonomous manual control resumes
 when HWC selects AUTO_OFF. Global and idle debug-disable bits stop the
@@ -45,7 +45,9 @@ governor. Unsupported panels, fixed-90-Hz modes and AOD/off are excluded.
 Setting either policy-disable debug bit schedules native restoration even when
 the panel is at an active low rate or a low-rate transfer is still in flight.
 
-The active ladder is 10/20/30/40/60/120 Hz; quiet content can reach 1 Hz.
+The active ladder is 10/20/30/40/60/120 Hz. By default, quiet content
+remains at 10 Hz instead of dropping to 1 Hz; a 1-Hz idle floor remains
+available through the sysfs control.
 These are panel refresh minima, not a frame-rate limiter or a promise of
 application FPS. There is no 50-Hz extension code in this command family.
 The next supported rate above a 50-FPS workload is 60 Hz. No panel command
@@ -93,7 +95,8 @@ The root-writable control is::
 
     /sys/kernel/oplus_display/adfr_idle_fps
 
-Writing 1, 10, 20, 30, 40 or 60 selects the autonomous minimum; 0 opts out
+Writing 1, 10, 20, 30, 40 or 60 selects the autonomous minimum; the default
+is 10 Hz. Writing 0 opts out
 and restores HWC policy on the next safe update. Other values, including
 50, return ``-EINVAL``. Reads report configuration, requested and applied
 codes, validity, idle/restoration state, last error, active target, measured

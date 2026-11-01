@@ -250,7 +250,7 @@ void oplus_adfr_panel_init(void *dsi_panel)
 	spin_lock_init(&adfr->lock);
 	mutex_init(&adfr->update_lock);
 	adfr->fakeframe_requested = true;
-	adfr->kernel_idle_min_fps = OPLUS_ADFR_AUTO_MIN_FPS_1HZ;
+	adfr->kernel_idle_min_fps = OPLUS_ADFR_AUTO_MIN_FPS_10HZ;
 	if (panel->type && !strcmp(panel->type, "primary"))
 		of_property_read_u32(panel->panel_of_node, "oplus,adfr-config",
 				     &adfr->config);
