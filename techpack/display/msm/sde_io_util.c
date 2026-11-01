@@ -12,6 +12,7 @@
 #include <linux/delay.h>
 #include <linux/sde_io_util.h>
 #include <linux/sde_vm_event.h>
+#include <linux/soc/qcom/msm_mmrm.h>
 #include "sde_dbg.h"
 
 #define MAX_I2C_CMDS  16
@@ -577,6 +578,9 @@ int msm_dss_mmrm_register(struct device *dev, struct dss_module_power *mp,
 
 		if (clk_array[i].type != DSS_CLK_MMRM)
 			continue;
+
+		if (!msm_mmrm_is_ready())
+			return -EPROBE_DEFER;
 
 		desc.client_type = MMRM_CLIENT_CLOCK;
 		desc.client_info.desc.client_domain =

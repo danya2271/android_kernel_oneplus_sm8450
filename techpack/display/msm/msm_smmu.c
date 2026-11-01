@@ -514,8 +514,8 @@ static int msm_smmu_probe(struct platform_device *pdev)
 	client->dev = &pdev->dev;
 	client->domain = iommu_get_domain_for_dev(client->dev);
 	if (!client->domain) {
-		dev_err(&pdev->dev, "iommu get domain for dev failed\n");
-		return -EINVAL;
+		return dev_err_probe(&pdev->dev, -EPROBE_DEFER,
+				"IOMMU domain is not ready\n");
 	}
 	client->compat = match->compatible;
 	client->secure = domain->secure;
@@ -573,7 +573,7 @@ static struct platform_driver msm_smmu_driver = {
 		.name = "msmdrm_smmu",
 		.of_match_table = msm_smmu_dt_match,
 		.suppress_bind_attrs = true,
-		.probe_type = PROBE_FORCE_SYNCHRONOUS,
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 

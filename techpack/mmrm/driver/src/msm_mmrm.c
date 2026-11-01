@@ -4,11 +4,13 @@
  */
 
 #include <linux/module.h>
+#include <linux/atomic.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/soc/qcom/msm_mmrm.h>
 #include <linux/fs.h>
+#include <linux/compiler.h>
 
 #include "mmrm_internal.h"
 #include "mmrm_debug.h"
@@ -44,6 +46,13 @@ extern u8 msm_mmrm_enable_throttle_feature;
 extern u8 msm_mmrm_allow_multiple_register;
 
 struct mmrm_driver_data *drv_data = (void *) -EPROBE_DEFER;
+static bool msm_mmrm_ready;
+
+bool msm_mmrm_is_ready(void)
+{
+	return READ_ONCE(msm_mmrm_ready);
+}
+EXPORT_SYMBOL(msm_mmrm_is_ready);
 
 bool mmrm_client_check_scaling_supported(enum mmrm_client_type client_type, u32 client_domain)
 {
@@ -513,9 +522,14 @@ static int msm_mmrm_probe(struct platform_device *pdev)
 	VERIFY_PDEV(pdev)
 
 	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-mmrm"))
-		return msm_mmrm_probe_init(pdev);
+		rc = msm_mmrm_probe_init(pdev);
+	else
+		d_mpr_e("%s: no compatible device node\n", __func__);
 
-	d_mpr_e("%s: no compatible device node\n", __func__);
+	if (!rc)
+		WRITE_ONCE(msm_mmrm_ready, true);
+	if (!rc)
+		pr_info("msm-mmrm: driver probe ready\n");
 	return rc;
 
 err_exit:
@@ -528,6 +542,7 @@ static int msm_mmrm_remove(struct platform_device *pdev)
 	int rc = 0;
 
 	VERIFY_PDEV(pdev);
+	WRITE_ONCE(msm_mmrm_ready, false);
 
 	drv_data = dev_get_drvdata(&pdev->dev);
 	if (!drv_data) {
@@ -565,6 +580,7 @@ static struct platform_driver msm_mmrm_driver = {
 	.driver = {
 		.name = "msm-mmrm",
 		.of_match_table = msm_mmrm_dt_match,
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 
@@ -591,6 +607,20 @@ static void __exit msm_mmrm_exit(void)
 {
 	platform_driver_unregister(&msm_mmrm_driver);
 }
+
+#if defined(MODULE) && defined(CONFIG_INTEGRATE_MODULES)
+extern atomic_t __initdone__kmod_msm_mmrm__;
+
+static int __init msm_mmrm_integrated_init(void)
+{
+	if (atomic_cmpxchg(&__initdone__kmod_msm_mmrm__, 0, 1))
+		return 0;
+
+	return msm_mmrm_init();
+}
+
+__define_initcall(msm_mmrm_integrated_init, 6);
+#endif
 
 module_init(msm_mmrm_init);
 module_exit(msm_mmrm_exit);

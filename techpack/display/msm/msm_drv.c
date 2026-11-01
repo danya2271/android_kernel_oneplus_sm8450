@@ -40,6 +40,10 @@
 
 #include <linux/of_address.h>
 #include <linux/kthread.h>
+#include <linux/atomic.h>
+#include <linux/jiffies.h>
+#include <linux/soc/qcom/msm_mmrm.h>
+#include <linux/workqueue.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_of.h>
 #include <drm/drm_irq.h>
@@ -2172,6 +2176,11 @@ static int msm_drm_component_dependency_check(struct device *dev)
 	if (!of_device_is_compatible(dev->of_node, "qcom,sde-kms"))
 		return 0;
 
+#if IS_ENABLED(CONFIG_MSM_MMRM)
+	if (!msm_mmrm_is_ready())
+		return -EPROBE_DEFER;
+#endif
+
 	for (i = 0; ; i++) {
 		node = of_parse_phandle(np, "connectors", i);
 		if (!node)
@@ -2316,6 +2325,41 @@ static void __exit msm_drm_unregister(void)
 	sde_rsc_unregister();
 	platform_driver_unregister(&msm_platform_driver);
 }
+
+#if defined(MODULE) && defined(CONFIG_INTEGRATE_MODULES)
+extern atomic_t __initdone__kmod_msm_drm__;
+static bool msm_drm_waiting_for_mmrm;
+static void msm_drm_integrated_register_worker(struct work_struct *work);
+static DECLARE_DELAYED_WORK(msm_drm_integrated_register_work,
+		msm_drm_integrated_register_worker);
+
+static void msm_drm_integrated_register_worker(struct work_struct *work)
+{
+	if (!msm_mmrm_is_ready()) {
+		if (!READ_ONCE(msm_drm_waiting_for_mmrm)) {
+			WRITE_ONCE(msm_drm_waiting_for_mmrm, true);
+			pr_info("msm_drm: waiting for MMRM before registration\n");
+		}
+		schedule_delayed_work(&msm_drm_integrated_register_work, HZ);
+		return;
+	}
+
+	if (atomic_cmpxchg(&__initdone__kmod_msm_drm__, 0, 1))
+		return;
+
+	pr_info("msm_drm: registering after MMRM became ready\n");
+	msm_drm_register();
+}
+
+static int __init msm_drm_integrated_schedule(void)
+{
+	pr_info("msm_drm: scheduling integrated registration\n");
+	schedule_delayed_work(&msm_drm_integrated_register_work, 3 * HZ);
+	return 0;
+}
+
+__define_initcall(msm_drm_integrated_schedule, 7);
+#endif
 
 module_init(msm_drm_register);
 module_exit(msm_drm_unregister);

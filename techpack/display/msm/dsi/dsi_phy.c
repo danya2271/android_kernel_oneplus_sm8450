@@ -530,6 +530,7 @@ static struct platform_driver dsi_phy_platform_driver = {
 	.driver     = {
 		.name   = "dsi_phy",
 		.of_match_table = msm_dsi_phy_of_match,
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 
