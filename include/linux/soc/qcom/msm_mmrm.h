@@ -171,8 +171,6 @@ struct mmrm_client_data {
 };
 
 #if IS_ENABLED(CONFIG_MSM_MMRM)
-bool msm_mmrm_is_ready(void);
-
 /**
  * mmrm_client_check_scaling_supported - check if mmrm client type (clk, bw)
  * scaling is supported for a client domain (camera, cvp, video, display)
@@ -250,11 +248,6 @@ int mmrm_client_get_value(struct mmrm_client *client,
 	struct mmrm_client_res_value *val);
 
 #else
-static inline bool msm_mmrm_is_ready(void)
-{
-	return true;
-}
-
 static inline bool mmrm_client_check_scaling_supported(
 	enum mmrm_client_type client_type, u32 client_domain)
 {

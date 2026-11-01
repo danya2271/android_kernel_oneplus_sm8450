@@ -1746,7 +1746,7 @@ static int sde_rsc_probe(struct platform_device *pdev)
 
 	rsc->rpmh_dev = rpmh_dev[SDE_RSC_INDEX + counter];
 	if (IS_ERR_OR_NULL(rsc->rpmh_dev)) {
-		ret = !rsc->rpmh_dev ? -EPROBE_DEFER : PTR_ERR(rsc->rpmh_dev);
+		ret = !rsc->rpmh_dev ? -EINVAL : PTR_ERR(rsc->rpmh_dev);
 		rsc->rpmh_dev = NULL;
 		pr_err("rpmh device node is not available ret:%d\n", ret);
 		goto sde_rsc_fail;
@@ -1874,7 +1874,6 @@ static struct platform_driver sde_rsc_platform_driver = {
 		.name   = "sde_rsc",
 		.of_match_table = dt_match,
 		.suppress_bind_attrs = true,
-		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 
@@ -1889,7 +1888,6 @@ static struct platform_driver sde_rsc_rpmh_driver = {
 	.driver = {
 		.name = "sde_rsc_rpmh",
 		.of_match_table = sde_rsc_rpmh_match,
-		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 
