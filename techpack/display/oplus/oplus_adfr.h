@@ -29,6 +29,16 @@ struct oplus_adfr_state {
 	u32 applied_min_fps;
 	u32 sw_fps;
 	u32 measured_fps;
+	/* Autonomous cadence/idle policy, separate from HWC's requested codes. */
+	u32 kernel_idle_min_fps;
+	u32 kernel_active_min_fps;
+	u32 kernel_down_candidate;
+	u32 cadence_fps;
+	bool kernel_idle_enabled;
+	u64 last_frame_ns;
+	u64 frame_period_ns;
+	u64 down_since_ns;
+	u64 boost_until_ns;
 	u64 sequence;
 	/* Permanent command-table errors wait for a new request or timing. */
 	const void *failed_timing;
@@ -137,12 +147,21 @@ int oplus_display_get_dynamic_te(void *buf);
 void oplus_adfr_init(void *dsi_panel);
 void oplus_adfr_panel_init(void *dsi_panel);
 void oplus_adfr_panel_deinit(void *dsi_panel);
+void oplus_adfr_frame_start(void *sde_enc);
+void oplus_adfr_touch_event(void *sde_enc);
+void oplus_adfr_touch_work(void *sde_enc);
+u32 oplus_adfr_idle_delay_ms(void *sde_enc);
 bool oplus_adfr_is_support(void);
 bool oplus_adfr_idle_mode_is_enable(void);
 ssize_t oplus_adfr_get_debug(struct kobject *obj,
 	struct kobj_attribute *attr, char *buf);
 ssize_t oplus_adfr_set_debug(struct kobject *obj,
 	struct kobj_attribute *attr, const char *buf, size_t count);
+ssize_t oplus_adfr_get_idle_fps(struct kobject *obj,
+				struct kobj_attribute *attr, char *buf);
+ssize_t oplus_adfr_set_idle_fps(struct kobject *obj,
+				struct kobj_attribute *attr, const char *buf,
+				size_t count);
 ssize_t oplus_get_vsync_switch(struct kobject *obj,
 	struct kobj_attribute *attr, char *buf);
 ssize_t oplus_set_vsync_switch(struct kobject *obj,

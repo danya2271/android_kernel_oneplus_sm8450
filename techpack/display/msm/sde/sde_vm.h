@@ -261,6 +261,12 @@ static inline void sde_vm_lock(struct sde_kms *sde_kms)
 	mutex_lock(&sde_kms->vm->vm_res_lock);
 }
 
+/* A cancelled input worker must not wait on a modeset holding the VM lock. */
+static inline bool sde_vm_trylock(struct sde_kms *sde_kms)
+{
+	return !sde_kms->vm || mutex_trylock(&sde_kms->vm->vm_res_lock);
+}
+
 /**
  * sde_vm_unlock - unlock vm variables
  * @sde_kms - pointer to sde_kms
@@ -320,6 +326,11 @@ static inline bool sde_vm_is_enabled(struct sde_kms *sde_kms)
 
 static inline void sde_vm_lock(struct sde_kms *sde_kms)
 {
+}
+
+static inline bool sde_vm_trylock(struct sde_kms *sde_kms)
+{
+	return true;
 }
 
 static inline void sde_vm_unlock(struct sde_kms *sde_kms)

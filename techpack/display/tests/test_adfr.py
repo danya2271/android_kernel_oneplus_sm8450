@@ -17,6 +17,9 @@ PREFIX = r"""
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <sys/types.h>
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 typedef uint8_t u8;
 typedef uint32_t u32;
@@ -27,9 +30,13 @@ typedef int spinlock_t;
 typedef int irqreturn_t;
 struct mutex { int held; };
 struct hrtimer { int unused; };
+struct kobject { int unused; };
+struct kobj_attribute { int unused; };
+#define OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT 1
 #define READ_ONCE(x) (x)
 #define WRITE_ONCE(x, v) ((x) = (v))
 #define NSEC_PER_SEC 1000000000ULL
+#define NSEC_PER_MSEC 1000000ULL
 #define IRQ_HANDLED 1
 #define HRTIMER_MODE_REL 0
 #define SDE_MODE_DPMS_ON 0
@@ -39,10 +46,12 @@ struct hrtimer { int unused; };
 #define SDE_ATRACE_END(...) do {} while (0)
 #define SDE_ATRACE_INT(...) do {} while (0)
 #define SDE_EVT32(...) do {} while (0)
+#define SDE_ERROR(...) do {} while (0)
 #define DSI_DEBUG(...) do {} while (0)
 #define DSI_INFO(...) do {} while (0)
 #define DSI_ERR(...) do {} while (0)
 #define pr_err(...) do {} while (0)
+#define pr_info_ratelimited(...) record_log(__VA_ARGS__)
 #define BIT(n) (1U << (n))
 #define spin_lock_init(lock) (*(lock) = 0)
 #define mutex_init(lock) ((lock)->held = 0)
@@ -94,6 +103,23 @@ struct dsi_display {
     u32 ctrl_count;
 };
 struct sde_encoder_phys_cmd { int unused; };
+#define INTF_MODE_CMD 1
+#define DRM_MODE_CONNECTOR_DSI 16
+#define CONNECTOR_PROP_HBM_ENABLE 0
+#define OPLUS_OFP_PROPERTY_DIM_LAYER BIT(0)
+#define OPLUS_OFP_PROPERTY_FINGERPRESS_LAYER BIT(1)
+struct drm_connector { int connector_type; u64 *state; };
+struct sde_connector {
+    struct drm_connector base;
+    int connector_type;
+    struct dsi_display *display;
+};
+struct sde_encoder_phys { int intf_mode; struct drm_connector *connector; };
+struct sde_encoder_virt { struct sde_encoder_phys *cur_master; };
+#define to_sde_connector(conn) ((struct sde_connector *)(conn))
+#define to_sde_encoder_phys_cmd(phys) ((struct sde_encoder_phys_cmd *)(phys))
+static u64 sde_connector_get_property(u64 *state, int property) { return *state; }
+void oplus_adfr_handle_idle_mode(void *sde_enc_v, int enter_idle);
 #define display_for_each_ctrl(i, display) \
     for ((i) = 0; (u32)(i) < (display)->ctrl_count; (i)++)
 static u32 oplus_adfr_config = 23, oplus_adfr_debug, dt_config = 23;
@@ -106,7 +132,46 @@ static int oplus_dsi_log_type;
 static int attempts, fail_at, failure = -EIO, notices, delays, timers;
 static u32 inject_request, notified, sent_min, sent_mode;
 static bool inject_reset;
+static bool inject_touch;
+static bool fixture_autonomous;
+static bool global_hbm, ofp_supported, ofp_hbm;
+static unsigned int log_count, log_hz, log_code;
+static const char *log_owner, *log_action;
 static struct dsi_panel *last_panel;
+static struct dsi_display *current_display;
+static struct dsi_display *oplus_display_get_current_display(void)
+{ return current_display; }
+static int oplus_display_panel_get_global_hbm_status(void) { return global_hbm; }
+static bool oplus_ofp_is_supported(void) { return ofp_supported; }
+static bool oplus_ofp_get_hbm_state(void) { return ofp_hbm; }
+static void record_log(const char *fmt, ...)
+{
+    va_list args;
+    assert(!spin_depth);
+    assert(strstr(fmt, "kVRR"));
+    va_start(args, fmt);
+    log_owner = va_arg(args, const char *);
+    log_action = va_arg(args, const char *);
+    log_hz = va_arg(args, unsigned int);
+    log_code = va_arg(args, unsigned int);
+    log_count++;
+    va_end(args);
+}
+static int kstrtou32(const char *text, unsigned int base, u32 *value)
+{
+    char *end;
+    unsigned long parsed;
+    errno = 0;
+    parsed = strtoul(text, &end, base);
+    if (errno || end == text || parsed > UINT32_MAX)
+        return -EINVAL;
+    if (*end == '\n')
+        end++;
+    if (*end)
+        return -EINVAL;
+    *value = parsed;
+    return 0;
+}
 static int dsi_panel_tx_cmd_set(struct dsi_panel *panel, int command);
 static int oplus_adfr_send_min_fps_event(unsigned int h_skew, unsigned int value)
 {
@@ -154,6 +219,11 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel, int command)
         inject_reset = false;
         dsi_panel_adfr_status_reset(panel);
     }
+    if (inject_touch) {
+        inject_touch = false;
+        oplus_adfr_governor_touch(&panel->adfr, fake_now,
+            panel->cur_mode->timing.refresh_rate);
+    }
     return 0;
 }
 
@@ -162,6 +232,10 @@ struct fixture {
     struct dsi_display display;
     struct dsi_display_mode mode;
     struct dsi_display_mode_priv_info info;
+    struct sde_connector connector;
+    struct sde_encoder_phys phys;
+    struct sde_encoder_virt encoder;
+    u64 hbm_property;
     struct dsi_cmd_desc desc[CMD_COUNT][3];
     u8 payload[CMD_COUNT][3][2];
 };
@@ -181,6 +255,14 @@ static void init_fixture(struct fixture *f, int rate)
     f->mode.priv_info = &f->info;
     f->display.panel = &f->panel;
     f->display.ctrl_count = 1;
+    f->connector.base.connector_type = DRM_MODE_CONNECTOR_DSI;
+    f->connector.connector_type = DRM_MODE_CONNECTOR_DSI;
+    f->connector.base.state = &f->hbm_property;
+    f->connector.display = &f->display;
+    f->phys.intf_mode = INTF_MODE_CMD;
+    f->phys.connector = &f->connector.base;
+    f->encoder.cur_master = &f->phys;
+    current_display = &f->display;
     for (i = 0; i < CMD_COUNT; i++) {
         f->info.cmd_sets[i].count = 3;
         f->info.cmd_sets[i].cmds = f->desc[i];
@@ -190,6 +272,8 @@ static void init_fixture(struct fixture *f, int rate)
         }
     }
     oplus_adfr_panel_init(&f->panel);
+    f->panel.adfr.kernel_idle_enabled = fixture_autonomous;
+    f->panel.adfr.kernel_active_min_fps = rate == 60 ? 1 : 0;
     f->panel.adfr.mode_valid = true;
     f->panel.adfr.min_fps_valid = true;
     f->panel.adfr.min_fps = rate == 60 ? 1 : 0;
@@ -221,7 +305,18 @@ def program(body):
         "bool oplus_adfr_is_support(",
         "bool oplus_adfr_idle_mode_is_enable(",
         "static bool oplus_adfr_panel_supported(",
+        "static bool oplus_adfr_governor_enabled(",
+        "static u32 oplus_adfr_rate_code(",
+        "static u32 oplus_adfr_native_code(",
+        "static void oplus_adfr_select_active(",
+        "static void oplus_adfr_governor_touch(",
+        "static void oplus_adfr_governor_frame(",
+        "static u32 oplus_adfr_governor_idle_delay(",
+        "ssize_t oplus_adfr_set_debug(",
         "void oplus_adfr_panel_init(",
+        "static int oplus_adfr_set_kernel_idle_fps(",
+        "ssize_t oplus_adfr_get_idle_fps(",
+        "ssize_t oplus_adfr_set_idle_fps(",
         "bool oplus_adfr_auto_on_cmd_filter_set(",
         "bool oplus_adfr_auto_on_cmd_filter_get(",
         "bool oplus_adfr_has_auto_mode(",
@@ -238,8 +333,16 @@ def program(body):
         "static int dsi_display_auto_mode_min_fps(",
         "static bool oplus_adfr_retry_blocked(",
         "int dsi_display_auto_mode_update(",
+        "static bool oplus_adfr_hbm_active(",
+        "static struct dsi_display *oplus_adfr_encoder_display(",
+        "void oplus_adfr_frame_start(",
+        "void oplus_adfr_touch_event(",
+        "void oplus_adfr_touch_work(",
+        "u32 oplus_adfr_idle_delay_ms(",
+        "static u32 oplus_adfr_idle_target(",
         "static bool oplus_adfr_can_enter_idle(",
         "static int oplus_adfr_apply_idle(",
+        "void oplus_adfr_handle_idle_mode(",
         "int oplus_get_te_fps(",
         "irqreturn_t oplus_adfr_dynamic_te_handler(",
     ):
@@ -259,6 +362,9 @@ class AdfrTests(unittest.TestCase):
         self.run_policy(r"""
         unsigned int config, debug, raw;
         struct fixture f;
+        struct dsi_panel fresh = {.type = "primary"};
+        oplus_adfr_panel_init(&fresh);
+        assert(fresh.adfr.kernel_idle_enabled && fresh.adfr.kernel_idle_min_fps == 119);
         for (config = 0; config < 64; config++)
             for (debug = 0; debug < 64; debug++) {
                 bool supported = (config & 1) && !(debug & 1);
@@ -318,6 +424,7 @@ class AdfrTests(unittest.TestCase):
         f.panel.oplus_priv.vendor_name = "NT37705";
         assert(dsi_panel_auto_minfps_check(&f.panel, 11, false) == 11);
         init_fixture(&f, 120);
+        f.panel.adfr.kernel_idle_enabled = false;
         for (raw = 0; raw < 128; raw++) {
             f.panel.adfr.min_fps = raw;
             assert(oplus_adfr_can_enter_idle(&f.panel.adfr) ==
@@ -494,6 +601,352 @@ class AdfrTests(unittest.TestCase):
         puts("idle: 60/120Hz, native first frame, failed entry/exit and recovery OK");
         """)
 
+    def test_autonomous_idle_without_hwc_request(self):
+        self.run_policy(r"""
+        struct fixture f;
+        struct sde_encoder_phys_cmd cmd = { 0 };
+        int rate, before;
+        fixture_autonomous = true;
+        for (rate = 60; rate <= 120; rate += 60) {
+            init_fixture(&f, rate);
+            dsi_panel_adfr_status_reset(&f.panel);
+            assert(!dsi_display_auto_mode_update(&f.display));
+            assert(!f.panel.adfr.has_request && !oplus_adfr_auto_update_counter);
+            assert(f.panel.adfr.kernel_idle_enabled);
+            before = attempts;
+            assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+            assert(attempts == before + 1 && sent_min == 119);
+            assert(f.panel.adfr.idle && f.panel.adfr.applied_min_fps == 119);
+            assert(f.panel.adfr.min_fps == (rate == 60 ? 1U : 0U));
+            assert(!strcmp(log_owner, "kernel") && !strcmp(log_action, "enter"));
+            assert(log_hz == 1 && log_code == 119);
+            assert(!oplus_adfr_apply_idle(&f.display, &cmd, false));
+            assert(sent_min == (rate == 60 ? 1U : 0U));
+            assert(log_hz == (u32)rate && !strcmp(log_action, "exit"));
+            assert(!dsi_display_auto_mode_update(&f.display));
+            assert(!f.panel.adfr.has_request && !oplus_adfr_auto_update_counter);
+        }
+        puts("autonomous: real reset -> idle 1Hz -> native FPS without any HWC request");
+        """)
+
+    def test_autonomous_target_sysfs_and_hwc_fallback(self):
+        self.run_policy(r"""
+        struct fixture f;
+        struct sde_encoder_phys_cmd cmd = { 0 };
+        char status[512];
+        u64 sequence;
+        int before;
+        fixture_autonomous = true;
+        init_fixture(&f, 120);
+        assert(oplus_adfr_set_idle_fps(NULL, NULL, "10\n", 3) == 3);
+        assert(f.panel.adfr.kernel_idle_min_fps == 11);
+        sequence = f.panel.adfr.sequence;
+        assert(oplus_adfr_set_idle_fps(NULL, NULL, "10", 2) == 2);
+        assert(f.panel.adfr.sequence == sequence);
+        assert(oplus_adfr_set_idle_fps(NULL, NULL, "5", 1) == -EINVAL);
+        assert(oplus_adfr_set_idle_fps(NULL, NULL, "bad", 3) == -EINVAL);
+        assert(f.panel.adfr.sequence == sequence && !attempts);
+        assert(!dsi_display_auto_mode_update(&f.display));
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+        assert(sent_min == 11 && log_hz == 10 && !f.panel.adfr.has_request);
+        assert(oplus_adfr_get_idle_fps(NULL, NULL, status) > 0);
+        assert(strstr(status, "kernel=1 target_hz=10"));
+        assert(strstr(status, "requested_code=0x00 applied_code=0x0b"));
+        assert(strstr(status, "valid=1 idle=1"));
+        assert(oplus_adfr_set_idle_fps(NULL, NULL, "0", 1) == 1);
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, false));
+        assert(!dsi_display_auto_mode_update(&f.display));
+        before = attempts;
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+        assert(attempts == before && !f.panel.adfr.idle);
+        assert(oplus_adfr_handle_auto_mode(&f.panel, MIN_REQUEST(119)) == 1);
+        assert(!dsi_display_auto_mode_update(&f.display));
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+        assert(sent_min == 119 && !strcmp(log_owner, "hwc"));
+        current_display = NULL;
+        assert(oplus_adfr_get_idle_fps(NULL, NULL, status) == -ENODEV);
+        assert(oplus_adfr_set_idle_fps(NULL, NULL, "1", 1) == -ENODEV);
+        puts("sysfs: independent 10Hz target, truthful status, opt-out and HWC fallback");
+        """)
+
+    def test_autonomous_hbm_and_optical_fingerprint_guard(self):
+        self.run_policy(r"""
+        struct fixture f;
+        struct sde_encoder_phys_cmd cmd = { 0 };
+        fixture_autonomous = true;
+        init_fixture(&f, 120);
+        global_hbm = true;
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+        assert(!attempts && !f.panel.adfr.idle);
+        global_hbm = false;
+        ofp_supported = true;
+        ofp_hbm = true;
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+        assert(!attempts && !f.panel.adfr.idle);
+        ofp_hbm = false;
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+        assert(sent_min == 119 && f.panel.adfr.idle);
+        ofp_hbm = true;
+        assert(!oplus_adfr_apply_idle(&f.display, &cmd, false));
+        assert(sent_min == 0 && !f.panel.adfr.idle);
+        puts("HBM: autonomous entry blocked, native-FPS recovery remains allowed");
+        """)
+
+    def test_governor_cadence_ladder_and_immediate_upshift(self):
+        self.run_policy(r"""
+        struct fixture f;
+        unsigned int rates[] = {10, 20, 30, 40, 60, 120};
+        unsigned int codes[] = {11, 5, 3, 2, 1, 0};
+        unsigned int r, i;
+        u64 now, sequence;
+        fixture_autonomous = true;
+        assert(oplus_adfr_rate_code(1) == 119);
+        assert(oplus_adfr_rate_code(50) == 1);
+        for (r = 0; r < 6; r++) {
+            init_fixture(&f, 120);
+            now = NSEC_PER_SEC;
+            oplus_adfr_governor_frame(&f.panel.adfr, now, 120, false);
+            for (i = 0; i < rates[r] * 2; i++) {
+                now += NSEC_PER_SEC / rates[r];
+                oplus_adfr_governor_frame(&f.panel.adfr, now, 120, false);
+                assert(!dsi_display_auto_mode_update(&f.display));
+            }
+            assert(f.panel.adfr.kernel_active_min_fps == codes[r]);
+            assert(f.panel.adfr.applied_min_fps == codes[r]);
+            assert(f.panel.adfr.cadence_fps == rates[r]);
+            assert(!f.panel.adfr.min_fps && !f.panel.adfr.has_request);
+            assert(!f.panel.adfr.fakeframe || rates[r] == 120);
+            sequence = f.panel.adfr.sequence;
+            oplus_adfr_governor_frame(&f.panel.adfr, now + 8333333, 120, false);
+            assert(!f.panel.adfr.kernel_active_min_fps);
+            assert(!dsi_display_auto_mode_update(&f.display));
+            assert(!f.panel.adfr.applied_min_fps);
+            assert(f.panel.adfr.sequence == sequence + (rates[r] != 120));
+        }
+        assert(!oplus_adfr_auto_update_counter);
+        puts("cadence: 10/20/30/40/60/120Hz converge; next fast frame upshifts immediately");
+        """)
+
+    def test_governor_touch_hysteresis_and_idle_hold(self):
+        self.run_policy(r"""
+        struct fixture f;
+        unsigned int i;
+        int before;
+        u64 now = NSEC_PER_SEC, sequence;
+        fixture_autonomous = true;
+        init_fixture(&f, 120);
+        oplus_adfr_governor_frame(&f.panel.adfr, now, 120, false);
+        for (i = 1; i <= 7; i++)
+            oplus_adfr_governor_frame(&f.panel.adfr,
+                now + i * 33333333ULL, 120, false);
+        assert(!f.panel.adfr.kernel_active_min_fps);
+        for (i = 8; i <= 12; i++)
+            oplus_adfr_governor_frame(&f.panel.adfr,
+                now + i * 33333333ULL, 120, false);
+        now += 12 * 33333333ULL;
+        assert(f.panel.adfr.kernel_active_min_fps == 3);
+        assert(!dsi_display_auto_mode_update(&f.display));
+        before = attempts;
+        oplus_adfr_governor_touch(&f.panel.adfr, now, 120);
+        assert(!f.panel.adfr.kernel_active_min_fps);
+        assert(attempts == before); /* IRQ path cannot send DSI. */
+        assert(oplus_adfr_governor_idle_delay(&f.panel.adfr, now) == 250);
+        assert(oplus_adfr_governor_idle_delay(&f.panel.adfr,
+            now + 249 * NSEC_PER_MSEC + 1) == 1);
+        assert(!oplus_adfr_governor_idle_delay(&f.panel.adfr,
+            now + 250 * NSEC_PER_MSEC));
+        assert(!dsi_display_auto_mode_update(&f.display));
+        assert(!f.panel.adfr.applied_min_fps);
+        sequence = f.panel.adfr.sequence;
+        oplus_adfr_governor_touch(&f.panel.adfr, now + NSEC_PER_MSEC, 120);
+        assert(f.panel.adfr.sequence == sequence);
+        assert(!dsi_display_auto_mode_update(&f.display));
+        assert(attempts == before + 1); /* No repeated native command per touch. */
+        now += NSEC_PER_MSEC;
+        for (i = 1; i <= 7; i++) {
+            oplus_adfr_governor_frame(&f.panel.adfr,
+                now + i * 33333333ULL, 120, false);
+            assert(!f.panel.adfr.kernel_active_min_fps);
+        }
+        oplus_adfr_governor_frame(&f.panel.adfr,
+            now + 2 * NSEC_PER_SEC, 120, false);
+        assert(!f.panel.adfr.frame_period_ns &&
+               !f.panel.adfr.kernel_active_min_fps);
+        f.panel.adfr.frame_period_ns = NSEC_PER_SEC;
+        f.panel.adfr.last_frame_ns = now;
+        assert(oplus_adfr_governor_idle_delay(&f.panel.adfr, now) == 250);
+        puts("touch: immediate native selection, 250ms boost, bounded idle hold, no redundant DSI");
+        """)
+
+    def test_governor_floor_hbm_and_legacy_optout(self):
+        self.run_policy(r"""
+        struct fixture f;
+        struct sde_encoder_phys_cmd cmd = {0};
+        unsigned int floors[] = {1, 10, 20, 30, 40, 60};
+        unsigned int codes[] = {119, 11, 5, 3, 2, 1};
+        unsigned int i, j;
+        u64 now;
+        char status[512];
+        fixture_autonomous = true;
+        for (i = 0; i < 6; i++) {
+            init_fixture(&f, 60);
+            assert(!oplus_adfr_set_kernel_idle_fps(&f.panel, floors[i]));
+            assert(!dsi_display_auto_mode_update(&f.display));
+            assert(!oplus_adfr_apply_idle(&f.display, &cmd, true));
+            assert(sent_min == codes[i]);
+            assert(!oplus_adfr_apply_idle(&f.display, &cmd, false));
+            assert(sent_min == 1);
+            now = NSEC_PER_SEC;
+            for (j = 0; j < 20; j++) {
+                now += NSEC_PER_SEC / 10;
+                oplus_adfr_governor_frame(&f.panel.adfr, now, 60, false);
+            }
+            assert(f.panel.adfr.kernel_active_min_fps ==
+                (codes[i] > 11 ? 11U : codes[i]));
+            oplus_adfr_governor_frame(&f.panel.adfr, now + 8333333, 60, true);
+            assert(f.panel.adfr.kernel_active_min_fps == 1);
+            assert(!dsi_display_auto_mode_update(&f.display));
+            assert(f.panel.adfr.applied_min_fps == 1);
+        }
+        assert(oplus_adfr_set_kernel_idle_fps(&f.panel, 50) == -EINVAL);
+        oplus_adfr_governor_touch(&f.panel.adfr, now, 60);
+        fake_now = now;
+        assert(oplus_adfr_get_idle_fps(NULL, NULL, status) > 0);
+        assert(strstr(status, "active_hz=60") && strstr(status, "boost_ms=250"));
+        f.panel.adfr.auto_mode = OPLUS_ADFR_AUTO_ON;
+        f.panel.adfr.kernel_active_min_fps = 11;
+        oplus_adfr_governor_touch(&f.panel.adfr, now, 60);
+        oplus_adfr_governor_frame(&f.panel.adfr, now, 60, true);
+        assert(f.panel.adfr.kernel_active_min_fps == 11);
+        f.panel.adfr.auto_mode = OPLUS_ADFR_AUTO_OFF;
+        oplus_adfr_debug = OPLUS_ADFR_DEBUG_IDLE_MODE_DISABLE;
+        oplus_adfr_governor_touch(&f.panel.adfr, now, 60);
+        assert(f.panel.adfr.kernel_active_min_fps == 11);
+        assert(!oplus_adfr_governor_idle_delay(&f.panel.adfr, now));
+        puts("policy: all floors, 60Hz native cap, HBM native, explicit auto-on/debug opt-out");
+        """)
+
+    def test_governor_encoder_touch_idle_and_hbm_integration(self):
+        self.run_policy(r"""
+        struct fixture f;
+        unsigned int i;
+        int before;
+        fixture_autonomous = true;
+        init_fixture(&f, 120);
+        dsi_panel_adfr_status_reset(&f.panel);
+        fake_now = NSEC_PER_SEC;
+        oplus_adfr_frame_start(&f.encoder);
+        for (i = 0; i < 60; i++) {
+            fake_now += 33333333;
+            oplus_adfr_frame_start(&f.encoder);
+        }
+        assert(f.panel.adfr.applied_min_fps == 3);
+        assert(!f.panel.adfr.has_request && !oplus_adfr_auto_update_counter);
+        assert(attempts == 1); /* One rate change, no per-frame DSI traffic. */
+        oplus_adfr_handle_idle_mode(&f.encoder, true);
+        assert(!f.panel.adfr.idle && oplus_adfr_idle_delay_ms(&f.encoder) == 67);
+        fake_now += 251 * NSEC_PER_MSEC;
+        oplus_adfr_handle_idle_mode(&f.encoder, true);
+        assert(f.panel.adfr.idle && sent_min == 119);
+        before = attempts;
+        oplus_adfr_touch_event(&f.encoder);
+        assert(attempts == before && !f.panel.adfr.kernel_active_min_fps);
+        assert(oplus_adfr_idle_delay_ms(&f.encoder) == 250);
+        oplus_adfr_touch_work(&f.encoder);
+        assert(attempts == before + 1 && !sent_min && !f.panel.adfr.idle);
+        assert(!f.panel.adfr.min_fps_updated && f.panel.adfr.min_fps_valid);
+        oplus_adfr_touch_event(&f.encoder);
+        oplus_adfr_touch_work(&f.encoder);
+        assert(attempts == before + 1);
+        fake_now += 300 * NSEC_PER_MSEC;
+        oplus_adfr_handle_idle_mode(&f.encoder, true);
+        assert(f.panel.adfr.idle && sent_min == 119);
+        fake_now += NSEC_PER_SEC;
+        oplus_adfr_frame_start(&f.encoder);
+        oplus_adfr_handle_idle_mode(&f.encoder, false);
+        assert(!sent_min && !f.panel.adfr.idle);
+        for (i = 0; i < 60; i++) {
+            fake_now += 33333333;
+            oplus_adfr_frame_start(&f.encoder);
+        }
+        assert(sent_min == 3);
+        f.hbm_property = OPLUS_OFP_PROPERTY_FINGERPRESS_LAYER;
+        fake_now += 33333333;
+        oplus_adfr_frame_start(&f.encoder);
+        assert(!sent_min && !f.panel.adfr.kernel_active_min_fps);
+        before = attempts;
+        f.panel.power_mode = SDE_MODE_DPMS_LP1;
+        oplus_adfr_touch_event(&f.encoder);
+        oplus_adfr_touch_work(&f.encoder);
+        oplus_adfr_frame_start(&f.encoder);
+        assert(attempts == before && !oplus_adfr_idle_delay_ms(&f.encoder));
+        f.panel.power_mode = SDE_MODE_DPMS_ON;
+        f.mode.timing.refresh_rate = 90;
+        oplus_adfr_touch_event(&f.encoder);
+        oplus_adfr_touch_work(&f.encoder);
+        oplus_adfr_frame_start(&f.encoder);
+        assert(attempts == before && !oplus_adfr_idle_delay_ms(&f.encoder));
+        puts("encoder: real frame/touch/idle paths, one transfer per change, FOD and AOD guards");
+        """)
+
+    def test_governor_touch_racing_idle_and_failed_boost(self):
+        self.run_policy(r"""
+        struct fixture f;
+        int before;
+        fixture_autonomous = true;
+        init_fixture(&f, 120);
+        fake_now = NSEC_PER_SEC;
+        inject_touch = true;
+        oplus_adfr_handle_idle_mode(&f.encoder, true);
+        assert(f.panel.adfr.idle && sent_min == 119);
+        assert(oplus_adfr_idle_delay_ms(&f.encoder) == 250);
+        fail_at = attempts + 1;
+        oplus_adfr_touch_work(&f.encoder);
+        assert(f.panel.adfr.restore_pending && !f.panel.adfr.min_fps_valid);
+        assert(f.panel.adfr.last_error == -EIO && sent_min == 119);
+        fail_at = 0;
+        oplus_adfr_touch_work(&f.encoder);
+        assert(!sent_min && !f.panel.adfr.idle && !f.panel.adfr.restore_pending);
+        assert(f.panel.adfr.min_fps_valid && !f.panel.adfr.last_error);
+        before = attempts;
+        oplus_adfr_handle_idle_mode(&f.encoder, true);
+        assert(attempts == before); /* Boost prevents re-entry while clocks stay on. */
+        f.panel.adfr.kernel_active_min_fps = 11;
+        f.panel.adfr.min_fps_updated = true;
+        assert(!dsi_display_auto_mode_update(&f.display) && sent_min == 11);
+        oplus_adfr_touch_event(&f.encoder);
+        fail_at = attempts + 1;
+        oplus_adfr_touch_work(&f.encoder);
+        assert(f.panel.adfr.min_fps_updated && !f.panel.adfr.min_fps_valid);
+        fail_at = 0;
+        oplus_adfr_frame_start(&f.encoder);
+        assert(!sent_min && f.panel.adfr.min_fps_valid);
+        puts("recovery: racing touch defers collapse; failed idle/active boost retries native");
+        """)
+
+    def test_governor_debug_disable_restores_active_and_idle(self):
+        self.run_policy(r"""
+        struct fixture f;
+        fixture_autonomous = true;
+        init_fixture(&f, 120);
+        f.panel.adfr.kernel_active_min_fps = 11;
+        f.panel.adfr.min_fps_updated = true;
+        assert(!dsi_display_auto_mode_update(&f.display) && sent_min == 11);
+        assert(oplus_adfr_set_debug(NULL, NULL, "1", 1) == 1);
+        assert(f.panel.adfr.restore_pending && f.panel.adfr.min_fps_updated);
+        oplus_adfr_frame_start(&f.encoder);
+        oplus_adfr_handle_idle_mode(&f.encoder, false);
+        assert(!sent_min && !f.panel.adfr.restore_pending);
+        assert(oplus_adfr_set_debug(NULL, NULL, "0", 1) == 1);
+        assert(!dsi_display_auto_mode_update(&f.display));
+        oplus_adfr_handle_idle_mode(&f.encoder, true);
+        assert(sent_min == 119 && f.panel.adfr.idle);
+        assert(oplus_adfr_set_debug(NULL, NULL, "16", 2) == 2);
+        oplus_adfr_handle_idle_mode(&f.encoder, false);
+        assert(!sent_min && !f.panel.adfr.idle && !f.panel.adfr.restore_pending);
+        puts("debug: global/idle policy disable restores native from active or idle low rates");
+        """)
+
     def test_reset_filter_and_multiple_controllers(self):
         self.run_policy(r"""
         struct fixture f;
@@ -564,8 +1017,18 @@ class AdfrTests(unittest.TestCase):
                         commit.index("priv->kms->funcs->prepare_fence("))
         encoder = (DISPLAY / "msm/sde/sde_encoder.c").read_text()
         kickoff = definition(encoder, "void sde_encoder_kickoff(")
+        self.assertLess(kickoff.index("oplus_adfr_frame_start("),
+                        kickoff.index("oplus_adfr_handle_idle_mode("))
         self.assertLess(kickoff.index("oplus_adfr_handle_idle_mode("),
                         kickoff.index("_sde_encoder_kickoff_phys("))
+        idle = definition(encoder, "static int _sde_encoder_rc_idle(")
+        self.assertLess(idle.index("sde_crtc_frame_pending("),
+                        idle.index("oplus_adfr_handle_idle_mode("))
+        self.assertLess(idle.index("mutex_lock(&sde_enc->rc_lock)"),
+                        idle.index("oplus_adfr_handle_idle_mode("))
+        self.assertLess(idle.index("oplus_adfr_handle_idle_mode("),
+                        idle.index("_sde_encoder_resource_control_helper("))
+        self.assertEqual(idle.count("oplus_adfr_idle_delay_ms("), 2)
         crtc = (DISPLAY / "msm/sde/sde_crtc.c").read_text()
         fps = definition(crtc, "static void sde_crtc_calc_fps(")
         self.assertIn("oplus_adfr_update_sw_fps(", fps)

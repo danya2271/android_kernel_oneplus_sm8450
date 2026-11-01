@@ -647,6 +647,8 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 		SDE_ERROR("failed to get compression info ret %d\n", ret);
 }
 
+static void _sde_encoder_input_handler_unregister(struct drm_encoder *drm_enc);
+
 void sde_encoder_destroy(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
@@ -662,6 +664,7 @@ void sde_encoder_destroy(struct drm_encoder *drm_enc)
 	SDE_DEBUG_ENC(sde_enc, "\n");
 	num_encs = sde_enc->num_phys_encs;
 
+	_sde_encoder_input_handler_unregister(drm_enc);
 	mutex_lock(&sde_enc->enc_lock);
 	sde_rsc_client_destroy(sde_enc->rsc_client);
 
@@ -1811,6 +1814,12 @@ static void sde_encoder_input_event_handler(struct input_handle *handle,
 	struct msm_drm_thread *disp_thread = NULL;
 	struct msm_drm_private *priv = NULL;
 
+	if (!((type == EV_ABS &&
+	       (code == ABS_MT_POSITION_X || code == ABS_MT_POSITION_Y ||
+		(code == ABS_MT_TRACKING_ID && value >= 0))) ||
+	      (type == EV_KEY && code == BTN_TOUCH && value)))
+		return;
+
 	if (!handle || !handle->handler || !handle->handler->private) {
 		SDE_ERROR("invalid encoder for the input event\n");
 		return;
@@ -1837,6 +1846,12 @@ static void sde_encoder_input_event_handler(struct input_handle *handle,
 
 	disp_thread = &priv->disp_thread[sde_enc->crtc->index];
 
+#ifdef OPLUS_FEATURE_DISPLAY
+	oplus_adfr_touch_event(sde_enc);
+	/* Keep this work on one worker for its entire registered lifetime. */
+	if (priv->adfr_thread[sde_enc->crtc->index].thread)
+		disp_thread = &priv->adfr_thread[sde_enc->crtc->index];
+#endif
 	kthread_queue_work(&disp_thread->worker,
 				&sde_enc->input_event_work);
 }
@@ -2160,6 +2175,10 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 	struct drm_crtc *crtc = drm_enc->crtc;
 	struct sde_crtc *sde_crtc;
 	struct sde_connector *sde_conn;
+#ifdef OPLUS_FEATURE_DISPLAY
+	struct msm_drm_thread *thread;
+	u32 delay;
+#endif
 
 	priv = drm_enc->dev->dev_private;
 
@@ -2191,6 +2210,24 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 		_sde_encoder_rc_kickoff_delayed(sde_enc, sw_event);
 		goto end;
 	}
+#ifdef OPLUS_FEATURE_DISPLAY
+	if (!is_vid_mode && oplus_adfr_is_support() &&
+	    oplus_adfr_idle_mode_is_enable()) {
+		delay = oplus_adfr_idle_delay_ms(sde_enc);
+		if (!delay)
+			oplus_adfr_handle_idle_mode(sde_enc, true);
+		/* A touch may have arrived while the low-rate command was in flight. */
+		if (!delay)
+			delay = oplus_adfr_idle_delay_ms(sde_enc);
+		if (delay) {
+			thread = &priv->disp_thread[crtc->index];
+			kthread_mod_delayed_work(&thread->worker,
+						 &sde_enc->delayed_off_work,
+						 msecs_to_jiffies(delay));
+			goto end;
+		}
+	}
+#endif
 	/*
 	 * Avoid power collapse entry for writeback crtc since HAL does not repopulate
 	 * crtc, plane properties like luts for idlepc exit commit. Here is_vid_mode will
@@ -2768,7 +2805,7 @@ static void _sde_encoder_input_disconnect(struct input_handle *handle)
  */
 static const struct input_device_id sde_input_ids[] = {
 	{
-		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT | INPUT_DEVICE_ID_MATCH_ABSBIT,
 		.evbit = { BIT_MASK(EV_ABS) },
 		.absbit = { [BIT_WORD(ABS_MT_POSITION_X)] =
 					BIT_MASK(ABS_MT_POSITION_X) |
@@ -2796,6 +2833,7 @@ static void _sde_encoder_input_handler_register(
 			SDE_ERROR("input_handler_register failed, rc= %d\n",
 						 rc);
 			kfree(sde_enc->input_handler);
+			sde_enc->input_handler = NULL;
 		}
 	}
 }
@@ -2805,12 +2843,9 @@ static void _sde_encoder_input_handler_unregister(
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 
-	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE) ||
-		!sde_enc->input_event_enabled)
-		return;
-
 	if (sde_enc->input_handler && sde_enc->input_handler->private) {
 		input_unregister_handler(sde_enc->input_handler);
+		kthread_cancel_work_sync(&sde_enc->input_event_work);
 		sde_enc->input_handler->private = NULL;
 	}
 
@@ -3069,12 +3104,6 @@ static void sde_encoder_off_work(struct kthread_work *work)
 	drm_enc = &sde_enc->base;
 
 	SDE_ATRACE_BEGIN("sde_encoder_off_work");
-#ifdef OPLUS_FEATURE_DISPLAY
-	if (oplus_adfr_is_support() && oplus_adfr_idle_mode_is_enable()) {
-		//pr_info("kVRR enter idle mode\n");
-		oplus_adfr_handle_idle_mode(sde_enc, true);
-	}
-#endif /* OPLUS_FEATURE_DISPLAY */
 #if defined(CONFIG_PXLW_IRIS)
 	if (iris_is_dual_supported() && sde_encoder_is_dsi_display(drm_enc) &&
 		!sde_encoder_is_primary_display(drm_enc)) {
@@ -4276,6 +4305,8 @@ static void sde_encoder_input_event_work_handler(struct kthread_work *work)
 {
 	struct sde_encoder_virt *sde_enc = container_of(work,
 				struct sde_encoder_virt, input_event_work);
+	struct sde_kms *sde_kms;
+	int rc;
 
 	if (!sde_enc || !sde_enc->input_handler) {
 		SDE_ERROR("invalid args sde encoder\n");
@@ -4287,8 +4318,25 @@ static void sde_encoder_input_event_work_handler(struct kthread_work *work)
 		return;
 	}
 
-	sde_encoder_resource_control(&sde_enc->base,
-			SDE_ENC_RC_EVENT_EARLY_WAKEUP);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
+	if (!sde_kms || !sde_vm_trylock(sde_kms))
+		return;
+	if (!sde_vm_owns_hw(sde_kms))
+		goto unlock;
+	rc = sde_encoder_resource_control(&sde_enc->base,
+					  SDE_ENC_RC_EVENT_EARLY_WAKEUP);
+#ifdef OPLUS_FEATURE_DISPLAY
+	if (!rc) {
+		mutex_lock(&sde_enc->rc_lock);
+		if (sde_enc->rc_state == SDE_ENC_RC_STATE_ON)
+			oplus_adfr_touch_work(sde_enc);
+		mutex_unlock(&sde_enc->rc_lock);
+	}
+#else
+	(void)rc;
+#endif
+unlock:
+	sde_vm_unlock(sde_kms);
 }
 
 static void sde_encoder_early_wakeup_work_handler(struct kthread_work *work)
@@ -5046,6 +5094,7 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 	}
 
 	/* A debug disable must not strand a panel at its idle minimum. */
+	oplus_adfr_frame_start(sde_enc);
 	oplus_adfr_handle_idle_mode(sde_enc, false);
 
 	oplus_display_pwm_turbo_kickoff();
@@ -5785,6 +5834,11 @@ static int sde_encoder_setup_display(struct sde_encoder_virt *sde_enc,
 	sde_enc->idle_pc_enabled = sde_kms->catalog->has_idle_pc;
 
 	sde_enc->input_event_enabled = sde_kms->catalog->wakeup_with_touch;
+#ifdef OPLUS_FEATURE_DISPLAY
+	if (oplus_adfr_is_support() && disp_info->intf_type == DRM_MODE_CONNECTOR_DSI &&
+	    disp_info->display_type == SDE_CONNECTOR_PRIMARY)
+		sde_enc->input_event_enabled = true;
+#endif
 
 	mutex_lock(&sde_enc->enc_lock);
 	for (i = 0; i < disp_info->num_of_h_tiles && !ret; i++) {

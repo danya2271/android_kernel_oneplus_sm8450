@@ -3256,6 +3256,8 @@ static OPLUS_ATTR(pwm_turbo, S_IRUGO|S_IWUSR, oplus_get_pwm_turbo_debug,
 		oplus_set_pwm_turbo_debug);
 #ifdef OPLUS_FEATURE_DISPLAY
 static OPLUS_ATTR(adfr_debug, S_IRUGO|S_IWUSR, oplus_adfr_get_debug, oplus_adfr_set_debug);
+static OPLUS_ATTR(adfr_idle_fps, 0644,
+		oplus_adfr_get_idle_fps, oplus_adfr_set_idle_fps);
 static OPLUS_ATTR(vsync_switch, S_IRUGO|S_IWUSR, oplus_get_vsync_switch, oplus_set_vsync_switch);
 /* dynamic te detect */
 static OPLUS_ATTR(dynamic_te, S_IRUGO|S_IWUSR, oplus_adfr_get_dynamic_te, oplus_adfr_set_dynamic_te);
@@ -3314,6 +3316,7 @@ static struct attribute *oplus_display_attrs[] = {
 	&oplus_attr_pwm_turbo.attr,
 #ifdef OPLUS_FEATURE_DISPLAY
 	&oplus_attr_adfr_debug.attr,
+	&oplus_attr_adfr_idle_fps.attr,
 	&oplus_attr_vsync_switch.attr,
 	/* dynamic te detect */
 	&oplus_attr_dynamic_te.attr,
