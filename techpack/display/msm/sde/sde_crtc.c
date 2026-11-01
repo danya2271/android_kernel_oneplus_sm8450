@@ -6150,21 +6150,26 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 	cstate = to_sde_crtc_state(state);
 
 	SDE_ATRACE_BEGIN("sde_crtc_atomic_set_property");
+	idx = msm_property_index(&sde_crtc->property_info, property);
+	if (idx < 0) {
 #ifdef OPLUS_FEATURE_DISPLAY
-	mutex_lock(&priv->dspp_lock);
+		/* Ordinary atomic properties need no DSPP serialization. */
+		mutex_lock(&priv->dspp_lock);
 #endif /* OPLUS_FEATURE_DISPLAY */
-	/* check with cp property system first */
-	ret = sde_cp_crtc_set_property(crtc, state, property, val);
-	if (unlikely(ret != -ENOENT))
+		ret = sde_cp_crtc_set_property(crtc, state, property, val);
+#ifdef OPLUS_FEATURE_DISPLAY
+		mutex_unlock(&priv->dspp_lock);
+#endif /* OPLUS_FEATURE_DISPLAY */
+		if (ret == -ENOENT)
+			ret = -EINVAL;
 		goto exit;
+	}
 
-	/* if not handled by cp, check msm_property system */
 	ret = msm_property_atomic_set(&sde_crtc->property_info,
 			&cstate->property_state, property, val);
 	if (unlikely(ret))
 		goto exit;
 
-	idx = msm_property_index(&sde_crtc->property_info, property);
 	switch (idx) {
 	case CRTC_PROP_INPUT_FENCE_TIMEOUT:
 		_sde_crtc_set_input_fence_timeout(cstate);
@@ -6259,9 +6264,6 @@ exit:
 				property->base.id, val);
 	}
 
-#ifdef OPLUS_FEATURE_DISPLAY
-	mutex_unlock(&priv->dspp_lock);
-#endif /* OPLUS_FEATURE_DISPLAY */
 	SDE_ATRACE_END("sde_crtc_atomic_set_property");
 	return ret;
 }

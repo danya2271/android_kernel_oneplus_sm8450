@@ -462,6 +462,10 @@ static void sde_hw_intr_dispatch_irq(struct sde_hw_intr *intr,
 	 */
 	spin_lock_irqsave(&intr->irq_lock, irq_flags);
 	for (reg_idx = 0; reg_idx < intr->sde_irq_size; reg_idx++) {
+		/* Masked banks cannot have an interrupt to dispatch. */
+		if (!intr->cache_irq_mask[reg_idx])
+			continue;
+
 		/*
 		 * Each Interrupt register has dynamic range of indexes,
 		 * initialized during hw_intr_init when sde_irq_tbl is created.
@@ -474,7 +478,8 @@ static void sde_hw_intr_dispatch_irq(struct sde_hw_intr *intr,
 			continue;
 
 		irq_status = SDE_REG_READ(&intr->hw,
-				intr->sde_irq_tbl[reg_idx].status_off);
+				intr->sde_irq_tbl[reg_idx].status_off) &
+				intr->cache_irq_mask[reg_idx];
 
 		/*
 		 * Search through matching intr status from irq map.

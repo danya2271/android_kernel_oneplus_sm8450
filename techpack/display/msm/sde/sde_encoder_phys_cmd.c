@@ -258,16 +258,18 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 		spin_unlock(phys_enc->enc_spinlock);
 	}
 
-	if (ctl->ops.get_scheduler_status)
-		scheduler_status = ctl->ops.get_scheduler_status(ctl);
+	if (sde_evtlog_is_enabled(sde_dbg_base_evtlog, SDE_EVTLOG_IRQ)) {
+		if (ctl->ops.get_scheduler_status)
+			scheduler_status = ctl->ops.get_scheduler_status(ctl);
 
-	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
-	SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0,
-		phys_enc->hw_pp->idx - PINGPONG_0, event, scheduler_status,
-		info[0].pp_idx, info[0].intf_idx, info[0].intf_frame_count,
-		info[0].wr_ptr_line_count,
-		info[1].pp_idx, info[1].intf_idx, info[1].intf_frame_count,
-		info[1].wr_ptr_line_count);
+		sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
+		SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0,
+			      phys_enc->hw_pp->idx - PINGPONG_0, event, scheduler_status,
+			      info[0].pp_idx, info[0].intf_idx, info[0].intf_frame_count,
+			      info[0].wr_ptr_line_count,
+			      info[1].pp_idx, info[1].intf_idx, info[1].intf_frame_count,
+			      info[1].wr_ptr_line_count);
+	}
 
 #ifdef OPLUS_FEATURE_DISPLAY
 	if (oplus_adfr_is_support()) {
@@ -359,9 +361,6 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
 	ctl = phys_enc->hw_ctl;
 
-	if (ctl && ctl->ops.get_scheduler_status)
-		scheduler_status = ctl->ops.get_scheduler_status(ctl);
-
 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
 	te_timestamp = list_first_entry_or_null(&cmd_enc->te_timestamp_list,
 				struct sde_encoder_phys_cmd_te_timestamp, list);
@@ -379,12 +378,17 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	}
 #endif /* OPLUS_FEATURE_DISPLAY */
 
-	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
-	SDE_EVT32_IRQ(DRMID(phys_enc->parent), scheduler_status, info[0].pp_idx,
-		info[0].intf_idx, info[0].intf_frame_count,
-		info[0].wr_ptr_line_count,
-		info[1].pp_idx, info[1].intf_idx, info[1].intf_frame_count,
-		info[1].wr_ptr_line_count);
+	if (sde_evtlog_is_enabled(sde_dbg_base_evtlog, SDE_EVTLOG_IRQ)) {
+		if (ctl && ctl->ops.get_scheduler_status)
+			scheduler_status = ctl->ops.get_scheduler_status(ctl);
+
+		sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
+		SDE_EVT32_IRQ(DRMID(phys_enc->parent), scheduler_status,
+			      info[0].pp_idx, info[0].intf_idx, info[0].intf_frame_count,
+			      info[0].wr_ptr_line_count,
+			      info[1].pp_idx, info[1].intf_idx, info[1].intf_frame_count,
+			      info[1].wr_ptr_line_count);
+	}
 
 	if (phys_enc->parent_ops.handle_vblank_virt)
 		phys_enc->parent_ops.handle_vblank_virt(phys_enc->parent,
@@ -452,12 +456,14 @@ static void sde_encoder_phys_cmd_wr_ptr_irq(void *arg, int irq_idx)
 		}
 	}
 
-	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
-	SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0, event,
-		qsync_mode, info[0].pp_idx, info[0].intf_idx,
-		info[0].intf_frame_count, info[0].wr_ptr_line_count,
-		info[1].pp_idx, info[1].intf_idx,
-		info[1].intf_frame_count, info[1].wr_ptr_line_count);
+	if (sde_evtlog_is_enabled(sde_dbg_base_evtlog, SDE_EVTLOG_IRQ)) {
+		sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
+		SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0, event,
+			      qsync_mode, info[0].pp_idx, info[0].intf_idx,
+			      info[0].intf_frame_count, info[0].wr_ptr_line_count,
+			      info[1].pp_idx, info[1].intf_idx,
+			      info[1].intf_frame_count, info[1].wr_ptr_line_count);
+	}
 
 	if (qsync_mode)
 		sde_encoder_override_tearcheck_rd_ptr(phys_enc);
