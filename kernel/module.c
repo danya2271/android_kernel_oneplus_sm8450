@@ -38,8 +38,10 @@
 #include <linux/sched.h>
 #include <linux/device.h>
 #include <linux/string.h>
+#include <linux/stringhash.h>
 #include <linux/mutex.h>
 #include <linux/rculist.h>
+#include <linux/hashtable.h>
 #include <linux/uaccess.h>
 #include <asm/cacheflush.h>
 #include <linux/set_memory.h>
@@ -4090,16 +4092,128 @@ void integrated_module_load_end(void)
 	mutex_unlock(&modloader_lock);
 }
 
+struct integrated_module_entry {
+	struct hlist_node node;
+	atomic_t *init_done;
+	initcall_entry_t *initcall;
+	char name[MODULE_NAME_LEN];
+};
+
+static struct hlist_head integrated_module_index[256] __ro_after_init;
+static bool integrated_module_index_ready __ro_after_init;
+
+static struct integrated_module_entry *
+find_integrated_module(const char *name)
+{
+	struct integrated_module_entry *entry;
+	unsigned int hash = full_name_hash(NULL, name, strlen(name));
+
+	hash_for_each_possible(integrated_module_index, entry, node, hash) {
+		if (!strcmp(entry->name, name))
+			return entry;
+	}
+
+	return NULL;
+}
+
+static int __init index_integrated_module(void *data, const char *name,
+					  struct module *mod, unsigned long addr)
+{
+	static const char done_prefix[] = "__initdone__kmod_";
+	static const char call_prefix[] = "__initcall__kmod_";
+	struct integrated_module_entry *entry;
+	char modname[MODULE_NAME_LEN];
+	unsigned int *count = data;
+	size_t len;
+	bool init_done;
+
+	if (mod)
+		return 0;
+
+	if (!strncmp(name, done_prefix, sizeof(done_prefix) - 1)) {
+		name += sizeof(done_prefix) - 1;
+		init_done = true;
+	} else if (!strncmp(name, call_prefix, sizeof(call_prefix) - 1)) {
+		name += sizeof(call_prefix) - 1;
+		init_done = false;
+	} else {
+		return 0;
+	}
+
+	len = strlen(name);
+	if (len <= 2 || strcmp(name + len - 2, "__"))
+		return 0;
+	len -= 2;
+	if (len >= sizeof(modname))
+		return 0;
+
+	memcpy(modname, name, len);
+	modname[len] = '\0';
+	entry = find_integrated_module(modname);
+	if (!entry) {
+		entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+		if (!entry)
+			return -ENOMEM;
+		memcpy(entry->name, modname, len + 1);
+		hash_add(integrated_module_index, &entry->node,
+			 full_name_hash(NULL, modname, len));
+		(*count)++;
+	}
+
+	if (init_done)
+		entry->init_done = (void *)addr;
+	else
+		entry->initcall = (void *)addr;
+
+	return 0;
+}
+
+static int __init integrated_module_index_init(void)
+{
+	struct integrated_module_entry *entry;
+	struct hlist_node *tmp;
+	unsigned int count = 0;
+	int bucket, ret;
+
+	if (!IS_ENABLED(CONFIG_INTEGRATE_MODULES))
+		return 0;
+
+	/* Resolve both symbols in one pass, before userspace loads any modules. */
+	ret = kallsyms_on_each_symbol(index_integrated_module, &count);
+	if (ret) {
+		hash_for_each_safe(integrated_module_index, bucket, tmp, entry, node) {
+			hash_del(&entry->node);
+			kfree(entry);
+		}
+		pr_warn("integrated modules: index unavailable, using symbol lookups\n");
+		return 0;
+	}
+
+	integrated_module_index_ready = true;
+	pr_info("integrated modules: indexed %u modules\n", count);
+	return 0;
+}
+late_initcall(integrated_module_index_init);
+
 static int load_integrated_module(const char *modname, const char __user *uargs)
 {
+	struct integrated_module_entry *indexed;
 	char *args, kmod[MODULE_NAME_LEN + 20];
 	initcall_entry_t *entry;
 	atomic_t *init_done;
 	int ret;
 
-	/* Find the initdone flag */
-	snprintf(kmod, sizeof(kmod), "__initdone__kmod_%s__", modname);
-	init_done = (void *)kallsyms_lookup_name(kmod);
+	if (integrated_module_index_ready) {
+		indexed = find_integrated_module(modname);
+		init_done = indexed ? indexed->init_done : NULL;
+		entry = indexed ? indexed->initcall : NULL;
+	} else {
+		snprintf(kmod, sizeof(kmod), "__initdone__kmod_%s__", modname);
+		init_done = (void *)kallsyms_lookup_name(kmod);
+		snprintf(kmod, sizeof(kmod), "__initcall__kmod_%s__", modname);
+		entry = init_done ? (void *)kallsyms_lookup_name(kmod) : NULL;
+	}
+
 	if (!init_done) {
 		/* Missing integrated entries are normal for built-in/unused modules. */
 		pr_debug("%s: module '%s' not found\n", __func__, modname);
@@ -4110,10 +4224,6 @@ static int load_integrated_module(const char *modname, const char __user *uargs)
 	args = strndup_user(uargs, ~0UL >> 1);
 	if (IS_ERR(args))
 		return PTR_ERR(args);
-
-	/* Find where the initcall entry is stored */
-	snprintf(kmod, sizeof(kmod), "__initcall__kmod_%s__", modname);
-	entry = (void *)kallsyms_lookup_name(kmod);
 
 	/* Initialize the module if it hasn't been initialized already */
 	if (!atomic_cmpxchg(init_done, 0, 1)) {
