@@ -13,9 +13,40 @@
 /* please just only include linux common head file to keep me pure */
 #include <linux/device.h>
 #include <linux/hrtimer.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
 
-static u32 oplus_adfr_auto_min_fps = 0;
-static u32 oplus_adfr_auto_sw_fps = 0;
+/* Requested codes are distinct from the last successfully sent commands. */
+struct oplus_adfr_state {
+	/* Protect requests and their generation against IRQ/commit updates. */
+	spinlock_t lock;
+	/* Serialize DSI updates and idle transitions; never acquired in IRQ. */
+	struct mutex update_lock;
+	u32 config;
+	u32 auto_mode;
+	u32 min_fps;
+	u32 applied_auto_mode;
+	u32 applied_min_fps;
+	u32 sw_fps;
+	u32 measured_fps;
+	u64 sequence;
+	/* Permanent command-table errors wait for a new request or timing. */
+	const void *failed_timing;
+	u64 failed_sequence;
+	int last_error;
+	bool auto_mode_updated;
+	bool min_fps_updated;
+	bool fakeframe_updated;
+	bool fakeframe;
+	bool fakeframe_requested;
+	bool idle;
+	bool restore_pending;
+	bool mode_valid;
+	bool min_fps_valid;
+	bool has_request;
+	bool hwc_sw_fps;
+	bool filter_auto_on;
+};
 
 enum oplus_vsync_mode {
 	OPLUS_DOUBLE_TE_VSYNC = 0,
@@ -104,8 +135,10 @@ int oplus_display_set_dynamic_te(void *buf);
 int oplus_display_get_dynamic_te(void *buf);
 /* --------------- adfr misc ---------------*/
 void oplus_adfr_init(void *dsi_panel);
-inline bool oplus_adfr_is_support(void);
-inline bool oplus_adfr_idle_mode_is_enable(void);
+void oplus_adfr_panel_init(void *dsi_panel);
+void oplus_adfr_panel_deinit(void *dsi_panel);
+bool oplus_adfr_is_support(void);
+bool oplus_adfr_idle_mode_is_enable(void);
 ssize_t oplus_adfr_get_debug(struct kobject *obj,
 	struct kobj_attribute *attr, char *buf);
 ssize_t oplus_adfr_set_debug(struct kobject *obj,
@@ -211,9 +244,11 @@ void sde_encoder_adfr_aod_fod_source_switch(void *dsi_display, int te_source);
 
 /* --------------- auto mode ---------------*/
 /* Add for auto on cmd filter */
-bool oplus_adfr_auto_on_cmd_filter_set(bool enable);
-bool oplus_adfr_auto_on_cmd_filter_get(void);
-int oplus_adfr_handle_auto_mode(u32 propval);
+bool oplus_adfr_auto_on_cmd_filter_set(void *dsi_panel, bool enable);
+bool oplus_adfr_auto_on_cmd_filter_get(void *dsi_panel);
+int oplus_adfr_validate_auto_mode(u32 propval);
+int oplus_adfr_handle_auto_mode(void *dsi_panel, u32 propval);
+void oplus_adfr_update_sw_fps(void *drm_crtc, u32 fps);
 int dsi_display_auto_mode_update(void *dsi_display);
 bool oplus_adfr_has_auto_mode(u32 value);
 int oplus_adfr_send_min_fps_event(unsigned int h_skew, unsigned int min_fps);

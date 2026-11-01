@@ -176,11 +176,10 @@ static void sde_crtc_calc_fps(struct sde_crtc *sde_crtc)
 				(unsigned int)fps%10);
 		sde_crtc->fps_info.last_sampled_time_us = current_time_us;
 		sde_crtc->fps_info.frame_count = 0;
-		oplus_adfr_auto_min_fps = fps/10;
-		oplus_adfr_auto_sw_fps = fps/10;
 		msm_panel_fps = fps/10;
-		if ((fps/10)>=1 && (fps/10) <=59)
-			oplus_adfr_send_min_fps_event(2,fps/10);
+#ifdef OPLUS_FEATURE_DISPLAY
+		oplus_adfr_update_sw_fps(&sde_crtc->base, fps / 10);
+#endif
 	}
 
 	if (!sde_crtc->fps_info.time_buf)

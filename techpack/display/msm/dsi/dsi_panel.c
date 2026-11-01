@@ -4474,6 +4474,10 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 
 	mutex_init(&panel->panel_tx_lock);
 
+#ifdef OPLUS_FEATURE_DISPLAY
+	oplus_adfr_panel_init(panel);
+#endif
+
 	return panel;
 error:
 	kfree(panel);
@@ -4482,6 +4486,9 @@ error:
 
 void dsi_panel_put(struct dsi_panel *panel)
 {
+#ifdef OPLUS_FEATURE_DISPLAY
+	oplus_adfr_panel_deinit(panel);
+#endif
 	drm_panel_remove(&panel->drm_panel);
 
 	/* free resources allocated for ESD check */

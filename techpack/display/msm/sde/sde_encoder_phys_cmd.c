@@ -327,6 +327,7 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	unsigned long lock_flags;
 #ifdef OPLUS_FEATURE_DISPLAY
 	struct sde_connector *c_conn = NULL;
+	struct dsi_display *display;
 	static unsigned long now;
 #endif /* OPLUS_FEATURE_DISPLAY */
 
@@ -401,9 +402,15 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 		}
 		SDE_DEBUG("frame_state = %d\n", atomic_read(&phys_enc->frame_state));
 
-		if (oplus_adfr_auto_on_cmd_filter_get()) {
+		display = c_conn && c_conn->connector_type ==
+						  DRM_MODE_CONNECTOR_DSI ?
+				  c_conn->display :
+				  NULL;
+		if (display &&
+		    oplus_adfr_auto_on_cmd_filter_get(display->panel)) {
 			/* when the rd_ptr_irq comes there is no need to filter auto on cmd anymore */
-			oplus_adfr_auto_on_cmd_filter_set(false);
+			oplus_adfr_auto_on_cmd_filter_set(display->panel,
+							  false);
 		}
 
 		if (oplus_adfr_backlight_cmd_filter_get()) {

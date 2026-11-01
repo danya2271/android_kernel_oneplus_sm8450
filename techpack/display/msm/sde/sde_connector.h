@@ -907,6 +907,14 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 		int connector_poll,
 		int connector_type);
 
+#ifdef OPLUS_FEATURE_DISPLAY
+/**
+ * sde_connector_prepare_adfr - capture policy after a successful atomic swap
+ * @connector: Pointer to drm connector object
+ */
+void sde_connector_prepare_adfr(struct drm_connector *connector);
+#endif
+
 /**
  * sde_connector_prepare_fence - prepare fence support for current commit
  * @connector: Pointer to drm connector object

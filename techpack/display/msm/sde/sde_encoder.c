@@ -5045,10 +5045,8 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 		oplus_sync_panel_brightness_v2(drm_enc);
 	}
 
-	if (oplus_adfr_is_support() && oplus_adfr_idle_mode_is_enable()) {
-		SDE_DEBUG("kVRR exit idle mode\n");
-		oplus_adfr_handle_idle_mode(sde_enc, false);
-	}
+	/* A debug disable must not strand a panel at its idle minimum. */
+	oplus_adfr_handle_idle_mode(sde_enc, false);
 
 	oplus_display_pwm_turbo_kickoff();
 

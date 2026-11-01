@@ -1667,6 +1667,10 @@ static void sde_kms_prepare_fence(struct msm_kms *kms,
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state;
+#ifdef OPLUS_FEATURE_DISPLAY
+	struct drm_connector *connector;
+	struct drm_connector_state *new_conn_state;
+#endif
 	int i;
 
 	if (!kms || !old_state || !old_state->dev || !old_state->acquire_ctx) {
@@ -1675,6 +1679,12 @@ static void sde_kms_prepare_fence(struct msm_kms *kms,
 	}
 
 	SDE_ATRACE_BEGIN("sde_kms_prepare_fence");
+
+#ifdef OPLUS_FEATURE_DISPLAY
+	/* Capture validated requests after swap, including powered-off CRTCs. */
+	for_each_new_connector_in_state(old_state, connector, new_conn_state, i)
+		sde_connector_prepare_adfr(connector);
+#endif
 
 	/* old_state actually contains updated crtc pointers */
 	for_each_old_crtc_in_state(old_state, crtc, old_crtc_state, i) {

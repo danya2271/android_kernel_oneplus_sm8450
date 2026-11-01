@@ -1155,11 +1155,6 @@ void sde_connector_set_qsync_params(struct drm_connector *connector)
 
 #ifdef OPLUS_FEATURE_DISPLAY
 	if (oplus_adfr_is_support()) {
-		/*
-		prop_dirty = msm_property_is_dirty(&c_conn->property_info,
-						&c_state->property_state,
-						CONNECTOR_PROP_QSYNC_MIN_FPS);
-		*/
 		prop_dirty = oplus_adfr_qsync_mode_minfps_is_updated();
 		if (prop_dirty) {
 			/*
@@ -2101,14 +2096,10 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		if (oplus_adfr_is_support()) {
 			SDE_INFO("kVRR set qsync minfps dirty with %llu[%08X]\n", val, val);
 
-			/* minfps maybe disappear after state change, so handle it early */
-			if (oplus_adfr_handle_auto_mode(val)) {
-				SDE_DEBUG("kVRR updated auto mode %08X\n", val);
-			} else {
-				oplus_adfr_handle_qsync_mode_minfps(val);
-				SDE_DEBUG("kVRR updated qsync mode minfps %08X\n", val);
-			}
-
+			/* TEST_ONLY and aborted atomic states must not change ADFR. */
+			rc = oplus_adfr_validate_auto_mode(val);
+			if (rc)
+				break;
 			msm_property_set_dirty(&c_conn->property_info,
 					&c_state->property_state, idx);
 		}
@@ -2225,6 +2216,39 @@ void sde_conn_timeline_status(struct drm_connector *conn)
 	c_conn = to_sde_connector(conn);
 	sde_fence_timeline_status(c_conn->retire_fence, &conn->base);
 }
+
+#ifdef OPLUS_FEATURE_DISPLAY
+void sde_connector_prepare_adfr(struct drm_connector *connector)
+{
+	struct sde_connector *c_conn;
+	struct sde_connector_state *c_state;
+	struct dsi_display *display;
+	u32 value;
+	int rc;
+
+	if (!connector || !connector->state ||
+	    connector->connector_type != DRM_MODE_CONNECTOR_DSI ||
+	    !oplus_adfr_is_support())
+		return;
+	c_conn = to_sde_connector(connector);
+	c_state = to_sde_connector_state(connector->state);
+	display = c_conn->display;
+	if (!display || !display->panel || !display->panel->type ||
+	    strcmp(display->panel->type, "primary"))
+		return;
+	if (!msm_property_is_dirty(&c_conn->property_info, &c_state->property_state,
+				   CONNECTOR_PROP_QSYNC_MIN_FPS))
+		return;
+	value = sde_connector_get_property(connector->state, CONNECTOR_PROP_QSYNC_MIN_FPS);
+	if (oplus_adfr_has_auto_mode(value)) {
+		rc = oplus_adfr_handle_auto_mode(display->panel, value);
+		if (rc < 0)
+			SDE_ERROR_CONN(c_conn, "ADFR request failed: %d\n", rc);
+	} else {
+		oplus_adfr_handle_qsync_mode_minfps(value);
+	}
+}
+#endif
 
 void sde_connector_prepare_fence(struct drm_connector *connector)
 {

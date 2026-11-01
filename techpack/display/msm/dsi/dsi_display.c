@@ -4537,7 +4537,8 @@ static int dsi_display_res_init(struct dsi_display *display)
 	}
 
 #ifdef OPLUS_FEATURE_DISPLAY
-	oplus_adfr_init(display->panel_node);
+	if (!strcmp(display->display_type, "primary"))
+		oplus_adfr_init(display->panel_node);
 #endif /* OPLUS_FEATURE_DISPLAY */
 
 	display->panel = dsi_panel_get(&display->pdev->dev,
@@ -8819,9 +8820,12 @@ int dsi_display_pre_commit(void *display,
 
 #ifdef OPLUS_FEATURE_DISPLAY
 	ret = dsi_display_auto_mode_update(display);
-	if (ret)
+	if (ret && ret != -EAGAIN) {
 		pr_err("%s failed to send auto mode update commands\n",
 			__func__);
+		if (!rc)
+			rc = ret;
+	}
 	SDE_EVT32(params->qsync_mode, params->qsync_dynamic_min_fps, ret);
 #endif /* OPLUS_FEATURE_DISPLAY */
 

@@ -24,6 +24,7 @@
 #include "msm_drv.h"
 #ifdef OPLUS_FEATURE_DISPLAY
 #include "../oplus/oplus_dsi_support.h"
+#include "../oplus/oplus_adfr.h"
 #include <linux/soc/qcom/panel_event_notifier.h>
 
 struct oplus_brightness_alpha {
@@ -398,6 +399,7 @@ struct dsi_panel {
 
 	struct dsi_panel_ops panel_ops;
 #ifdef OPLUS_FEATURE_DISPLAY
+	struct oplus_adfr_state adfr;
 	bool need_power_on_backlight;
 	struct oplus_brightness_alpha *dc_ba_seq;
 	int dc_ba_count;
