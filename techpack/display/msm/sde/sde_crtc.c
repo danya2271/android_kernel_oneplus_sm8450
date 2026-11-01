@@ -6953,7 +6953,7 @@ static void vblank_ctrl_worker(struct kthread_work *work)
 
 	sde_crtc_vblank(priv->crtcs[cur_work->crtc_id], cur_work->enable);
 
-	kmem_cache_free(kmem_vblank_work_pool, cur_work);
+	kfree(cur_work);
 }
 
 static int vblank_ctrl_queue_work(struct msm_drm_private *priv,

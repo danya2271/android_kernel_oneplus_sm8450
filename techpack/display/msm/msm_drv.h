@@ -77,8 +77,6 @@ struct vblank_work {
 	struct msm_drm_private *priv;
 };
 
-static struct kmem_cache *kmem_vblank_work_pool;
-
 #define NUM_DOMAINS    4    /* one for KMS, then one per gpu core (?) */
 #define MAX_CRTCS      16
 #define MAX_PLANES     20
