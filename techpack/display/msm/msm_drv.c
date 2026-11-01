@@ -40,7 +40,6 @@
 
 #include <linux/of_address.h>
 #include <linux/kthread.h>
-#include <linux/atomic.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_of.h>
 #include <drm/drm_irq.h>
@@ -2317,20 +2316,6 @@ static void __exit msm_drm_unregister(void)
 	sde_rsc_unregister();
 	platform_driver_unregister(&msm_platform_driver);
 }
-
-#if defined(MODULE) && defined(CONFIG_INTEGRATE_MODULES)
-extern atomic_t __initdone__kmod_msm_drm__;
-
-static int __init msm_drm_integrated_register(void)
-{
-	if (atomic_cmpxchg(&__initdone__kmod_msm_drm__, 0, 1))
-		return 0;
-
-	return msm_drm_register();
-}
-
-__define_initcall(msm_drm_integrated_register, 4);
-#endif
 
 module_init(msm_drm_register);
 module_exit(msm_drm_unregister);
