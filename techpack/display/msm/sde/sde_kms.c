@@ -54,6 +54,7 @@
 #include "sde_reg_dma.h"
 #include "sde_connector.h"
 #include "sde_vm.h"
+#include "sde_console.h"
 
 #include <linux/qcom_scm.h>
 #include <linux/qcom-iommu-util.h>
@@ -1303,6 +1304,7 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 		return;
 
 	if (splash_display->cont_splash_enabled) {
+		sde_console_fini(sde_kms->dev);
 		sde_encoder_update_caps_for_cont_splash(splash_display->encoder,
 				splash_display, false);
 		_sde_kms_free_splash_display_data(sde_kms, splash_display);

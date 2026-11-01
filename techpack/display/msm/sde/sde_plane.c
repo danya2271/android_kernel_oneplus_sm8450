@@ -2241,6 +2241,39 @@ int sde_plane_validate_src_addr(struct drm_plane *plane,
 	return ret;
 }
 
+u32 sde_plane_get_source_addr(struct drm_plane *plane)
+{
+	struct sde_plane *psde = to_sde_plane(plane);
+
+	if (!psde || !psde->pipe_hw || !psde->pipe_hw->ops.get_sourceaddress)
+		return 0;
+
+	return psde->pipe_hw->ops.get_sourceaddress(psde->pipe_hw,
+			is_sde_plane_virtual(plane));
+}
+
+u32 sde_plane_get_source_stride(struct drm_plane *plane)
+{
+	struct sde_plane *psde = to_sde_plane(plane);
+
+	if (!psde || !psde->pipe_hw || !psde->pipe_hw->ops.get_source_stride)
+		return 0;
+
+	return psde->pipe_hw->ops.get_source_stride(psde->pipe_hw,
+			is_sde_plane_virtual(plane));
+}
+
+u32 sde_plane_get_source_bpp(struct drm_plane *plane)
+{
+	struct sde_plane *psde = to_sde_plane(plane);
+
+	if (!psde || !psde->pipe_hw || !psde->pipe_hw->ops.get_source_bpp)
+		return 0;
+
+	return psde->pipe_hw->ops.get_source_bpp(psde->pipe_hw,
+			is_sde_plane_virtual(plane));
+}
+
 static inline bool _sde_plane_is_pre_downscale_enabled(
 		struct sde_hw_inline_pre_downscale_cfg *pre_down)
 {

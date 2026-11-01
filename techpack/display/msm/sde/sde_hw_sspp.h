@@ -362,6 +362,8 @@ struct sde_hw_sspp_ops {
 	 * @is_virtual: If true get address programmed for R1 in multirect
 	 */
 	u32 (*get_sourceaddress)(struct sde_hw_pipe *ctx, bool is_virtual);
+	u32 (*get_source_stride)(struct sde_hw_pipe *ctx, bool is_virtual);
+	u32 (*get_source_bpp)(struct sde_hw_pipe *ctx, bool is_virtual);
 
 	/**
 	 * setup_csc - setup color space conversion

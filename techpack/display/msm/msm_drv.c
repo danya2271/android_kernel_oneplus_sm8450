@@ -55,6 +55,7 @@
 #include "msm_mmu.h"
 #include "sde_wb.h"
 #include "sde_dbg.h"
+#include "sde/sde_console.h"
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
 #include "dsi_iris_api.h"
 #endif
@@ -400,6 +401,7 @@ static int msm_drm_uninit(struct device *dev)
 	struct msm_vm_client_entry *client_entry, *tmp;
 	int i;
 
+	sde_console_fini(ddev);
 	flush_workqueue(priv->wq);
 	pm_runtime_get_sync(dev);
 
@@ -950,6 +952,11 @@ static int msm_drm_component_init(struct device *dev)
 	}
 
 	drm_kms_helper_poll_init(ddev);
+	if (get_mdp_ver(pdev) == KMS_SDE) {
+		ret = sde_console_init_splash(ddev);
+		if (ret)
+			dev_info(dev, "SDE splash console unavailable: %d\n", ret);
+	}
 
 	return 0;
 
@@ -1016,6 +1023,9 @@ static int context_init(struct drm_device *dev, struct drm_file *file)
 
 static int msm_open(struct drm_device *dev, struct drm_file *file)
 {
+	if (drm_is_primary_client(file) && !(current->flags & PF_KTHREAD))
+		sde_console_user_open(dev);
+
 	return context_init(dev, file);
 }
 

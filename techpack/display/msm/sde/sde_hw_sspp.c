@@ -998,6 +998,36 @@ u32 sde_hw_sspp_get_source_addr(struct sde_hw_pipe *ctx, bool is_virtual)
 	return SDE_REG_READ(&ctx->hw, offset);
 }
 
+static u32 sde_hw_sspp_get_source_stride(struct sde_hw_pipe *ctx,
+		bool is_virtual)
+{
+	u32 idx;
+	u32 stride;
+
+	if (!ctx || _sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx))
+		return 0;
+
+	stride = SDE_REG_READ(&ctx->hw, SSPP_SRC_YSTRIDE0 + idx);
+	return is_virtual ? stride >> 16 : stride & 0xffff;
+}
+
+static u32 sde_hw_sspp_get_source_bpp(struct sde_hw_pipe *ctx,
+		bool is_virtual)
+{
+	u32 idx;
+	u32 format;
+
+	if (!ctx || _sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx))
+		return 0;
+
+	format = SDE_REG_READ(&ctx->hw, (is_virtual ?
+			SSPP_SRC_FORMAT_REC1 : SSPP_SRC_FORMAT) + idx);
+	if (format & BIT(16))
+		return 0;
+
+	return ((format >> 9) & 0x3) + 1;
+}
+
 static void sde_hw_sspp_setup_csc(struct sde_hw_pipe *ctx,
 		struct sde_csc_cfg *data)
 {
@@ -1477,6 +1507,8 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 		c->ops.setup_rects = sde_hw_sspp_setup_rects;
 		c->ops.setup_sourceaddress = sde_hw_sspp_setup_sourceaddress;
 		c->ops.get_sourceaddress = sde_hw_sspp_get_source_addr;
+		c->ops.get_source_stride = sde_hw_sspp_get_source_stride;
+		c->ops.get_source_bpp = sde_hw_sspp_get_source_bpp;
 		c->ops.setup_solidfill = sde_hw_sspp_setup_solidfill;
 		c->ops.setup_pe = sde_hw_sspp_setup_pe_config;
 		c->ops.setup_secure_address = sde_hw_sspp_setup_secure;

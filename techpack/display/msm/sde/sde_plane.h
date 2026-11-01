@@ -274,6 +274,9 @@ void sde_plane_clear_multirect(const struct drm_plane_state *drm_state);
  */
 int sde_plane_validate_src_addr(struct drm_plane *plane,
 		unsigned long base_addr, u32 size);
+u32 sde_plane_get_source_addr(struct drm_plane *plane);
+u32 sde_plane_get_source_stride(struct drm_plane *plane);
+u32 sde_plane_get_source_bpp(struct drm_plane *plane);
 
 /**
  * sde_plane_wait_input_fence - wait for input fence object
