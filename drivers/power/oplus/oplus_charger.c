@@ -1518,8 +1518,8 @@ static ssize_t chg_cycle_write(struct file *file, const char __user *buff,
 			mcu_status = 0;
 		}
 		cancel_delayed_work_sync(&g_charger_chip->update_work);
-		queue_delayed_work(system_power_efficient_wq, &g_charger_chip->update_work,
-				   round_jiffies_relative(msecs_to_jiffies(1500)));
+		schedule_delayed_work(&g_charger_chip->update_work,
+				      round_jiffies_relative(msecs_to_jiffies(1500)));
 		charger_xlog_printk(CHG_LOG_CRTI, "wake up update_work\n");
 	} else if ((strncmp(proc_chg_cycle_data, "dis808", 6) == 0) ||
 		    (strncmp(proc_chg_cycle_data, "user_disable", 12) == 0)) {
@@ -3964,8 +3964,7 @@ int oplus_chg_init(struct oplus_chg_chip *chip)
 	rc = init_ui_soc_decimal_proc(chip);
 	rc = init_charger_proc(chip);
 	/*ye.zhang add end*/
-	queue_delayed_work(system_power_efficient_wq, &chip->update_work,
-			   OPLUS_CHG_UPDATE_INIT_DELAY);
+	schedule_delayed_work(&chip->update_work, OPLUS_CHG_UPDATE_INIT_DELAY);
 #ifndef CONFIG_DISABLE_OPLUS_FUNCTION
 	if ((get_eng_version() == HIGH_TEMP_AGING) || oplus_is_ptcrb_version())
 		schedule_delayed_work(&chip->aging_check_work,
@@ -12579,11 +12578,11 @@ static void oplus_chg_update_work(struct work_struct *work)
 	oplus_chg_other_thing(chip);
 	/* run again after interval */
 	if (timer_pending(&chip->update_work.timer) && !delayed_work_pending(&chip->update_work)) {
-		mod_delayed_work(system_power_efficient_wq, &chip->update_work,
+		mod_delayed_work(system_wq, &chip->update_work,
 				 OPLUS_CHG_UPDATE_INTERVAL(oplus_chg_update_slow(chip)));
 	} else {
-		queue_delayed_work(system_power_efficient_wq, &chip->update_work,
-				   OPLUS_CHG_UPDATE_INTERVAL(oplus_chg_update_slow(chip)));
+		schedule_delayed_work(&chip->update_work,
+				      OPLUS_CHG_UPDATE_INTERVAL(oplus_chg_update_slow(chip)));
 	}
 }
 void oplus_chg_cancel_update_work_sync(void)
@@ -12601,7 +12600,7 @@ void oplus_chg_restart_update_work(void)
 		return;
 	}
 
-	queue_delayed_work(system_power_efficient_wq, &g_charger_chip->update_work, 0);
+	schedule_delayed_work(&g_charger_chip->update_work, 0);
 }
 bool oplus_chg_wake_update_work(void)
 {
@@ -12611,7 +12610,7 @@ bool oplus_chg_wake_update_work(void)
 	}
 
 	if (g_charger_chip->update_work.work.func) {
-		mod_delayed_work(system_power_efficient_wq, &g_charger_chip->update_work, 0);
+		mod_delayed_work(system_wq, &g_charger_chip->update_work, 0);
 	}
 	return true;
 }
