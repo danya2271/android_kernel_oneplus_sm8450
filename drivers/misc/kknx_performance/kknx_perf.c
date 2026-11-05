@@ -19,6 +19,7 @@
 #define KKNX_CPU_MINIMAL_X100		2000
 #define KKNX_CPU_HIGH_X100		5000
 #define KKNX_GPU_HIGH_X100		3000
+#define KKNX_CPU_MAX_CAP_PERCENT	60
 
 struct kknx_window {
 	u64 busy[KKNX_WINDOW_SAMPLES];
@@ -41,7 +42,9 @@ struct kknx_gpu_window {
 struct kknx_cpu_floor {
 	struct cpufreq_policy *policy;
 	struct freq_qos_request request;
+	struct freq_qos_request max_request;
 	s32 floor_khz;
+	s32 max_khz;
 };
 
 struct kknx_perf_state {
@@ -52,6 +55,7 @@ struct kknx_perf_state {
 	struct kknx_gpu_window gpu;
 	struct kknx_cpu_floor cpu_floors[NR_CPUS];
 	bool cpu_floors_active;
+	bool cpu_boost_active;
 	enum kknx_perf_load_level level;
 	bool probe_60hz;
 	bool sample_valid;
@@ -63,6 +67,7 @@ struct kknx_perf_state {
 
 static struct kknx_perf_state kknx_perf;
 static DEFINE_MUTEX(kknx_display_ops_lock);
+static DEFINE_MUTEX(kknx_cpu_qos_lock);
 static const struct kknx_perf_display_ops *kknx_display_ops;
 
 #if IS_ENABLED(CONFIG_QCOM_DCVS)
@@ -318,6 +323,48 @@ bool kknx_perf_use_minimal_cpu_floor(void)
 }
 EXPORT_SYMBOL_GPL(kknx_perf_use_minimal_cpu_floor);
 
+static void kknx_cpu_max_cap_update(struct kknx_cpu_floor *floor,
+				    s32 max_khz)
+{
+	if (!freq_qos_request_active(&floor->max_request) ||
+	    max_khz == floor->max_khz ||
+	    freq_qos_update_request(&floor->max_request, max_khz))
+		return;
+
+	floor->max_khz = max_khz;
+	if (max_khz == FREQ_QOS_MAX_DEFAULT_VALUE)
+		pr_info_ratelimited("kknx_perf: cpu%u max cap released\n",
+				    floor->policy->cpu);
+	else
+		pr_info_ratelimited("kknx_perf: cpu%u max cap %d kHz\n",
+				    floor->policy->cpu, max_khz);
+}
+
+void kknx_perf_set_cpu_boost_active(bool active)
+{
+	WRITE_ONCE(kknx_perf.cpu_boost_active, active);
+}
+EXPORT_SYMBOL_GPL(kknx_perf_set_cpu_boost_active);
+
+void kknx_perf_clear_cpu_max_cap_for_boost(void)
+{
+	struct kknx_cpu_floor *floor;
+	int i;
+
+	if (!READ_ONCE(kknx_perf.cpu_boost_active))
+		return;
+
+	mutex_lock(&kknx_cpu_qos_lock);
+	for (i = 0; i < ARRAY_SIZE(kknx_perf.cpu_floors); i++) {
+		floor = &kknx_perf.cpu_floors[i];
+		if (floor->policy)
+			kknx_cpu_max_cap_update(floor,
+						FREQ_QOS_MAX_DEFAULT_VALUE);
+	}
+	mutex_unlock(&kknx_cpu_qos_lock);
+}
+EXPORT_SYMBOL_GPL(kknx_perf_clear_cpu_max_cap_for_boost);
+
 static bool kknx_sample_cpu(u64 *busy_delta, u64 *total_delta)
 {
 	struct kernel_cpustat snapshot;
@@ -377,24 +424,57 @@ static struct kknx_cpu_floor *kknx_find_free_cpu_floor(void)
 	return NULL;
 }
 
+static unsigned int kknx_cpu_max_cap_freq(struct cpufreq_policy *policy)
+{
+	struct cpufreq_frequency_table *pos;
+	unsigned int min_khz = policy->cpuinfo.min_freq;
+	unsigned int max_khz = policy->cpuinfo.max_freq;
+	unsigned int target_khz, cap_khz = min_khz;
+
+	if (max_khz <= min_khz)
+		return min_khz;
+
+	target_khz = min_khz +
+		div_u64((u64)(max_khz - min_khz) *
+			KKNX_CPU_MAX_CAP_PERCENT, 100);
+	if (!policy->freq_table)
+		return target_khz;
+
+	cpufreq_for_each_valid_entry(pos, policy->freq_table) {
+		if (pos->frequency >= min_khz &&
+		    pos->frequency <= target_khz &&
+		    pos->frequency > cap_khz)
+			cap_khz = pos->frequency;
+	}
+
+	return cap_khz;
+}
+
 static void kknx_cpu_floors_release(void)
 {
 	struct kknx_cpu_floor *floor;
 	int i;
 
+	mutex_lock(&kknx_cpu_qos_lock);
 	if (!kknx_perf.cpu_floors_active)
-		return;
+		goto out;
 
 	for (i = 0; i < ARRAY_SIZE(kknx_perf.cpu_floors); i++) {
 		floor = &kknx_perf.cpu_floors[i];
 		if (!floor->policy)
 			continue;
-		freq_qos_remove_request(&floor->request);
+		if (freq_qos_request_active(&floor->max_request))
+			freq_qos_remove_request(&floor->max_request);
+		if (freq_qos_request_active(&floor->request))
+			freq_qos_remove_request(&floor->request);
 		cpufreq_cpu_put(floor->policy);
 		floor->policy = NULL;
 		floor->floor_khz = 0;
+		floor->max_khz = 0;
 	}
 	kknx_perf.cpu_floors_active = false;
+out:
+	mutex_unlock(&kknx_cpu_qos_lock);
 }
 
 static void kknx_cpu_floors_update(enum kknx_perf_load_level level)
@@ -402,12 +482,14 @@ static void kknx_cpu_floors_update(enum kknx_perf_load_level level)
 	struct kknx_cpu_floor *floor;
 	struct cpufreq_policy *policy;
 	unsigned int cpu, leader;
-	unsigned int target_khz;
+	unsigned int target_khz, max_khz;
+	bool cap_enabled;
 	int i, ret;
 
-	if (level == KKNX_PERF_LEVEL_UNKNOWN)
-		return;
+	cap_enabled = level == KKNX_PERF_LEVEL_MINIMAL &&
+		!READ_ONCE(kknx_perf.cpu_boost_active);
 
+	mutex_lock(&kknx_cpu_qos_lock);
 	for_each_online_cpu(cpu) {
 		policy = cpufreq_cpu_get(cpu);
 		if (!policy)
@@ -422,15 +504,27 @@ static void kknx_cpu_floors_update(enum kknx_perf_load_level level)
 		if (floor) {
 			if (level == KKNX_PERF_LEVEL_MINIMAL)
 				target_khz = policy->cpuinfo.min_freq;
-			else
+			else if (level != KKNX_PERF_LEVEL_UNKNOWN)
 				target_khz = max(policy->cur,
 						 (unsigned int)floor->floor_khz);
-			if (target_khz != floor->floor_khz) {
+			else
+				target_khz = floor->floor_khz;
+			if (level != KKNX_PERF_LEVEL_UNKNOWN &&
+			    target_khz != floor->floor_khz) {
 				ret = freq_qos_update_request(&floor->request,
 							      target_khz);
 				if (!ret)
 					floor->floor_khz = target_khz;
 			}
+			max_khz = cap_enabled ?
+				kknx_cpu_max_cap_freq(policy) :
+				FREQ_QOS_MAX_DEFAULT_VALUE;
+			kknx_cpu_max_cap_update(floor, max_khz);
+			cpufreq_cpu_put(policy);
+			continue;
+		}
+
+		if (level == KKNX_PERF_LEVEL_UNKNOWN) {
 			cpufreq_cpu_put(policy);
 			continue;
 		}
@@ -443,15 +537,28 @@ static void kknx_cpu_floors_update(enum kknx_perf_load_level level)
 		target_khz = level == KKNX_PERF_LEVEL_MINIMAL ?
 			policy->cpuinfo.min_freq : policy->cur;
 		ret = freq_qos_add_request(&policy->constraints,
+					   &floor->max_request, FREQ_QOS_MAX,
+					   FREQ_QOS_MAX_DEFAULT_VALUE);
+		if (ret) {
+			cpufreq_cpu_put(policy);
+			continue;
+		}
+		ret = freq_qos_add_request(&policy->constraints,
 					   &floor->request, FREQ_QOS_MIN,
 					   target_khz);
 		if (ret) {
+			freq_qos_remove_request(&floor->max_request);
 			cpufreq_cpu_put(policy);
 			continue;
 		}
 		floor->policy = policy;
 		floor->floor_khz = target_khz;
+		floor->max_khz = FREQ_QOS_MAX_DEFAULT_VALUE;
 		kknx_perf.cpu_floors_active = true;
+		max_khz = cap_enabled ?
+			kknx_cpu_max_cap_freq(policy) :
+			FREQ_QOS_MAX_DEFAULT_VALUE;
+		kknx_cpu_max_cap_update(floor, max_khz);
 	}
 
 	/* Drop references for policies removed while the floor was active. */
@@ -460,12 +567,17 @@ static void kknx_cpu_floors_update(enum kknx_perf_load_level level)
 		if (floor->policy &&
 		    !cpumask_intersects(floor->policy->related_cpus,
 					cpu_online_mask)) {
-			freq_qos_remove_request(&floor->request);
+			if (freq_qos_request_active(&floor->max_request))
+				freq_qos_remove_request(&floor->max_request);
+			if (freq_qos_request_active(&floor->request))
+				freq_qos_remove_request(&floor->request);
 			cpufreq_cpu_put(floor->policy);
 			floor->policy = NULL;
 			floor->floor_khz = 0;
+			floor->max_khz = 0;
 		}
 	}
+	mutex_unlock(&kknx_cpu_qos_lock);
 }
 
 static void kknx_apply_level(enum kknx_perf_load_level level,
@@ -553,17 +665,18 @@ static void kknx_perf_sample_work(struct work_struct *work)
 		WRITE_ONCE(kknx_perf.display_hz, display_hz);
 		WRITE_ONCE(kknx_perf.display_hz_valid, true);
 		WRITE_ONCE(kknx_perf.sample_valid, true);
+		kknx_cpu_floors_update(level);
 		kknx_apply_level(level, gpu_freq, probe_60hz);
 		if (refresh_changed && !policy_changed)
 			cpu_input_boost_update_policy();
-		kknx_cpu_floors_update(level);
 		kknx_dcvs_apply(level == KKNX_PERF_LEVEL_MINIMAL);
 		if (level == KKNX_PERF_LEVEL_HIGH && gpu_freq >
 		    kknx_perf.gpu_floor_hz) {
 			if (!kknx_set_gpu_min_freq(gpu_freq))
 				kknx_perf.gpu_floor_hz = gpu_freq;
 		}
-	}
+	} else
+		kknx_cpu_floors_update(KKNX_PERF_LEVEL_UNKNOWN);
 
 	queue_delayed_work(system_freezable_wq, &kknx_perf.sample_work,
 			   KKNX_SAMPLE_PERIOD);

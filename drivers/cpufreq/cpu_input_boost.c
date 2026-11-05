@@ -236,6 +236,14 @@ static bool update_online_cpu_policy(void)
 	unsigned int cpu;
 	struct cpufreq_policy *policy;
 	bool policies_ready = true;
+	bool boost_active;
+
+	boost_active = !test_bit(SCREEN_OFF, &boost_drv_g.state) &&
+		(test_bit(INPUT_BOOST, &boost_drv_g.state) ||
+		 test_bit(MAX_BOOST, &boost_drv_g.state));
+	kknx_perf_set_cpu_boost_active(boost_active);
+	if (boost_active)
+		kknx_perf_clear_cpu_max_cap_for_boost();
 
 	get_online_cpus();
 	for_each_online_cpu(cpu) {
@@ -297,6 +305,7 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 				     new_expires) != curr_expires);
 
 	set_bit(MAX_BOOST, &b->state);
+	kknx_perf_set_cpu_boost_active(true);
 	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
 			      boost_jiffies))
 		wake_up(&b->boost_waitq);
@@ -341,9 +350,11 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	if (!test_bit(INPUT_BOOST, &b->state)) {
 		__cpu_input_boost_kick_high(25, 0);
 		set_bit(INPUT_BOOST, &b->state);
+		kknx_perf_set_cpu_boost_active(true);
 		return;
 	}
 	set_bit(INPUT_BOOST, &b->state);
+	kknx_perf_set_cpu_boost_active(true);
 	if (cam_boost == 1) {
 		if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
 			      msecs_to_jiffies(800)))

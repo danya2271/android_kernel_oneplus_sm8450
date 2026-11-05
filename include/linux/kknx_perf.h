@@ -26,10 +26,20 @@ void kknx_perf_unregister_display_ops(const struct kknx_perf_display_ops *ops);
 
 #if IS_ENABLED(CONFIG_KKNX_PERF)
 bool kknx_perf_use_minimal_cpu_floor(void);
+void kknx_perf_set_cpu_boost_active(bool active);
+void kknx_perf_clear_cpu_max_cap_for_boost(void);
 #else
 static inline bool kknx_perf_use_minimal_cpu_floor(void)
 {
 	return false;
+}
+
+static inline void kknx_perf_set_cpu_boost_active(bool)
+{
+}
+
+static inline void kknx_perf_clear_cpu_max_cap_for_boost(void)
+{
 }
 #endif
 
