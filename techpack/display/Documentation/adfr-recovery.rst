@@ -119,6 +119,12 @@ with Hz and the actual applied code. For example, 1 Hz uses ``0x77`` and
 10 Hz uses ``0x0b``. Per-frame status is also available through existing
 ADFR trace counters without enabling unbounded printk in the hotpath.
 
+At minimal load, a sparse non-touch kickoff keeps the applied low-rate
+command instead of restoring the native floor for one frame. Touch/boost
+restores the native floor immediately; sustained frame cadence raises the
+active floor as needed. This avoids repeated low/native DSI transitions for
+occasional commits.
+
 Transactions and recovery
 -------------------------
 

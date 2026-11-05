@@ -190,7 +190,20 @@ static void oplus_adfr_governor_frame(struct oplus_adfr_state *adfr, u64 now,
 		adfr->cadence_fps = refresh_rate;
 		adfr->kernel_down_candidate = native;
 		adfr->down_since_ns = now;
-		oplus_adfr_select_active(adfr, native);
+		if (require_native || now < adfr->boost_until_ns ||
+		    (READ_ONCE(oplus_adfr_perf_level) !=
+			     KKNX_PERF_LEVEL_MINIMAL &&
+		     !READ_ONCE(oplus_adfr_probe_60hz)))
+			oplus_adfr_select_active(adfr, native);
+		else if (READ_ONCE(oplus_adfr_probe_60hz))
+			oplus_adfr_select_active(adfr,
+				min_t(u32, native,
+				      OPLUS_ADFR_AUTO_MIN_FPS_60HZ));
+		else if (adfr->idle)
+			oplus_adfr_select_active(adfr,
+						 adfr->kernel_idle_min_fps);
+		else
+			oplus_adfr_select_active(adfr, native);
 		return;
 	}
 	delta = now - adfr->last_frame_ns;
@@ -3463,7 +3476,7 @@ void oplus_adfr_frame_start(void *sde_enc_v)
 	spin_lock_irqsave(&adfr->lock, flags);
 	oplus_adfr_governor_frame(adfr, ktime_get_ns(),
 				  display->panel->cur_mode->timing.refresh_rate,
-				  native || adfr->idle || adfr->restore_pending);
+				  native || adfr->restore_pending);
 	spin_unlock_irqrestore(&adfr->lock, flags);
 	dsi_display_auto_mode_update(display);
 }
@@ -3690,6 +3703,7 @@ static int oplus_adfr_apply_idle(struct dsi_display *display,
 	u64 sequence;
 	bool notify = false;
 	bool kernel_idle;
+	u64 now;
 	int rc = 0;
 
 	if ((h_skew != SDC_ADFR && h_skew != SDC_MFR) ||
@@ -3709,15 +3723,39 @@ static int oplus_adfr_apply_idle(struct dsi_display *display,
 		spin_unlock_irqrestore(&adfr->lock, flags);
 		goto exit;
 	}
-	if (enter_idle && oplus_adfr_governor_idle_delay(adfr, ktime_get_ns())) {
+	now = ktime_get_ns();
+	if (enter_idle && oplus_adfr_governor_idle_delay(adfr, now)) {
 		spin_unlock_irqrestore(&adfr->lock, flags);
 		goto exit;
 	}
-	/* Restore native FPS for the first frame, then reapply the active floor. */
 	requested = enter_idle ?
 			    oplus_adfr_idle_target(adfr) :
-			    (refresh_rate == 60 ? OPLUS_ADFR_AUTO_MIN_FPS_60HZ :
-						  OPLUS_ADFR_AUTO_MIN_FPS_MAX);
+			    adfr->kernel_active_min_fps;
+	/*
+	 * Sparse non-touch commits do not need to wake the panel to its native
+	 * floor. Keep the low-rate command until cadence or input asks for more.
+	 */
+	if (!enter_idle && kernel_idle &&
+	    oplus_adfr_governor_enabled(adfr) && !adfr->restore_pending &&
+	    READ_ONCE(oplus_adfr_perf_level) == KKNX_PERF_LEVEL_MINIMAL &&
+	    !READ_ONCE(oplus_adfr_probe_60hz) &&
+	    now >= adfr->boost_until_ns &&
+	    adfr->kernel_active_min_fps >= adfr->kernel_idle_min_fps) {
+		adfr->idle = false;
+		adfr->restore_pending = false;
+		spin_unlock_irqrestore(&adfr->lock, flags);
+		goto exit;
+	}
+	if (adfr->min_fps_valid && !adfr->restore_pending &&
+	    adfr->applied_min_fps == requested) {
+		adfr->idle = enter_idle;
+		if (enter_idle) {
+			adfr->kernel_active_min_fps = adfr->applied_min_fps;
+			adfr->kernel_down_candidate = adfr->applied_min_fps;
+		}
+		spin_unlock_irqrestore(&adfr->lock, flags);
+		goto exit;
+	}
 	spin_unlock_irqrestore(&adfr->lock, flags);
 	if (refresh_rate == 60)
 		oplus_adfr_idle_mode_minfps_delay(cmd_enc);
@@ -3737,6 +3775,9 @@ static int oplus_adfr_apply_idle(struct dsi_display *display,
 		adfr->idle = enter_idle;
 		adfr->restore_pending = false;
 		adfr->last_error = 0;
+		adfr->kernel_active_min_fps = applied;
+		adfr->kernel_down_candidate = applied;
+		adfr->down_since_ns = ktime_get_ns();
 		if (!enter_idle)
 			adfr->min_fps_updated = true;
 		notify = true;
