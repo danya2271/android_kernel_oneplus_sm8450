@@ -127,6 +127,14 @@ static void bcm_aggregate(struct qcom_icc_bcm *bcm, bool init)
 			bcm->vote_y[QCOM_ICC_BUCKET_WAKE] = 1;
 		}
 	}
+
+	bcm->vote_pending = 0;
+	for (bucket = 0; bucket < QCOM_ICC_NUM_BUCKETS; bucket++) {
+		if (!(bcm->last_vote_valid & BIT(bucket)) ||
+		    bcm->last_vote_x[bucket] != bcm->vote_x[bucket] ||
+		    bcm->last_vote_y[bucket] != bcm->vote_y[bucket])
+			bcm->vote_pending |= BIT(bucket);
+	}
 }
 
 static inline void tcs_cmd_gen(struct tcs_cmd *cmd, u64 vote_x, u64 vote_y,
@@ -158,8 +166,23 @@ static inline void tcs_cmd_gen(struct tcs_cmd *cmd, u64 vote_x, u64 vote_y,
 	cmd->wait = wait;
 }
 
+static bool bcm_is_last_pending(struct qcom_icc_bcm *bcm,
+				struct list_head *bcm_list, int bucket)
+{
+	struct qcom_icc_bcm *next;
+
+	list_for_each_entry_continue(next, bcm_list, list) {
+		if (!(next->vote_pending & BIT(bucket)))
+			continue;
+
+		return next->aux_data.vcd != bcm->aux_data.vcd;
+	}
+
+	return true;
+}
+
 static void tcs_list_gen(struct bcm_voter *voter, int bucket,
-			 struct tcs_cmd tcs_list[MAX_VCD],
+			 struct tcs_cmd tcs_list[MAX_BCMS],
 			 int n[MAX_VCD + 1])
 {
 	struct list_head *bcm_list = &voter->commit_list;
@@ -170,13 +193,13 @@ static void tcs_list_gen(struct bcm_voter *voter, int bucket,
 	memset(n, 0, sizeof(int) * (MAX_VCD + 1));
 
 	list_for_each_entry(bcm, bcm_list, list) {
-		commit = false;
+		if (!(bcm->vote_pending & BIT(bucket)))
+			continue;
+
 		cur_vcd_size++;
-		if ((list_is_last(&bcm->list, bcm_list)) ||
-		    bcm->aux_data.vcd != list_next_entry(bcm, list)->aux_data.vcd) {
-			commit = true;
+		commit = bcm_is_last_pending(bcm, bcm_list, bucket);
+		if (commit)
 			cur_vcd_size = 0;
-		}
 
 		wait = commit && (voter->tcs_wait & BIT(bucket));
 
@@ -198,6 +221,29 @@ static void tcs_list_gen(struct bcm_voter *voter, int bucket,
 			batch++;
 		}
 	}
+}
+
+static void bcm_cache_commit(struct bcm_voter *voter, int bucket)
+{
+	struct qcom_icc_bcm *bcm;
+
+	list_for_each_entry(bcm, &voter->commit_list, list) {
+		if (!(bcm->vote_pending & BIT(bucket)))
+			continue;
+
+		bcm->last_vote_x[bucket] = bcm->vote_x[bucket];
+		bcm->last_vote_y[bucket] = bcm->vote_y[bucket];
+		bcm->last_vote_valid |= BIT(bucket);
+		bcm->vote_pending &= ~BIT(bucket);
+	}
+}
+
+static void bcm_cache_invalidate(struct bcm_voter *voter, int bucket)
+{
+	struct qcom_icc_bcm *bcm;
+
+	list_for_each_entry(bcm, &voter->commit_list, list)
+		bcm->last_vote_valid &= ~BIT(bucket);
 }
 
 /**
@@ -339,28 +385,24 @@ int qcom_icc_bcm_voter_commit(struct bcm_voter *voter)
 	 * based on VCD.
 	 */
 	tcs_list_gen(voter, QCOM_ICC_BUCKET_AMC, cmds, commit_idx);
-	if (!commit_idx[0])
-		goto out;
+	if (commit_idx[0]) {
+		rpmh_invalidate(voter->dev);
 
-	rpmh_invalidate(voter->dev);
+		ret = rpmh_write_batch(voter->dev, RPMH_ACTIVE_ONLY_STATE,
+				       cmds, commit_idx);
 
-	ret = rpmh_write_batch(voter->dev, RPMH_ACTIVE_ONLY_STATE,
-			       cmds, commit_idx);
-
-	/*
-	 * Ignore -EBUSY for AMC requests, since this can only happen for AMC
-	 * requests when the RSC is in solver mode. We can only be in solver
-	 * mode at the time of request for secondary RSCs (e.g. Display RSC),
-	 * since the primary Apps RSC is only in solver mode while
-	 * entering/exiting power collapse when SW isn't running. The -EBUSY
-	 * response is expected in solver and is a non-issue, since we just
-	 * want the request to apply to the WAKE set in that case instead.
-	 * Interconnect doesn't know when the RSC is in solver, so just always
-	 * send AMC and ignore the harmless error response.
-	 */
-	if (ret && ret != -EBUSY) {
-		pr_err("Error sending AMC RPMH requests (%d)\n", ret);
-		goto out;
+		/*
+		 * Ignore -EBUSY for AMC requests, since this can only happen for
+		 * AMC requests when the RSC is in solver mode. The request will
+		 * still be represented by the WAKE vote below.
+		 */
+		if (ret && ret != -EBUSY) {
+			bcm_cache_invalidate(voter, QCOM_ICC_BUCKET_AMC);
+			pr_err("Error sending AMC RPMH requests (%d)\n", ret);
+			goto out;
+		}
+		if (!ret)
+			bcm_cache_commit(voter, QCOM_ICC_BUCKET_AMC);
 	}
 
 	list_for_each_entry_safe(bcm, bcm_tmp, &voter->commit_list, list)
@@ -388,18 +430,28 @@ int qcom_icc_bcm_voter_commit(struct bcm_voter *voter)
 
 	tcs_list_gen(voter, QCOM_ICC_BUCKET_WAKE, cmds, commit_idx);
 
-	ret = rpmh_write_batch(voter->dev, RPMH_WAKE_ONLY_STATE, cmds, commit_idx);
-	if (ret) {
-		pr_err("Error sending WAKE RPMH requests (%d)\n", ret);
-		goto out;
+	if (commit_idx[0]) {
+		ret = rpmh_write_batch(voter->dev, RPMH_WAKE_ONLY_STATE,
+				       cmds, commit_idx);
+		if (ret) {
+			bcm_cache_invalidate(voter, QCOM_ICC_BUCKET_WAKE);
+			pr_err("Error sending WAKE RPMH requests (%d)\n", ret);
+			goto out;
+		}
+		bcm_cache_commit(voter, QCOM_ICC_BUCKET_WAKE);
 	}
 
 	tcs_list_gen(voter, QCOM_ICC_BUCKET_SLEEP, cmds, commit_idx);
 
-	ret = rpmh_write_batch(voter->dev, RPMH_SLEEP_STATE, cmds, commit_idx);
-	if (ret) {
-		pr_err("Error sending SLEEP RPMH requests (%d)\n", ret);
-		goto out;
+	if (commit_idx[0]) {
+		ret = rpmh_write_batch(voter->dev, RPMH_SLEEP_STATE,
+				       cmds, commit_idx);
+		if (ret) {
+			bcm_cache_invalidate(voter, QCOM_ICC_BUCKET_SLEEP);
+			pr_err("Error sending SLEEP RPMH requests (%d)\n", ret);
+			goto out;
+		}
+		bcm_cache_commit(voter, QCOM_ICC_BUCKET_SLEEP);
 	}
 
 out:

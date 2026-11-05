@@ -104,6 +104,10 @@ struct qcom_icc_node {
  * @disabled: flag used to indicate state of bcm node
  * @aux_data: auxiliary data used when calculating threshold values and
  * communicating with RPMh
+ * @last_vote_x: last successfully committed average vote per bucket
+ * @last_vote_y: last successfully committed peak vote per bucket
+ * @last_vote_valid: buckets with a valid committed vote cache
+ * @vote_pending: buckets whose current vote still needs committing
  * @list: used to link to other bcms when compiling lists for commit
  * @ws_list: used to keep track of bcms that may transition between wake/sleep
  * @num_nodes: total number of @num_nodes
@@ -123,6 +127,10 @@ struct qcom_icc_bcm {
 	bool keepalive_early;
 	bool disabled;
 	struct bcm_db aux_data;
+	u64 last_vote_x[QCOM_ICC_NUM_BUCKETS];
+	u64 last_vote_y[QCOM_ICC_NUM_BUCKETS];
+	unsigned long last_vote_valid;
+	unsigned long vote_pending;
 	struct list_head list;
 	struct list_head ws_list;
 	int voter_idx;
