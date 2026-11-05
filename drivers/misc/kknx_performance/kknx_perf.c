@@ -335,11 +335,12 @@ static void kknx_cpu_floors_release(void)
 	}
 }
 
-static void kknx_cpu_floors_hold_current(void)
+static void kknx_cpu_floors_update(bool minimum)
 {
 	struct kknx_cpu_floor *floor;
 	struct cpufreq_policy *policy;
 	unsigned int cpu, leader;
+	unsigned int target_khz;
 	int i, ret;
 
 	for_each_online_cpu(cpu) {
@@ -354,11 +355,14 @@ static void kknx_cpu_floors_hold_current(void)
 
 		floor = kknx_find_cpu_floor(policy);
 		if (floor) {
-			if (policy->cur > floor->floor_khz) {
+			target_khz = minimum ? policy->cpuinfo.min_freq :
+					       max(policy->cur,
+						   (unsigned int)floor->floor_khz);
+			if (target_khz != floor->floor_khz) {
 				ret = freq_qos_update_request(&floor->request,
-							      policy->cur);
+							      target_khz);
 				if (!ret)
-					floor->floor_khz = policy->cur;
+					floor->floor_khz = target_khz;
 			}
 			cpufreq_cpu_put(policy);
 			continue;
@@ -369,15 +373,16 @@ static void kknx_cpu_floors_hold_current(void)
 			cpufreq_cpu_put(policy);
 			break;
 		}
+		target_khz = minimum ? policy->cpuinfo.min_freq : policy->cur;
 		ret = freq_qos_add_request(&policy->constraints,
 					   &floor->request, FREQ_QOS_MIN,
-					   policy->cur);
+					   target_khz);
 		if (ret) {
 			cpufreq_cpu_put(policy);
 			continue;
 		}
 		floor->policy = policy;
-		floor->floor_khz = policy->cur;
+		floor->floor_khz = target_khz;
 	}
 
 	/* Drop references for policies removed while the floor was active. */
@@ -407,7 +412,6 @@ static void kknx_apply_level(enum kknx_perf_load_level level,
 	WRITE_ONCE(kknx_perf.level, level);
 	WRITE_ONCE(kknx_perf.probe_60hz, probe_60hz);
 	if (level == KKNX_PERF_LEVEL_MINIMAL) {
-		kknx_cpu_floors_release();
 		if (kknx_perf.gpu_floor_hz) {
 			kknx_set_gpu_min_freq(0);
 			kknx_perf.gpu_floor_hz = 0;
@@ -467,10 +471,7 @@ static void kknx_perf_sample_work(struct work_struct *work)
 	}
 
 	kknx_apply_level(level, gpu_freq, probe_60hz);
-	if (level == KKNX_PERF_LEVEL_MEDIUM ||
-	    level == KKNX_PERF_LEVEL_HIGH ||
-	    level == KKNX_PERF_LEVEL_UNKNOWN)
-		kknx_cpu_floors_hold_current();
+	kknx_cpu_floors_update(level == KKNX_PERF_LEVEL_MINIMAL);
 	if (level == KKNX_PERF_LEVEL_HIGH && gpu_freq >
 	    kknx_perf.gpu_floor_hz) {
 		if (!kknx_set_gpu_min_freq(gpu_freq))
