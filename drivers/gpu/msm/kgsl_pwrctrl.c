@@ -6,6 +6,8 @@
 
 #include <linux/clk/qcom.h>
 #include <linux/interconnect.h>
+#include <linux/ktime.h>
+#include <linux/math64.h>
 #include <linux/of_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/regulator/consumer.h>
@@ -615,13 +617,20 @@ static ssize_t gpubusy_show(struct device *dev,
 	int ret;
 	struct kgsl_device *device = dev_get_drvdata(dev);
 	struct kgsl_clk_stats *stats = &device->pwrctrl.clk_stats;
+	unsigned long flags;
+	unsigned int busy, total;
 
-	ret = scnprintf(buf, PAGE_SIZE, "%7d %7d\n",
-			stats->busy_old, stats->total_old);
+	spin_lock_irqsave(&stats->lock, flags);
+	busy = stats->busy_old;
+	total = stats->total_old;
 	if (!test_bit(KGSL_PWRFLAGS_AXI_ON, &device->pwrctrl.power_flags)) {
 		stats->busy_old = 0;
 		stats->total_old = 0;
+		stats->last_update_ns = 0;
 	}
+	spin_unlock_irqrestore(&stats->lock, flags);
+
+	ret = scnprintf(buf, PAGE_SIZE, "%7u %7u\n", busy, total);
 	return ret;
 }
 
@@ -873,18 +882,22 @@ static ssize_t _gpu_busy_show(struct kgsl_device *device,
 {
 	int ret;
 	struct kgsl_clk_stats *stats = &device->pwrctrl.clk_stats;
+	unsigned long flags;
 	unsigned int busy_percent = 0;
 
+	spin_lock_irqsave(&stats->lock, flags);
 	if (stats->total_old != 0)
 		busy_percent = (stats->busy_old * 100) / stats->total_old;
-
-	ret = scnprintf(buf, PAGE_SIZE, "%d %%\n", busy_percent);
 
 	/* Reset the stats if GPU is OFF */
 	if (!test_bit(KGSL_PWRFLAGS_AXI_ON, &device->pwrctrl.power_flags)) {
 		stats->busy_old = 0;
 		stats->total_old = 0;
+		stats->last_update_ns = 0;
 	}
+	spin_unlock_irqrestore(&stats->lock, flags);
+
+	ret = scnprintf(buf, PAGE_SIZE, "%u %%\n", busy_percent);
 	return ret;
 }
 
@@ -1204,21 +1217,111 @@ int kgsl_pwrctrl_init_sysfs(struct kgsl_device *device)
 void kgsl_pwrctrl_busy_time(struct kgsl_device *device, u64 time, u64 busy)
 {
 	struct kgsl_clk_stats *stats = &device->pwrctrl.clk_stats;
+	unsigned long flags;
+	unsigned int total, busy_total;
 
+	spin_lock_irqsave(&stats->lock, flags);
 	stats->total += time;
 	stats->busy += busy;
 
-	if (stats->total < UPDATE_BUSY_VAL)
+	if (stats->total < UPDATE_BUSY_VAL) {
+		spin_unlock_irqrestore(&stats->lock, flags);
 		return;
+	}
 
 	/* Update the output regularly and reset the counters. */
 	stats->total_old = stats->total;
 	stats->busy_old = stats->busy;
+	stats->last_update_ns = ktime_get_ns();
 	stats->total = 0;
 	stats->busy = 0;
+	total = stats->total_old;
+	busy_total = stats->busy_old;
+	spin_unlock_irqrestore(&stats->lock, flags);
 
-	trace_kgsl_gpubusy(device, stats->busy_old, stats->total_old);
+	trace_kgsl_gpubusy(device, busy_total, total);
 }
+
+int kgsl_kknx_get_gpu_stats(u32 *busy_percent, unsigned long *freq_hz)
+{
+	struct kgsl_device *device;
+	struct kgsl_clk_stats *stats;
+	unsigned long flags;
+	unsigned int busy, total, level;
+	u64 updated;
+	int ret = 0;
+
+	if (!busy_percent || !freq_hz)
+		return -EINVAL;
+
+	mutex_lock(&kgsl_driver.devlock);
+	device = kgsl_driver.devp[0];
+	if (!device) {
+		ret = -ENODEV;
+		goto unlock;
+	}
+
+	*busy_percent = 0;
+	*freq_hz = 0;
+	if (!test_bit(KGSL_PWRFLAGS_AXI_ON, &device->pwrctrl.power_flags))
+		goto unlock;
+
+	stats = &device->pwrctrl.clk_stats;
+	spin_lock_irqsave(&stats->lock, flags);
+	busy = stats->busy_old;
+	total = stats->total_old;
+	updated = stats->last_update_ns;
+	spin_unlock_irqrestore(&stats->lock, flags);
+	if (!total || !updated || ktime_get_ns() - updated > 2 * NSEC_PER_SEC) {
+		ret = -EAGAIN;
+		goto unlock;
+	}
+
+	level = READ_ONCE(device->pwrctrl.active_pwrlevel);
+	if (level >= device->pwrctrl.num_pwrlevels) {
+		ret = -EINVAL;
+		goto unlock;
+	}
+	*busy_percent = min_t(u64, div64_u64((u64)busy * 100, total), 100);
+	*freq_hz = READ_ONCE(device->pwrctrl.pwrlevels[level].gpu_freq);
+unlock:
+	mutex_unlock(&kgsl_driver.devlock);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(kgsl_kknx_get_gpu_stats);
+
+int kgsl_kknx_set_gpu_min_freq(unsigned long freq_hz)
+{
+	struct kgsl_device *device;
+	struct dev_pm_qos_request *req;
+	unsigned long freq_khz;
+	int ret;
+
+	mutex_lock(&kgsl_driver.devlock);
+	device = kgsl_driver.devp[0];
+	if (!device) {
+		ret = -ENODEV;
+		goto unlock;
+	}
+	req = &device->pwrctrl.kknx_min_freq_req;
+	if (!freq_hz) {
+		ret = dev_pm_qos_request_active(req) ?
+			dev_pm_qos_remove_request(req) : 0;
+	} else {
+		freq_khz = min_t(unsigned long, DIV_ROUND_UP(freq_hz, 1000UL),
+				 S32_MAX);
+		if (dev_pm_qos_request_active(req))
+			ret = dev_pm_qos_update_request(req, freq_khz);
+		else
+			ret = dev_pm_qos_add_request(&device->pdev->dev, req,
+						     DEV_PM_QOS_MIN_FREQUENCY,
+						     freq_khz);
+	}
+unlock:
+	mutex_unlock(&kgsl_driver.devlock);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(kgsl_kknx_set_gpu_min_freq);
 
 static void kgsl_pwrctrl_clk(struct kgsl_device *device, bool state,
 					  int requested_state)
@@ -1597,6 +1700,7 @@ int kgsl_pwrctrl_init(struct kgsl_device *device)
 	struct platform_device *pdev = device->pdev;
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 
+	spin_lock_init(&pwr->clk_stats.lock);
 	result = _get_clocks(device);
 	if (result)
 		return result;
@@ -1703,6 +1807,10 @@ void kgsl_pwrctrl_close(struct kgsl_device *device)
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 
 	pwr->power_flags = 0;
+	mutex_lock(&kgsl_driver.devlock);
+	if (dev_pm_qos_request_active(&pwr->kknx_min_freq_req))
+		dev_pm_qos_remove_request(&pwr->kknx_min_freq_req);
+	mutex_unlock(&kgsl_driver.devlock);
 
 	if (dev_pm_qos_request_active(&pwr->sysfs_thermal_req))
 		dev_pm_qos_remove_request(&pwr->sysfs_thermal_req);

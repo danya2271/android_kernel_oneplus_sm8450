@@ -55,6 +55,8 @@ int kgsl_gpu_num_freqs(void);
  * Return: 0 on success or negative error on failure
  */
 int kgsl_gpu_stat(struct kgsl_gpu_freq_stat *stats, u32 numfreq);
+int kgsl_kknx_get_gpu_stats(u32 *busy_percent, unsigned long *freq_hz);
+int kgsl_kknx_set_gpu_min_freq(unsigned long freq_hz);
 
 /**
  * kgsl_gpu_frame_count - Get number of frames already processed by GPU

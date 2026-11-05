@@ -13,6 +13,8 @@
 #include "sde_crtc.h"
 #include "sde_encoder_phys.h"
 #include <linux/ratelimit.h>
+#include <linux/export.h>
+#include <linux/kknx_perf.h>
 #include <uapi/linux/sched/types.h>
 
 #include "dsi_display.h"
@@ -85,6 +87,8 @@ static u64 oplus_adfr_auto_update_counter = 0;
 /* Panel extension code for a 40 Hz active floor, not a value in Hz. */
 static const u32 oplus_adfr_exit_idle_minfps = OPLUS_ADFR_AUTO_MIN_FPS_40HZ;
 static bool oplus_adfr_skip_min_fps_cmd = false;
+static u32 oplus_adfr_perf_level = KKNX_PERF_LEVEL_UNKNOWN;
+static bool oplus_adfr_probe_60hz;
 
 struct oplus_te_refcount te_refcount = {0, 0, 0, 0};
 /* dynamic te detect */
@@ -178,6 +182,7 @@ static void oplus_adfr_governor_frame(struct oplus_adfr_state *adfr, u64 now,
 
 	if (!oplus_adfr_governor_enabled(adfr))
 		return;
+	adfr->kernel_native_min_fps = native;
 	if (!adfr->last_frame_ns || now <= adfr->last_frame_ns ||
 	    now - adfr->last_frame_ns > ADFR_CADENCE_RESET_NS) {
 		adfr->last_frame_ns = now;
@@ -212,6 +217,16 @@ static void oplus_adfr_governor_frame(struct oplus_adfr_state *adfr, u64 now,
 		oplus_adfr_select_active(adfr, native);
 		return;
 	}
+	if (READ_ONCE(oplus_adfr_perf_level) != KKNX_PERF_LEVEL_MINIMAL &&
+	    !READ_ONCE(oplus_adfr_probe_60hz)) {
+		adfr->kernel_down_candidate = native;
+		adfr->down_since_ns = now;
+		oplus_adfr_select_active(adfr, native);
+		return;
+	}
+	if (READ_ONCE(oplus_adfr_probe_60hz) && code >
+	    OPLUS_ADFR_AUTO_MIN_FPS_60HZ)
+		code = OPLUS_ADFR_AUTO_MIN_FPS_60HZ;
 	if (code <= adfr->kernel_active_min_fps) {
 		adfr->kernel_down_candidate = code;
 		adfr->down_since_ns = now;
@@ -251,6 +266,7 @@ void oplus_adfr_panel_init(void *dsi_panel)
 	mutex_init(&adfr->update_lock);
 	adfr->fakeframe_requested = true;
 	adfr->kernel_idle_min_fps = OPLUS_ADFR_AUTO_MIN_FPS_10HZ;
+	adfr->kernel_native_min_fps = OPLUS_ADFR_AUTO_MIN_FPS_MAX;
 	if (panel->type && !strcmp(panel->type, "primary"))
 		of_property_read_u32(panel->panel_of_node, "oplus,adfr-config",
 				     &adfr->config);
@@ -395,6 +411,7 @@ static int oplus_adfr_set_kernel_idle_fps(struct dsi_panel *panel, u32 fps)
 		adfr->kernel_active_min_fps = panel->cur_mode ?
 			oplus_adfr_native_code(panel->cur_mode->timing.refresh_rate) :
 			OPLUS_ADFR_AUTO_MIN_FPS_MAX;
+		adfr->kernel_native_min_fps = adfr->kernel_active_min_fps;
 		adfr->last_frame_ns = 0;
 		adfr->frame_period_ns = 0;
 		adfr->boost_until_ns = 0;
@@ -3502,9 +3519,148 @@ u32 oplus_adfr_idle_delay_ms(void *sde_enc_v)
 	return delay;
 }
 
+bool oplus_adfr_is_kernel_idle(void *sde_enc_v)
+{
+	struct dsi_display *display = oplus_adfr_encoder_display(sde_enc_v);
+	struct oplus_adfr_state *adfr;
+	unsigned long flags;
+	u64 now;
+	bool idle, quiet;
+
+	if (!display)
+		return false;
+	adfr = &display->panel->adfr;
+	spin_lock_irqsave(&adfr->lock, flags);
+	now = ktime_get_ns();
+	quiet = adfr->last_frame_ns && now > adfr->last_frame_ns &&
+		now - adfr->last_frame_ns > ADFR_CADENCE_RESET_NS &&
+		adfr->kernel_active_min_fps >=
+			OPLUS_ADFR_AUTO_MIN_FPS_60HZ &&
+		adfr->min_fps_valid &&
+		adfr->applied_min_fps >= OPLUS_ADFR_AUTO_MIN_FPS_60HZ;
+	idle = READ_ONCE(oplus_adfr_perf_level) == KKNX_PERF_LEVEL_MINIMAL &&
+	       oplus_adfr_governor_enabled(adfr) && adfr->idle &&
+	       adfr->min_fps_valid && !adfr->restore_pending;
+	idle |= READ_ONCE(oplus_adfr_perf_level) ==
+			KKNX_PERF_LEVEL_MINIMAL &&
+		oplus_adfr_governor_enabled(adfr) && quiet &&
+		!adfr->restore_pending;
+	spin_unlock_irqrestore(&adfr->lock, flags);
+	return idle;
+}
+
+int oplus_adfr_get_current_refresh_rate(u32 *refresh_rate)
+{
+	struct dsi_display *display = oplus_display_get_current_display();
+	struct oplus_adfr_state *adfr;
+	unsigned long flags;
+	u32 mode_rate, applied;
+	int rc = 0;
+
+	if (!refresh_rate)
+		return -EINVAL;
+	if (!display || !display->panel || !display->panel->cur_mode)
+		return -ENODEV;
+
+	mode_rate = display->panel->cur_mode->timing.refresh_rate;
+	adfr = &display->panel->adfr;
+	spin_lock_irqsave(&adfr->lock, flags);
+	if (!adfr->min_fps_valid) {
+		*refresh_rate = mode_rate;
+		rc = -EAGAIN;
+	} else {
+		applied = adfr->applied_min_fps;
+		switch (applied) {
+		case OPLUS_ADFR_AUTO_MIN_FPS_MAX:
+			*refresh_rate = 120;
+			break;
+		case OPLUS_ADFR_AUTO_MIN_FPS_60HZ:
+			*refresh_rate = 60;
+			break;
+		case OPLUS_ADFR_AUTO_MIN_FPS_40HZ:
+			*refresh_rate = 40;
+			break;
+		case OPLUS_ADFR_AUTO_MIN_FPS_30HZ:
+			*refresh_rate = 30;
+			break;
+		case OPLUS_ADFR_AUTO_MIN_FPS_24HZ:
+			*refresh_rate = 24;
+			break;
+		case OPLUS_ADFR_AUTO_MIN_FPS_20HZ:
+			*refresh_rate = 20;
+			break;
+		case OPLUS_ADFR_AUTO_MIN_FPS_10HZ:
+			*refresh_rate = 10;
+			break;
+		case OPLUS_ADFR_AUTO_MIN_FPS_1HZ:
+			*refresh_rate = 1;
+			break;
+		default:
+			*refresh_rate = mode_rate;
+			rc = -EOPNOTSUPP;
+			break;
+		}
+	}
+	spin_unlock_irqrestore(&adfr->lock, flags);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(oplus_adfr_get_current_refresh_rate);
+
+void oplus_adfr_kknx_policy_update(u32 load_level, bool probe_60hz)
+{
+	struct dsi_display *display;
+	struct oplus_adfr_state *adfr;
+	unsigned long flags;
+	u32 old_level;
+	bool old_probe;
+
+	old_level = xchg(&oplus_adfr_perf_level, load_level);
+	old_probe = xchg(&oplus_adfr_probe_60hz, probe_60hz);
+	if (old_level == load_level && old_probe == probe_60hz)
+		return;
+
+	display = oplus_display_get_current_display();
+	if (!display || !display->panel || !display->panel->cur_mode)
+		return;
+	adfr = &display->panel->adfr;
+	spin_lock_irqsave(&adfr->lock, flags);
+	adfr->kernel_native_min_fps =
+		oplus_adfr_native_code(display->panel->cur_mode->timing.refresh_rate);
+	if (adfr->kernel_idle_enabled &&
+	    adfr->auto_mode == OPLUS_ADFR_AUTO_OFF) {
+		if (load_level != KKNX_PERF_LEVEL_MINIMAL && !probe_60hz) {
+			oplus_adfr_select_active(adfr,
+						adfr->kernel_native_min_fps);
+			adfr->kernel_down_candidate =
+				adfr->kernel_native_min_fps;
+			adfr->down_since_ns = ktime_get_ns();
+		} else if (probe_60hz) {
+			u32 target = min_t(u32, adfr->kernel_native_min_fps,
+					   OPLUS_ADFR_AUTO_MIN_FPS_60HZ);
+
+			oplus_adfr_select_active(adfr, target);
+			adfr->kernel_down_candidate = target;
+			adfr->down_since_ns = ktime_get_ns();
+		} else {
+			adfr->last_frame_ns = 0;
+			adfr->frame_period_ns = 0;
+			adfr->cadence_fps = 0;
+		}
+	}
+	spin_unlock_irqrestore(&adfr->lock, flags);
+}
+EXPORT_SYMBOL_GPL(oplus_adfr_kknx_policy_update);
+
 static u32 oplus_adfr_idle_target(const struct oplus_adfr_state *adfr)
 {
-	return adfr->kernel_idle_enabled ? adfr->kernel_idle_min_fps : adfr->min_fps;
+	if (!adfr->kernel_idle_enabled)
+		return adfr->min_fps;
+	if (READ_ONCE(oplus_adfr_probe_60hz))
+		return min_t(u32, adfr->kernel_native_min_fps,
+			     OPLUS_ADFR_AUTO_MIN_FPS_60HZ);
+	if (READ_ONCE(oplus_adfr_perf_level) == KKNX_PERF_LEVEL_MINIMAL)
+		return adfr->kernel_idle_min_fps;
+	return adfr->kernel_native_min_fps;
 }
 
 static bool oplus_adfr_can_enter_idle(const struct oplus_adfr_state *adfr)

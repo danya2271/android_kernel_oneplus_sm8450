@@ -31,6 +31,7 @@ struct oplus_adfr_state {
 	u32 measured_fps;
 	/* Autonomous cadence/idle policy, separate from HWC's requested codes. */
 	u32 kernel_idle_min_fps;
+	u32 kernel_native_min_fps;
 	u32 kernel_active_min_fps;
 	u32 kernel_down_candidate;
 	u32 cadence_fps;
@@ -151,6 +152,9 @@ void oplus_adfr_frame_start(void *sde_enc);
 void oplus_adfr_touch_event(void *sde_enc);
 void oplus_adfr_touch_work(void *sde_enc);
 u32 oplus_adfr_idle_delay_ms(void *sde_enc);
+bool oplus_adfr_is_kernel_idle(void *sde_enc);
+int oplus_adfr_get_current_refresh_rate(u32 *refresh_rate);
+void oplus_adfr_kknx_policy_update(u32 load_level, bool probe_60hz);
 bool oplus_adfr_is_support(void);
 bool oplus_adfr_idle_mode_is_enable(void);
 ssize_t oplus_adfr_get_debug(struct kobject *obj,

@@ -82,6 +82,7 @@ obj-$(CONFIG_OEM_QMI)	+= oem_qmi_client.o
 #endif
 
 obj-$(CONFIG_OPLUS_GPIO) += oplus_gpio.o
+obj-$(CONFIG_KKNX_PERF) += kknx_performance/
 
 #ifdef OPLUS_FEATURE_CHG_BASIC
 obj-$(CONFIG_AW8697_HAPTIC) += aw8697_haptic/

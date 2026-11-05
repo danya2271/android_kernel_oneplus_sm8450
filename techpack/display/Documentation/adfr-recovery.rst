@@ -86,6 +86,16 @@ collapse and the input worker restores native refresh. HBM and optical
 fingerprint HBM block deep idle, and active HBM/FOD requests select native
 refresh. Autonomous low-rate operation suppresses fake-frame injection.
 
+After the panel confirms autonomous idle, SDE excludes that command-mode
+CRTC's cached AB/IB vote from the shared bus aggregation and releases its
+display LLCC slice when no other active CRTC needs it. Votes from other
+CRTCs, the configured minimum bus vote and fixed performance debug settings
+remain in force. The vote and cache activity are restored after resource
+wakeup, before the next frame is kicked off; an ordinary atomic performance
+update also clears the idle override. This avoids changing shared DDR/L3
+governors or lowering platform-wide minimum OPPs. The resulting interconnect
+vote is still subject to the platform's devfreq governor and OPP table.
+
 Native means the current DRM mode's maximum: 120 Hz in the 120-Hz mode,
 60 Hz in the 60-Hz mode. This governor does not perform an uncoordinated
 DRM modeset, so Android must select the 120-Hz base mode to obtain a

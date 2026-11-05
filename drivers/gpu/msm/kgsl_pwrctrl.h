@@ -8,6 +8,7 @@
 
 #include <linux/clk.h>
 #include <linux/pm_qos.h>
+#include <linux/spinlock.h>
 
 /*****************************************************************************
  * power flags
@@ -39,6 +40,8 @@ struct kgsl_clk_stats {
 	unsigned int total;
 	unsigned int busy_old;
 	unsigned int total_old;
+	u64 last_update_ns;
+	spinlock_t lock;
 };
 
 struct kgsl_pwr_constraint {
@@ -169,6 +172,7 @@ struct kgsl_pwrctrl {
 	u32 minbw_timeout;
 	/** @sysfs_thermal_req - PM QoS maximum frequency request from user (via sysfs) */
 	struct dev_pm_qos_request sysfs_thermal_req;
+	struct dev_pm_qos_request kknx_min_freq_req;
 	/** @time_in_pwrlevel: Each pwrlevel active duration in usec */
 	u64 time_in_pwrlevel[KGSL_MAX_PWRLEVELS];
 	/** @last_stat_updated: The last time stats were updated */

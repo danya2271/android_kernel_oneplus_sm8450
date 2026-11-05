@@ -9,6 +9,7 @@ from test_hotpath import DISPLAY, definition, run_c
 
 SOURCE = DISPLAY / "oplus/oplus_adfr.c"
 HEADER = DISPLAY / "oplus/oplus_adfr.h"
+KKNX_HEADER = DISPLAY.parents[1] / "include/linux/kknx_perf.h"
 
 PREFIX = r"""
 #include <assert.h>
@@ -35,6 +36,8 @@ struct kobj_attribute { int unused; };
 #define OPLUS_FEATURE_DISPLAY_ONSCREENFINGERPRINT 1
 #define READ_ONCE(x) (x)
 #define WRITE_ONCE(x, v) ((x) = (v))
+#define xchg(ptr, value) __sync_lock_test_and_set((ptr), (value))
+#define min_t(type, a, b) ((type)(a) < (type)(b) ? (type)(a) : (type)(b))
 #define NSEC_PER_SEC 1000000000ULL
 #define NSEC_PER_MSEC 1000000ULL
 #define IRQ_HANDLED 1
@@ -134,6 +137,8 @@ static u32 inject_request, notified, sent_min, sent_mode;
 static bool inject_reset;
 static bool inject_touch;
 static bool fixture_autonomous;
+static u32 oplus_adfr_perf_level = 1;
+static bool oplus_adfr_probe_60hz;
 static bool global_hbm, ofp_supported, ofp_hbm;
 static unsigned int log_count, log_hz, log_code;
 static const char *log_owner, *log_action;
@@ -278,6 +283,7 @@ static void init_fixture(struct fixture *f, int rate)
     f->panel.adfr.min_fps_valid = true;
     f->panel.adfr.min_fps = rate == 60 ? 1 : 0;
     f->panel.adfr.applied_min_fps = f->panel.adfr.min_fps;
+    f->panel.adfr.kernel_native_min_fps = rate == 60 ? 1 : 0;
     assert(!spin_depth);
 }
 #define MIN_REQUEST(v) (OPLUS_ADFR_AUTO_MAGIC | OPLUS_ADFR_AUTO_MIN_FPS_MAGIC | (v))
@@ -292,6 +298,8 @@ def program(body):
     text += source[source.index("#define OPLUS_ADFR_CONFIG_GLOBAL"):
                    source.index("#define to_dsi_bridge")]
     text += definition(header, "struct oplus_adfr_state {") + ";\n"
+    text += definition(KKNX_HEADER.read_text(),
+                       "enum kknx_perf_load_level {") + ";\n"
     for name in (
         "h_skew_type", "oplus_adfr_auto_mode_value",
         "oplus_adfr_auto_fakeframe_value", "oplus_adfr_auto_min_fps_value",
@@ -339,6 +347,9 @@ def program(body):
         "void oplus_adfr_touch_event(",
         "void oplus_adfr_touch_work(",
         "u32 oplus_adfr_idle_delay_ms(",
+        "bool oplus_adfr_is_kernel_idle(",
+        "int oplus_adfr_get_current_refresh_rate(",
+        "void oplus_adfr_kknx_policy_update(",
         "static u32 oplus_adfr_idle_target(",
         "static bool oplus_adfr_can_enter_idle(",
         "static int oplus_adfr_apply_idle(",
@@ -843,11 +854,13 @@ class AdfrTests(unittest.TestCase):
         assert(f.panel.adfr.applied_min_fps == 3);
         assert(!f.panel.adfr.has_request && !oplus_adfr_auto_update_counter);
         assert(attempts == 1); /* One rate change, no per-frame DSI traffic. */
+        assert(!oplus_adfr_is_kernel_idle(&f.encoder));
         oplus_adfr_handle_idle_mode(&f.encoder, true);
         assert(!f.panel.adfr.idle && oplus_adfr_idle_delay_ms(&f.encoder) == 67);
         fake_now += 251 * NSEC_PER_MSEC;
         oplus_adfr_handle_idle_mode(&f.encoder, true);
         assert(f.panel.adfr.idle && sent_min == 11);
+        assert(oplus_adfr_is_kernel_idle(&f.encoder));
         before = attempts;
         oplus_adfr_touch_event(&f.encoder);
         assert(attempts == before && !f.panel.adfr.kernel_active_min_fps);
@@ -865,6 +878,7 @@ class AdfrTests(unittest.TestCase):
         oplus_adfr_frame_start(&f.encoder);
         oplus_adfr_handle_idle_mode(&f.encoder, false);
         assert(!sent_min && !f.panel.adfr.idle);
+        assert(!oplus_adfr_is_kernel_idle(&f.encoder));
         for (i = 0; i < 60; i++) {
             fake_now += 33333333;
             oplus_adfr_frame_start(&f.encoder);
@@ -1029,6 +1043,32 @@ class AdfrTests(unittest.TestCase):
         self.assertLess(idle.index("oplus_adfr_handle_idle_mode("),
                         idle.index("_sde_encoder_resource_control_helper("))
         self.assertEqual(idle.count("oplus_adfr_idle_delay_ms("), 2)
+        self.assertLess(idle.index("oplus_adfr_handle_idle_mode("),
+                        idle.index("oplus_adfr_is_kernel_idle("))
+        self.assertLess(idle.index("oplus_adfr_is_kernel_idle("),
+                        idle.index("sde_core_perf_crtc_set_idle_bw("))
+        self.assertLess(idle.index("sde_core_perf_crtc_set_idle_bw("),
+                        idle.index("_sde_encoder_resource_control_helper("))
+        early_wakeup = definition(encoder, "static int _sde_encoder_rc_early_wakeup(")
+        self.assertLess(early_wakeup.index("_sde_encoder_resource_control_helper("),
+                        early_wakeup.index("sde_core_perf_crtc_set_idle_bw("))
+        perf = (DISPLAY / "msm/sde/sde_core_perf.c").read_text()
+        update_bus = definition(perf, "static void _sde_core_perf_crtc_update_bus(")
+        self.assertIn("if (sde_crtc->bw_vote_idle)", update_bus)
+        idle_vote = definition(perf, "int sde_core_perf_crtc_set_idle_bw(")
+        self.assertIn("mutex_lock(&sde_core_perf_lock)", idle_vote)
+        self.assertIn("_sde_core_perf_crtc_set_idle_bw_locked(kms, crtc, idle)",
+                      idle_vote)
+        idle_update = definition(perf,
+            "static void _sde_core_perf_crtc_set_idle_bw_locked(")
+        self.assertIn("_sde_core_perf_crtc_update_bus(kms, crtc, i)",
+                      idle_update)
+        perf_update = definition(perf, "void sde_core_perf_crtc_update(")
+        self.assertIn("params_changed && sde_crtc->bw_vote_idle", perf_update)
+        self.assertIn("sde_crtc->bw_vote_idle = false", perf_update)
+        llcc = definition(perf, "static void _sde_core_perf_crtc_set_llcc_cache_type(")
+        self.assertIn("if (!sde_crtc->bw_vote_idle)", llcc)
+        self.assertIn("kms->perf.perf_tune.min_bus_vote", update_bus)
         crtc = (DISPLAY / "msm/sde/sde_crtc.c").read_text()
         fps = definition(crtc, "static void sde_crtc_calc_fps(")
         self.assertIn("oplus_adfr_update_sw_fps(", fps)

@@ -15,6 +15,7 @@
 #include <linux/sde_rsc.h>
 #include <linux/platform_device.h>
 #include <linux/soc/qcom/llcc-qcom.h>
+#include <linux/kknx_perf.h>
 
 #include "msm_prop.h"
 
@@ -24,6 +25,9 @@
 #include "sde_encoder.h"
 #include "sde_hw_catalog.h"
 #include "sde_core_perf.h"
+#ifdef OPLUS_FEATURE_DISPLAY
+#include "../oplus/oplus_adfr.h"
+#endif
 
 #define SDE_PERF_MODE_STRING_SIZE	128
 #define SDE_PERF_THRESHOLD_HIGH_MIN     12800000
@@ -32,6 +36,7 @@
 #define GET_L32(val) (val & 0xffffffff)
 
 static DEFINE_MUTEX(sde_core_perf_lock);
+static struct sde_core_perf *sde_core_perf_active;
 
 /**
  * enum sde_perf_mode - performance tuning mode
@@ -404,7 +409,9 @@ static void _sde_core_perf_crtc_set_llcc_cache_type(struct sde_kms *kms,
 			/* use current perf, which are the values voted */
 			sde_crtc = to_sde_crtc(tmp_crtc);
 			cur_perf = &sde_crtc->cur_perf;
-			llcc_active |= cur_perf->llcc_active[type];
+			if (!sde_crtc->bw_vote_idle) {
+				llcc_active |= cur_perf->llcc_active[type];
+			}
 
 			SDE_DEBUG("crtc=%d type:%d llcc:%u active:0x%x\n",
 				tmp_crtc->base.id, type,
@@ -701,6 +708,8 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 
 			/* use current perf, which are the values voted */
 			sde_crtc = to_sde_crtc(tmp_crtc);
+			if (sde_crtc->bw_vote_idle)
+				continue;
 			tmp_bw_ctl =
 			  sde_crtc->cur_perf.bw_ctl[bus_id];
 
@@ -774,6 +783,96 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 		}
 	}
 }
+
+static void _sde_core_perf_crtc_set_idle_bw_locked(struct sde_kms *kms,
+		struct drm_crtc *crtc, bool idle)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *sde_cstate;
+	int i;
+
+	sde_crtc = to_sde_crtc(crtc);
+	sde_cstate = to_sde_crtc_state(crtc->state);
+	if (sde_crtc->bw_vote_idle == idle)
+		return;
+
+	sde_crtc->bw_vote_idle = idle;
+	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
+		_sde_core_perf_crtc_update_bus(kms, crtc, i);
+	for (i = 0; i < SDE_SYS_CACHE_MAX; i++)
+		_sde_core_perf_crtc_set_llcc_cache_type(kms, crtc, i);
+
+	if (kms->perf.bw_vote_mode != APPS_RSC_MODE &&
+	    kms->perf.sde_rsc_available &&
+	    sde_cstate->rsc_client)
+		sde_rsc_client_trigger_vote(sde_cstate->rsc_client, true);
+	SDE_EVT32(DRMID(crtc), idle, sde_crtc->bw_vote_idle);
+}
+
+int sde_core_perf_crtc_set_idle_bw(struct drm_crtc *crtc, bool idle)
+{
+	struct sde_kms *kms;
+	int rc = 0;
+
+	if (!crtc || !crtc->state)
+		return -EINVAL;
+	if (sde_crtc_get_intf_mode(crtc, crtc->state) != INTF_MODE_CMD)
+		return -EOPNOTSUPP;
+
+	kms = _sde_crtc_get_kms(crtc);
+	if (!kms || !kms->catalog)
+		return -ENODEV;
+
+	mutex_lock(&sde_core_perf_lock);
+	if (idle && kms->perf.kknx_load_level != KKNX_PERF_LEVEL_MINIMAL)
+		rc = -EAGAIN;
+	else
+		_sde_core_perf_crtc_set_idle_bw_locked(kms, crtc, idle);
+	mutex_unlock(&sde_core_perf_lock);
+	return rc;
+}
+
+void sde_core_perf_kknx_policy_update(u32 load_level)
+{
+	struct sde_core_perf *perf;
+	struct drm_crtc *crtc;
+	struct drm_encoder *encoder;
+	struct sde_kms *kms;
+	bool idle;
+
+	mutex_lock(&sde_core_perf_lock);
+	perf = sde_core_perf_active;
+	if (!perf || !perf->dev) {
+		mutex_unlock(&sde_core_perf_lock);
+		return;
+	}
+	perf->kknx_load_level = load_level;
+	drm_for_each_crtc(crtc, perf->dev) {
+		if (!crtc->state)
+			continue;
+		kms = _sde_crtc_get_kms(crtc);
+		if (!kms || !kms->catalog)
+			continue;
+
+		idle = false;
+#ifdef OPLUS_FEATURE_DISPLAY
+		if (load_level == KKNX_PERF_LEVEL_MINIMAL &&
+		    sde_crtc_get_intf_mode(crtc, crtc->state) == INTF_MODE_CMD) {
+			drm_for_each_encoder_mask(encoder, perf->dev,
+						  crtc->state->encoder_mask) {
+				if (sde_encoder_is_primary_display(encoder) &&
+				    oplus_adfr_is_kernel_idle(encoder)) {
+					idle = true;
+					break;
+				}
+			}
+		}
+#endif
+		_sde_core_perf_crtc_set_idle_bw_locked(kms, crtc, idle);
+	}
+	mutex_unlock(&sde_core_perf_lock);
+}
+EXPORT_SYMBOL_GPL(sde_core_perf_kknx_policy_update);
 
 /**
  * @sde_core_perf_crtc_release_bw() - request zero bandwidth
@@ -1011,6 +1110,15 @@ void sde_core_perf_crtc_update(struct drm_crtc *crtc,
 			crtc->base.id, stop_req, kms->perf.core_clk_rate);
 
 	mutex_lock(&sde_core_perf_lock);
+
+	if (stop_req) {
+		sde_crtc->bw_vote_idle = false;
+	} else if (params_changed && sde_crtc->bw_vote_idle) {
+		sde_crtc->bw_vote_idle = false;
+		update_bus = GENMASK(SDE_POWER_HANDLE_DBUS_ID_MAX - 1, 0);
+		for (i = 0; i < SDE_SYS_CACHE_MAX; i++)
+			_sde_core_perf_crtc_set_llcc_cache_type(kms, crtc, i);
+	}
 
 	/*
 	 * cache the performance numbers in the crtc prior to the
@@ -1407,6 +1515,10 @@ void sde_core_perf_destroy(struct sde_core_perf *perf)
 		return;
 	}
 
+	mutex_lock(&sde_core_perf_lock);
+	if (sde_core_perf_active == perf)
+		sde_core_perf_active = NULL;
+	mutex_unlock(&sde_core_perf_lock);
 	sde_core_perf_debugfs_destroy(perf);
 	perf->max_core_clk_rate = 0;
 	perf->core_clk = NULL;
@@ -1432,6 +1544,7 @@ int sde_core_perf_init(struct sde_core_perf *perf,
 	perf->phandle = phandle;
 	perf->clk_name = clk_name;
 	perf->sde_rsc_available = is_sde_rsc_available(SDE_RSC_INDEX);
+	perf->kknx_load_level = KKNX_PERF_LEVEL_UNKNOWN;
 	/* set default mode */
 	if (perf->sde_rsc_available)
 		perf->bw_vote_mode = DISP_RSC_MODE;
@@ -1450,6 +1563,9 @@ int sde_core_perf_init(struct sde_core_perf *perf,
 		perf->max_core_clk_rate = SDE_PERF_DEFAULT_MAX_CORE_CLK_RATE;
 	}
 	perf->idle_sys_cache_enabled = true;
+	mutex_lock(&sde_core_perf_lock);
+	sde_core_perf_active = perf;
+	mutex_unlock(&sde_core_perf_lock);
 
 	return 0;
 

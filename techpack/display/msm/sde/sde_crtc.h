@@ -398,6 +398,7 @@ struct sde_crtc {
 
 	struct sde_core_perf_params cur_perf;
 	struct sde_core_perf_params new_perf;
+	bool bw_vote_idle;
 
 	u32 plane_mask_old;
 

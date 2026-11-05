@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config KKNX_PERF
+	bool "KKNX load-aware performance policy"
+	depends on ARCH_WAIPIO && CPU_FREQ
+	default y
+	help
+	  Sample system CPU load, KGSL GPU busy time and the applied primary
+	  display refresh rate. Keep a five-second rolling load window and
+	  publish minimal, medium, high or unknown policy states.

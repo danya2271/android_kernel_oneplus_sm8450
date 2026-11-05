@@ -40,6 +40,7 @@
 
 #include <linux/of_address.h>
 #include <linux/kthread.h>
+#include <linux/kknx_perf.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_of.h>
 #include <drm/drm_irq.h>
@@ -55,6 +56,7 @@
 #include "msm_mmu.h"
 #include "sde_wb.h"
 #include "sde_dbg.h"
+#include "sde/sde_core_perf.h"
 #include "sde/sde_console.h"
 #if defined(CONFIG_PXLW_IRIS) || defined(CONFIG_PXLW_SOFT_IRIS)
 #include "dsi_iris_api.h"
@@ -62,6 +64,22 @@
 
 #ifdef OPLUS_FEATURE_DISPLAY
 #include "../oplus/oplus_adfr.h"
+
+static int msm_drm_kknx_get_refresh_rate(u32 *refresh_rate)
+{
+	return oplus_adfr_get_current_refresh_rate(refresh_rate);
+}
+
+static void msm_drm_kknx_update_policy(u32 load_level, bool probe_60hz)
+{
+	oplus_adfr_kknx_policy_update(load_level, probe_60hz);
+	sde_core_perf_kknx_policy_update(load_level);
+}
+
+static const struct kknx_perf_display_ops msm_drm_kknx_display_ops = {
+	.get_refresh_rate = msm_drm_kknx_get_refresh_rate,
+	.update_policy = msm_drm_kknx_update_policy,
+};
 #endif /* OPLUS_FEATURE_DISPLAY */
 
 /*
@@ -2281,9 +2299,16 @@ static struct platform_driver msm_platform_driver = {
 
 static int __init msm_drm_register(void)
 {
+	int ret;
+
 	if (!modeset)
 		return -EINVAL;
 
+#ifdef OPLUS_FEATURE_DISPLAY
+	ret = kknx_perf_register_display_ops(&msm_drm_kknx_display_ops);
+	if (ret)
+		return ret;
+#endif
 	DBG("init");
 	sde_rsc_rpmh_register();
 	sde_rsc_register();
@@ -2302,6 +2327,9 @@ static int __init msm_drm_register(void)
 static void __exit msm_drm_unregister(void)
 {
 	DBG("fini");
+#ifdef OPLUS_FEATURE_DISPLAY
+	kknx_perf_unregister_display_ops(&msm_drm_kknx_display_ops);
+#endif
 	sde_wb_unregister();
 	msm_hdmi_unregister();
 	msm_edp_unregister();

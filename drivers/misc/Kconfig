@@ -581,4 +581,5 @@ source "drivers/misc/uacce/Kconfig"
 source "drivers/misc/hdcp/Kconfig"
 source "drivers/misc/tri_state_key/Kconfig"
 source "drivers/misc/cs_press/Kconfig"
+source "drivers/misc/kknx_performance/Kconfig"
 endmenu

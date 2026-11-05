@@ -2001,6 +2001,10 @@ static int _sde_encoder_rc_kickoff(struct drm_encoder *drm_enc,
 	SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
 			SDE_ENC_RC_STATE_ON, SDE_EVTLOG_FUNC_CASE1);
 	sde_enc->rc_state = SDE_ENC_RC_STATE_ON;
+#ifdef OPLUS_FEATURE_DISPLAY
+	if (sde_enc->crtc)
+		sde_core_perf_crtc_set_idle_bw(sde_enc->crtc, false);
+#endif
 
 end:
 	_sde_encoder_rc_kickoff_delayed(sde_enc, sw_event);
@@ -2226,6 +2230,8 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 						 msecs_to_jiffies(delay));
 			goto end;
 		}
+		if (oplus_adfr_is_kernel_idle(sde_enc))
+			sde_core_perf_crtc_set_idle_bw(crtc, true);
 	}
 #endif
 	/*
@@ -2333,6 +2339,7 @@ static int _sde_encoder_rc_early_wakeup(struct drm_encoder *drm_enc,
 		idle_pc_duration = IDLE_POWERCOLLAPSE_IN_EARLY_WAKEUP;
 
 		sde_enc->rc_state = SDE_ENC_RC_STATE_ON;
+		sde_core_perf_crtc_set_idle_bw(sde_enc->crtc, false);
 	}
 
 	SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state, SDE_ENC_RC_STATE_ON,

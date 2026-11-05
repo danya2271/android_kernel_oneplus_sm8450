@@ -95,6 +95,7 @@ struct sde_core_perf {
 	u64 fix_core_ib_vote;
 	u64 fix_core_ab_vote;
 	u32 bw_vote_mode;
+	u32 kknx_load_level;
 	bool sde_rsc_available;
 	bool bw_vote_mode_updated;
 	bool llcc_active[SDE_SYS_CACHE_MAX];
@@ -132,6 +133,14 @@ void sde_core_perf_crtc_update(struct drm_crtc *crtc,
  * @crtc: Pointer to crtc
  */
 void sde_core_perf_crtc_release_bw(struct drm_crtc *crtc);
+
+/**
+ * sde_core_perf_crtc_set_idle_bw - omit a command-mode CRTC's bus vote
+ * @crtc: Pointer to the CRTC
+ * @idle: Whether the CRTC is entering/exiting display idle
+ */
+int sde_core_perf_crtc_set_idle_bw(struct drm_crtc *crtc, bool idle);
+void sde_core_perf_kknx_policy_update(u32 load_level);
 
 /**
  * sde_core_perf_reserve_res - reserve core clock resource for built-in displays.
