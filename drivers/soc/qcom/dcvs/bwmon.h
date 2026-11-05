@@ -122,6 +122,8 @@ struct hwmon_node {
 	unsigned long		hyst_trig_win;
 	unsigned long		hyst_en;
 	unsigned long		prev_req;
+	struct dcvs_freq	downscale_freq;
+	unsigned int		downscale_count;
 	unsigned int		wake;
 	unsigned int		down_cnt;
 	ktime_t			prev_ts;

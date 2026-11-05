@@ -471,6 +471,15 @@ static unsigned long to_mbps_zone(struct hwmon_node *node, unsigned long mbps)
 
 #define MIN_MBPS	500UL
 #define HIST_PEAK_TOL	75
+#define BWMON_DOWNSCALE_CONFIRM	2
+
+static inline void bwmon_reset_downscale(struct hwmon_node *node)
+{
+	node->downscale_freq.ib = 0;
+	node->downscale_freq.ab = 0;
+	node->downscale_count = 0;
+}
+
 static unsigned long get_bw_and_set_irq(struct hwmon_node *node,
 					struct dcvs_freq *freq_mbps)
 {
@@ -659,8 +668,10 @@ static bool bwmon_update_cur_freq(struct hwmon_node *node)
 {
 	struct bw_hwmon *hw = node->hw;
 	struct dcvs_freq new_freq;
+	bool downscale;
 
 	get_bw_and_set_irq(node, &new_freq);
+	new_freq.hw_type = node->cur_freq.hw_type;
 
 	/* first convert freq from mbps to khz */
 	new_freq.ab = MBPS_TO_KHZ(new_freq.ab, hw->dcvs_width);
@@ -668,14 +679,35 @@ static bool bwmon_update_cur_freq(struct hwmon_node *node)
 	new_freq.ib = max(new_freq.ib, node->min_freq);
 	new_freq.ib = min(new_freq.ib, node->max_freq);
 
-	if (new_freq.ib != node->cur_freq.ib ||
-			new_freq.ab != node->cur_freq.ab) {
-		node->cur_freq.ib = new_freq.ib;
-		node->cur_freq.ab = new_freq.ab;
-		return true;
+	if (new_freq.ib == node->cur_freq.ib &&
+	    new_freq.ab == node->cur_freq.ab) {
+		bwmon_reset_downscale(node);
+		return false;
 	}
 
-	return false;
+	/*
+	 * Keep upward transitions immediate. Only a request that lowers both
+	 * IB and AB is filtered, so touch/display bursts are not delayed.
+	 */
+	downscale = new_freq.ib <= node->cur_freq.ib &&
+		    new_freq.ab <= node->cur_freq.ab;
+	if (downscale) {
+		if (node->downscale_freq.ib != new_freq.ib ||
+		    node->downscale_freq.ab != new_freq.ab) {
+			node->downscale_freq = new_freq;
+			node->downscale_count = 1;
+		} else if (node->downscale_count < BWMON_DOWNSCALE_CONFIRM) {
+			node->downscale_count++;
+		}
+
+		if (node->downscale_count < BWMON_DOWNSCALE_CONFIRM)
+			return false;
+	}
+
+	bwmon_reset_downscale(node);
+	node->cur_freq.ib = new_freq.ib;
+	node->cur_freq.ab = new_freq.ab;
+	return true;
 }
 
 static const u64 HALF_TICK_NS = (NSEC_PER_SEC / HZ) >> 1;
@@ -721,6 +753,7 @@ static inline void bwmon_monitor_start(struct bw_hwmon *hw)
 {
 	hw->last_update_ts = ktime_get();
 	hw->is_active = true;
+	bwmon_reset_downscale(hw->node);
 }
 
 static inline void bwmon_monitor_stop(struct bw_hwmon *hw)
