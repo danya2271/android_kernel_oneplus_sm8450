@@ -170,8 +170,10 @@ static bool bcm_is_last_pending(struct qcom_icc_bcm *bcm,
 				struct list_head *bcm_list, int bucket)
 {
 	struct qcom_icc_bcm *next;
+	struct list_head *pos;
 
-	list_for_each_entry_continue(next, bcm_list, list) {
+	for (pos = bcm->list.next; pos != bcm_list; pos = pos->next) {
+		next = list_entry(pos, struct qcom_icc_bcm, list);
 		if (!(next->vote_pending & BIT(bucket)))
 			continue;
 
