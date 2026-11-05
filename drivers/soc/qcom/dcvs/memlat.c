@@ -198,7 +198,6 @@ struct memlat_group {
 	u32				adaptive_low_freq;
 	bool				fp_voting_enabled;
 	u32				fp_freq;
-	u32				fp_down_freq;
 	u32				fp_down_count;
 	u32				*fp_votes;
 	u32				grp_ev_ids[NUM_GRP_EVS];
@@ -1101,23 +1100,17 @@ static void update_memlat_fp_vote(int cpu, u32 *fp_freqs)
 		 * low samples before lowering the DDR/LLCC vote.
 		 */
 		if (max_freqs[grp] < memlat_grp->fp_freq) {
-			if (memlat_grp->fp_down_freq != max_freqs[grp]) {
-				memlat_grp->fp_down_freq = max_freqs[grp];
-				memlat_grp->fp_down_count = 1;
-			} else if (memlat_grp->fp_down_count <
-				   MEMLAT_FP_DOWNSCALE_CONFIRM) {
+			if (memlat_grp->fp_down_count <
+			    MEMLAT_FP_DOWNSCALE_CONFIRM)
 				memlat_grp->fp_down_count++;
-			}
 
 			if (memlat_grp->fp_down_count <
 			    MEMLAT_FP_DOWNSCALE_CONFIRM)
 				max_freqs[grp] = memlat_grp->fp_freq;
 			else {
-				memlat_grp->fp_down_freq = 0;
 				memlat_grp->fp_down_count = 0;
 			}
 		} else {
-			memlat_grp->fp_down_freq = 0;
 			memlat_grp->fp_down_count = 0;
 		}
 

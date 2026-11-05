@@ -475,8 +475,6 @@ static unsigned long to_mbps_zone(struct hwmon_node *node, unsigned long mbps)
 
 static inline void bwmon_reset_downscale(struct hwmon_node *node)
 {
-	node->downscale_freq.ib = 0;
-	node->downscale_freq.ab = 0;
 	node->downscale_count = 0;
 }
 
@@ -692,13 +690,8 @@ static bool bwmon_update_cur_freq(struct hwmon_node *node)
 	downscale = new_freq.ib <= node->cur_freq.ib &&
 		    new_freq.ab <= node->cur_freq.ab;
 	if (downscale) {
-		if (node->downscale_freq.ib != new_freq.ib ||
-		    node->downscale_freq.ab != new_freq.ab) {
-			node->downscale_freq = new_freq;
-			node->downscale_count = 1;
-		} else if (node->downscale_count < BWMON_DOWNSCALE_CONFIRM) {
+		if (node->downscale_count < BWMON_DOWNSCALE_CONFIRM)
 			node->downscale_count++;
-		}
 
 		if (node->downscale_count < BWMON_DOWNSCALE_CONFIRM)
 			return false;

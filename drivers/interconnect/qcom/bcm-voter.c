@@ -403,7 +403,7 @@ int qcom_icc_bcm_voter_commit(struct bcm_voter *voter)
 			pr_err("Error sending AMC RPMH requests (%d)\n", ret);
 			goto out;
 		}
-		if (!ret)
+		if (!ret || ret == -EBUSY)
 			bcm_cache_commit(voter, QCOM_ICC_BUCKET_AMC);
 	}
 
