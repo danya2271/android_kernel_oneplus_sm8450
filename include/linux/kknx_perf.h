@@ -2,6 +2,7 @@
 #ifndef _LINUX_KKNX_PERF_H
 #define _LINUX_KKNX_PERF_H
 
+#include <linux/kconfig.h>
 #include <linux/types.h>
 
 enum kknx_perf_load_level {
@@ -20,8 +21,16 @@ enum kknx_perf_load_level kknx_perf_get_load_level(void);
 bool kknx_perf_is_minimal_load(void);
 bool kknx_perf_is_medium_load(void);
 bool kknx_perf_is_high_load(void);
-
 int kknx_perf_register_display_ops(const struct kknx_perf_display_ops *ops);
 void kknx_perf_unregister_display_ops(const struct kknx_perf_display_ops *ops);
+
+#if IS_ENABLED(CONFIG_KKNX_PERF)
+bool kknx_perf_use_minimal_cpu_floor(void);
+#else
+static inline bool kknx_perf_use_minimal_cpu_floor(void)
+{
+	return false;
+}
+#endif
 
 #endif

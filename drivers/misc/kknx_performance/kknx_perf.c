@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
 #include <linux/cpu.h>
+#include <linux/cpu_input_boost.h>
 #include <linux/cpufreq.h>
 #include <linux/delay.h>
 #include <linux/export.h>
@@ -11,6 +12,7 @@
 #include <linux/msm_kgsl.h>
 #include <linux/pm_qos.h>
 #include <linux/workqueue.h>
+#include <soc/qcom/dcvs.h>
 
 #define KKNX_SAMPLE_PERIOD		HZ
 #define KKNX_WINDOW_SAMPLES		5
@@ -49,14 +51,62 @@ struct kknx_perf_state {
 	struct kknx_window cpu;
 	struct kknx_gpu_window gpu;
 	struct kknx_cpu_floor cpu_floors[NR_CPUS];
+	bool cpu_floors_active;
 	enum kknx_perf_load_level level;
 	bool probe_60hz;
+	bool sample_valid;
+	u32 display_hz;
+	bool display_hz_valid;
 	unsigned long gpu_floor_hz;
+	unsigned long dcvs_override_mask;
 };
 
 static struct kknx_perf_state kknx_perf;
 static DEFINE_MUTEX(kknx_display_ops_lock);
 static const struct kknx_perf_display_ops *kknx_display_ops;
+
+#if IS_ENABLED(CONFIG_QCOM_DCVS)
+static int kknx_dcvs_set_min_override(enum dcvs_hw_type hw_type, bool enable)
+{
+	int (*set_override)(enum dcvs_hw_type, bool);
+	int ret;
+
+	set_override = symbol_get(qcom_dcvs_hw_min_override_set);
+	if (!set_override)
+		return -ENODEV;
+	ret = set_override(hw_type, enable);
+	symbol_put(qcom_dcvs_hw_min_override_set);
+	return ret;
+}
+
+static void kknx_dcvs_apply(bool minimal)
+{
+	static const enum dcvs_hw_type hw_types[] = {
+		DCVS_DDR, DCVS_LLCC, DCVS_L3,
+	};
+	int i, ret;
+
+	for (i = 0; i < ARRAY_SIZE(hw_types); i++) {
+		enum dcvs_hw_type hw_type = hw_types[i];
+		unsigned long mask = BIT(hw_type);
+
+		if (minimal && !(kknx_perf.dcvs_override_mask & mask)) {
+			ret = kknx_dcvs_set_min_override(hw_type, true);
+			if (!ret)
+				kknx_perf.dcvs_override_mask |= mask;
+		} else if (!minimal &&
+			   (kknx_perf.dcvs_override_mask & mask)) {
+			ret = kknx_dcvs_set_min_override(hw_type, false);
+			if (!ret)
+				kknx_perf.dcvs_override_mask &= ~mask;
+		}
+	}
+}
+#else
+static void kknx_dcvs_apply(bool minimal)
+{
+}
+#endif
 
 int kknx_perf_register_display_ops(const struct kknx_perf_display_ops *ops)
 {
@@ -80,6 +130,7 @@ void kknx_perf_unregister_display_ops(const struct kknx_perf_display_ops *ops)
 	mutex_lock(&kknx_display_ops_lock);
 	if (kknx_display_ops == ops) {
 		kknx_display_ops->update_policy(KKNX_PERF_LEVEL_UNKNOWN, false);
+		WRITE_ONCE(kknx_perf.sample_valid, false);
 		kknx_display_ops = NULL;
 	}
 	mutex_unlock(&kknx_display_ops_lock);
@@ -260,6 +311,13 @@ bool kknx_perf_is_high_load(void)
 }
 EXPORT_SYMBOL_GPL(kknx_perf_is_high_load);
 
+bool kknx_perf_use_minimal_cpu_floor(void)
+{
+	return READ_ONCE(kknx_perf.sample_valid) &&
+		kknx_perf_get_load_level() == KKNX_PERF_LEVEL_MINIMAL;
+}
+EXPORT_SYMBOL_GPL(kknx_perf_use_minimal_cpu_floor);
+
 static bool kknx_sample_cpu(u64 *busy_delta, u64 *total_delta)
 {
 	struct kernel_cpustat snapshot;
@@ -324,6 +382,9 @@ static void kknx_cpu_floors_release(void)
 	struct kknx_cpu_floor *floor;
 	int i;
 
+	if (!kknx_perf.cpu_floors_active)
+		return;
+
 	for (i = 0; i < ARRAY_SIZE(kknx_perf.cpu_floors); i++) {
 		floor = &kknx_perf.cpu_floors[i];
 		if (!floor->policy)
@@ -333,15 +394,19 @@ static void kknx_cpu_floors_release(void)
 		floor->policy = NULL;
 		floor->floor_khz = 0;
 	}
+	kknx_perf.cpu_floors_active = false;
 }
 
-static void kknx_cpu_floors_update(bool minimum)
+static void kknx_cpu_floors_update(enum kknx_perf_load_level level)
 {
 	struct kknx_cpu_floor *floor;
 	struct cpufreq_policy *policy;
 	unsigned int cpu, leader;
 	unsigned int target_khz;
 	int i, ret;
+
+	if (level == KKNX_PERF_LEVEL_UNKNOWN)
+		return;
 
 	for_each_online_cpu(cpu) {
 		policy = cpufreq_cpu_get(cpu);
@@ -355,9 +420,11 @@ static void kknx_cpu_floors_update(bool minimum)
 
 		floor = kknx_find_cpu_floor(policy);
 		if (floor) {
-			target_khz = minimum ? policy->cpuinfo.min_freq :
-					       max(policy->cur,
-						   (unsigned int)floor->floor_khz);
+			if (level == KKNX_PERF_LEVEL_MINIMAL)
+				target_khz = policy->cpuinfo.min_freq;
+			else
+				target_khz = max(policy->cur,
+						 (unsigned int)floor->floor_khz);
 			if (target_khz != floor->floor_khz) {
 				ret = freq_qos_update_request(&floor->request,
 							      target_khz);
@@ -373,7 +440,8 @@ static void kknx_cpu_floors_update(bool minimum)
 			cpufreq_cpu_put(policy);
 			break;
 		}
-		target_khz = minimum ? policy->cpuinfo.min_freq : policy->cur;
+		target_khz = level == KKNX_PERF_LEVEL_MINIMAL ?
+			policy->cpuinfo.min_freq : policy->cur;
 		ret = freq_qos_add_request(&policy->constraints,
 					   &floor->request, FREQ_QOS_MIN,
 					   target_khz);
@@ -383,6 +451,7 @@ static void kknx_cpu_floors_update(bool minimum)
 		}
 		floor->policy = policy;
 		floor->floor_khz = target_khz;
+		kknx_perf.cpu_floors_active = true;
 	}
 
 	/* Drop references for policies removed while the floor was active. */
@@ -411,6 +480,7 @@ static void kknx_apply_level(enum kknx_perf_load_level level,
 
 	WRITE_ONCE(kknx_perf.level, level);
 	WRITE_ONCE(kknx_perf.probe_60hz, probe_60hz);
+	cpu_input_boost_update_policy();
 	if (level == KKNX_PERF_LEVEL_MINIMAL) {
 		if (kknx_perf.gpu_floor_hz) {
 			kknx_set_gpu_min_freq(0);
@@ -446,6 +516,9 @@ static void kknx_perf_sample_work(struct work_struct *work)
 	u32 cpu_percent_x100, gpu_percent_x100;
 	unsigned long gpu_freq = 0;
 	bool gpu_valid, probe_60hz = false;
+	bool valid_sample = false;
+	bool refresh_changed = false;
+	bool policy_changed;
 	int rc;
 	enum kknx_perf_load_level level = KKNX_PERF_LEVEL_UNKNOWN;
 
@@ -461,7 +534,8 @@ static void kknx_perf_sample_work(struct work_struct *work)
 		kknx_window_cpu_percent_x100(&kknx_perf.cpu);
 	gpu_percent_x100 =
 		kknx_window_gpu_percent_x100(&kknx_perf.gpu);
-	if (!rc && cpu_percent_x100 != U32_MAX) {
+	if ((!rc || rc == -EAGAIN) && cpu_percent_x100 != U32_MAX) {
+		valid_sample = display_hz != 0;
 		level = kknx_classify_load(cpu_percent_x100, display_hz,
 					   gpu_percent_x100,
 					   kknx_perf.gpu.valid_count ==
@@ -470,12 +544,25 @@ static void kknx_perf_sample_work(struct work_struct *work)
 						    display_hz);
 	}
 
-	kknx_apply_level(level, gpu_freq, probe_60hz);
-	kknx_cpu_floors_update(level == KKNX_PERF_LEVEL_MINIMAL);
-	if (level == KKNX_PERF_LEVEL_HIGH && gpu_freq >
-	    kknx_perf.gpu_floor_hz) {
-		if (!kknx_set_gpu_min_freq(gpu_freq))
-			kknx_perf.gpu_floor_hz = gpu_freq;
+	if (valid_sample) {
+		refresh_changed = !READ_ONCE(kknx_perf.display_hz_valid) ||
+			(READ_ONCE(kknx_perf.display_hz) > 60) !=
+			(display_hz > 60);
+		policy_changed = level != READ_ONCE(kknx_perf.level) ||
+			probe_60hz != READ_ONCE(kknx_perf.probe_60hz);
+		WRITE_ONCE(kknx_perf.display_hz, display_hz);
+		WRITE_ONCE(kknx_perf.display_hz_valid, true);
+		WRITE_ONCE(kknx_perf.sample_valid, true);
+		kknx_apply_level(level, gpu_freq, probe_60hz);
+		if (refresh_changed && !policy_changed)
+			cpu_input_boost_update_policy();
+		kknx_cpu_floors_update(level);
+		kknx_dcvs_apply(level == KKNX_PERF_LEVEL_MINIMAL);
+		if (level == KKNX_PERF_LEVEL_HIGH && gpu_freq >
+		    kknx_perf.gpu_floor_hz) {
+			if (!kknx_set_gpu_min_freq(gpu_freq))
+				kknx_perf.gpu_floor_hz = gpu_freq;
+		}
 	}
 
 	queue_delayed_work(system_freezable_wq, &kknx_perf.sample_work,
@@ -499,6 +586,7 @@ static void __exit kknx_perf_exit(void)
 	cancel_delayed_work_sync(&kknx_perf.sample_work);
 	kknx_cpu_floors_release();
 	kknx_set_gpu_min_freq(0);
+	kknx_dcvs_apply(false);
 	kknx_update_display_policy(KKNX_PERF_LEVEL_UNKNOWN, false);
 }
 module_exit(kknx_perf_exit);

@@ -10,6 +10,7 @@
 #include <linux/delay.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
+#include <linux/kknx_perf.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/version.h>
@@ -91,6 +92,7 @@ struct boost_drv {
 	struct notifier_block fb_notif;
 	wait_queue_head_t boost_waitq;
 	atomic_long_t max_boost_expires;
+	atomic_t policy_update_pending;
 	unsigned long state;
 };
 
@@ -218,7 +220,9 @@ static void boost_adjust_notify(struct cpufreq_policy *policy)
 		policy->min = get_input_boost_freq(policy);
 	} else {
 		sleep_disabled = false;
-		if (high_framerate) {
+		if (kknx_perf_use_minimal_cpu_floor()) {
+			policy->min = policy->cpuinfo.min_freq;
+		} else if (high_framerate) {
 			policy->min = get_input_boost_freq(policy);
 		} else
 			policy->min = get_min_freq(policy);
@@ -262,6 +266,14 @@ static bool update_online_cpu_policy(void)
 
 	return true;
 }
+void cpu_input_boost_update_policy(void)
+{
+	struct boost_drv *b = &boost_drv_g;
+
+	atomic_set(&b->policy_update_pending, 1);
+	wake_up(&b->boost_waitq);
+}
+EXPORT_SYMBOL_GPL(cpu_input_boost_update_policy);
 
 static void __cpu_input_boost_kick_max(struct boost_drv *b,
 				       unsigned int duration_ms)
@@ -384,15 +396,19 @@ static int cpu_boost_thread(void *data)
 
 		wait_event(b->boost_waitq,
 			(curr_state = READ_ONCE(b->state)) != old_state ||
+			atomic_read(&b->policy_update_pending) ||
 			(should_stop = kthread_should_stop()));
 
 		if (should_stop)
 			break;
 
+		atomic_xchg(&b->policy_update_pending, 0);
 		if (update_online_cpu_policy())
 			old_state = curr_state;
-		else
+		else {
+			atomic_set(&b->policy_update_pending, 1);
 			msleep(20);
+		}
 	}
 
 	return 0;

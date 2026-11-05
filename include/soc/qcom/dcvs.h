@@ -40,6 +40,7 @@ int qcom_dcvs_unregister_voter(const char *name, enum dcvs_hw_type hw_type,
 			enum dcvs_path_type path_type);
 int qcom_dcvs_update_votes(const char *name, struct dcvs_freq *votes,
 			u32 update_mask, enum dcvs_path_type path);
+int qcom_dcvs_hw_min_override_set(enum dcvs_hw_type hw_type, bool enable);
 struct kobject *qcom_dcvs_kobject_get(enum dcvs_hw_type type);
 int qcom_dcvs_hw_minmax_get(enum dcvs_hw_type hw_type, u32 *min, u32 *max);
 struct device_node *qcom_dcvs_get_ddr_child_node(struct device_node *of_parent);
@@ -57,6 +58,11 @@ static inline int qcom_dcvs_unregister_voter(const char *name,
 static inline int qcom_dcvs_update_votes(const char *name,
 		struct dcvs_freq *votes, u32 update_mask,
 		enum dcvs_path_type path)
+{
+	return -ENODEV;
+}
+static inline int qcom_dcvs_hw_min_override_set(
+		enum dcvs_hw_type hw_type, bool enable)
 {
 	return -ENODEV;
 }

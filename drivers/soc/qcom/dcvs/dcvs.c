@@ -112,7 +112,7 @@ static ssize_t store_boost_freq(struct kobject *kobj,
 	int ret;
 	unsigned int val;
 	struct dcvs_hw *hw = to_dcvs_hw(kobj);
-	struct dcvs_path *path;
+	struct dcvs_path *path = hw->dcvs_paths[DCVS_SLOW_PATH];
 	struct dcvs_voter *voter;
 	struct dcvs_freq new_freq;
 
@@ -121,16 +121,12 @@ static ssize_t store_boost_freq(struct kobject *kobj,
 		return ret;
 	if (val > hw->hw_max_freq)
 		return -EINVAL;
-	/* boost_freq only supported on hw with slow path */
-	path = hw->dcvs_paths[DCVS_SLOW_PATH];
 	if (!path)
 		return -EPERM;
 
+	mutex_lock(&path->voter_lock);
 	val = max(val, hw->hw_min_freq);
 	hw->boost_freq = val;
-
-	/* must re-aggregate votes to get new freq after boost update */
-	mutex_lock(&path->voter_lock);
 	new_freq.ib = new_freq.ab = 0;
 	new_freq.hw_type = hw->type;
 	list_for_each_entry(voter, &path->voter_list, node) {
@@ -145,7 +141,7 @@ static ssize_t store_boost_freq(struct kobject *kobj,
 	}
 	mutex_unlock(&path->voter_lock);
 
-	trace_qcom_dcvs_boost(hw->type, path->type, hw->boost_freq,
+	trace_qcom_dcvs_boost(hw->type, path->type, val,
 				new_freq.ib, new_freq.ab);
 
 	return count;
@@ -268,7 +264,8 @@ static u32 get_target_freq(struct dcvs_path *path, u32 freq)
 	int i;
 
 	if (path->type == DCVS_SLOW_PATH)
-		freq = max(freq, hw->boost_freq);
+		freq = max(freq, hw->min_override ? hw->hw_min_freq :
+						     hw->boost_freq);
 
 	for (i = 0; i < len; i++) {
 		if (freq <= freq_table[i]) {
@@ -443,6 +440,56 @@ int qcom_dcvs_update_votes(const char *name, struct dcvs_freq *votes,
 	return -EINVAL;
 }
 EXPORT_SYMBOL(qcom_dcvs_update_votes);
+
+int qcom_dcvs_hw_min_override_set(enum dcvs_hw_type hw_type, bool enable)
+{
+	struct dcvs_freq new_freq;
+	struct dcvs_voter *voter;
+	struct dcvs_path *path;
+	struct dcvs_hw *hw;
+	bool old_override;
+	int ret = 0;
+
+	if (hw_type >= NUM_DCVS_HW_TYPES)
+		return -EINVAL;
+	if (!dcvs_data || !dcvs_data->inited)
+		return -EPROBE_DEFER;
+
+	hw = dcvs_data->hw_devs[hw_type];
+	if (!hw)
+		return -ENODEV;
+	path = hw->dcvs_paths[DCVS_SLOW_PATH];
+	if (!path)
+		return -EPERM;
+
+	mutex_lock(&path->voter_lock);
+	old_override = hw->min_override;
+	if (old_override == enable)
+		goto unlock;
+
+	hw->min_override = enable;
+	new_freq.ib = new_freq.ab = 0;
+	new_freq.hw_type = hw_type;
+	list_for_each_entry(voter, &path->voter_list, node) {
+		new_freq.ib = max(voter->freq.ib, new_freq.ib);
+		new_freq.ab += voter->freq.ab;
+	}
+	new_freq.ib = get_target_freq(path, new_freq.ib);
+	if (new_freq.ib != path->cur_freq.ib ||
+	    new_freq.ab != path->cur_freq.ab) {
+		ret = path->commit_dcvs_freqs(path, &new_freq, 1);
+		if (ret < 0)
+			hw->min_override = old_override;
+	}
+	trace_qcom_dcvs_boost(hw_type, path->type,
+			      hw->min_override ? hw->hw_min_freq :
+						 hw->boost_freq,
+			      new_freq.ib, new_freq.ab);
+unlock:
+	mutex_unlock(&path->voter_lock);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(qcom_dcvs_hw_min_override_set);
 
 int qcom_dcvs_register_voter(const char *name, enum dcvs_hw_type hw_type,
 				enum dcvs_path_type path_type)
